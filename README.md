@@ -13,11 +13,11 @@ It uses two technologies:
 
 ## Benefits
 
-* Single executable - download and run, nothing else it required
+* Single executable - download and run, nothing else it required.
 * Compressed into squashfs, so it takes much less disk space than
 unpacked containers.
-* Contains many libraries so it can run almost everything. And you don't
-need to install anything on your host system. You can even run 32-bit applications
+* Contains many libraries and packages so it can run almost everything. And you don't
+need to install anything on your main (host) system. You can even run 32-bit applications
 on pure 64-bit systems.
 * Based on Arch Linux, so it contains latest software, including latest
 videodrivers.
