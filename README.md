@@ -14,7 +14,7 @@ It uses two technologies:
 
 ## Benefits
 
-* Single executable - download and run, nothing else it required.
+* Single executable - download (or create) and run, nothing else it required.
 * Root rights are **not required**.
 * Compressed into squashfs, so it takes much less disk space than
 unpacked containers.
