@@ -3,12 +3,13 @@
 This is an easy to use non-root container compressed into squashfs and packed 
 into a single executable that runs (or at least should run) on most Linux distros.
 
-You can use it to run any applications, including games (Vulkan and OpenGL). 
+You can use it to run any applications, including games (Vulkan and OpenGL).
+
 Besides, due to bubblewrap, Conty also supports true filesystem sandboxing, so you can even use it to sandbox
 your applications.
 
 It uses two technologies:
-* SuqashFS
+* SuqashFS (using squashfuse)
 * Linux namespaces (using bubblewrap)
 
 ## Benefits
@@ -25,7 +26,7 @@ videodrivers.
 * Almost completely seamless experience. All applcations that you run
 with Conty store their configs in your HOME directory as if you wouldn't
 use container at all.
-* Supports filesystem sandboxing
+* Supports filesystem sandboxing.
 
 ## Requirements
 
