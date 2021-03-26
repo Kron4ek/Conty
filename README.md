@@ -8,9 +8,14 @@ You can use it to run any applications, including games (Vulkan and OpenGL).
 Besides, due to bubblewrap, Conty also supports true filesystem sandboxing, so you can even use it to sandbox
 your applications.
 
+In other words, it's a portable Arch Linux distro packed into a single executable that can be used to run any applications. Conty combines benefits of
+flatpak and AppImage.
+
 It uses two technologies:
 * SuqashFS (using squashfuse)
 * Linux namespaces (using bubblewrap)
+
+This combies benefints of flatpak and AppImage.
 
 ## Benefits
 
