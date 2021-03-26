@@ -12,8 +12,8 @@ In other words, it's a portable Arch Linux distro packed into a single executabl
 flatpak and AppImage.
 
 It uses two technologies:
-* SuqashFS (using squashfuse)
-* Linux namespaces (using bubblewrap)
+* SuqashFS (using [squashfuse](https://github.com/vasi/squashfuse))
+* Linux namespaces (using [bubblewrap](https://github.com/containers/bubblewrap))
 
 ## Benefits
 
@@ -109,10 +109,10 @@ are required for this step, because chrooting is used here.
 ./create-arch-bootstrap.sh
 ```
 
-You can edit the script, if you want to include different set of packages inside
+You can edit the script if you want to include different set of packages inside
 the container.
 
-If you want to use some other distro then you need to manually obtain it from somewhere.
+If you want to use some other distro, then you need to manually obtain it from somewhere.
 
 When distro bootsrap is obtained, use the **create-conty.sh** script to pack
 everything into a single executable.
