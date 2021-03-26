@@ -15,8 +15,6 @@ It uses two technologies:
 * SuqashFS (using squashfuse)
 * Linux namespaces (using bubblewrap)
 
-This combies benefints of flatpak and AppImage.
-
 ## Benefits
 
 * Single executable - download (or create) and run, nothing else it required.
