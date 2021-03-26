@@ -13,9 +13,9 @@ bootstrap="${script_dir}"/root.x86_64
 
 cd "${script_dir}" || exit 1
 
-if [ ! -f utils.tar ]; then
-	echo "utils.tar is required!"
-	exit 1
+if [ ! -f utils.tar ] || [ "$(wc -c < utils.tar)" -lt 1000 ]; then
+	rm -f utils.tar
+	wget -q --show-progress "https://github.com/Kron4ek/Conty/raw/master/utils.tar"
 fi
 
 if [ ! -f squashfs-start.sh ]; then
