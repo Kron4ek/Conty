@@ -6,8 +6,8 @@ script_dir="$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")"
 
 # Builtin suqashfuse supports only lz4 and zstd
 # So choose either lz4 or zstd
-squashfs_compressor="zstd"
-compressor_arguments="-Xcompression-level 19"
+squashfs_compressor="lz4"
+compressor_arguments="-Xhc"
 
 bootstrap="${script_dir}"/root.x86_64
 
