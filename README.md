@@ -19,8 +19,8 @@ It uses two technologies:
 * Compressed into squashfs, so it takes much less disk space than
 unpacked containers.
 * Contains many libraries and packages so it can run almost everything. And you don't
-need to install anything on your main (host) system. You can even run 32-bit applications
-on pure 64-bit systems.
+need to install anything on your main (host) system. **You can even run 32-bit applications
+on pure 64-bit systems**.
 * Based on Arch Linux, so it contains latest software, including latest
 videodrivers.
 * Almost completely seamless experience. All applcations that you run
