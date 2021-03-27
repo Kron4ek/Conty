@@ -57,10 +57,10 @@ chmod +x conty.sh
 ./conty.sh command command_arguments
 ```
 
-For example, if you want to run an application from your HOME directory run:
+For example, if you want to run an application from your HOME or from somewhere on your storage run something like:
 
 ```
-./conty.sh /home/username/App/application_binary
+./conty.sh /full/path/to/a/binary
 ```
 
 Conty also contains Steam, Lutris, Wine-Staging and much more.
