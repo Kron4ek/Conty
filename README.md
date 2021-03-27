@@ -77,12 +77,13 @@ It has a builtin file manager (pcmanfm):
 ./conty.sh pcmanfm
 ```
 
-Want to check if graphics acceleration works? Run glxinfo, glxgears and vulkaninfo:
+Want to check if graphics acceleration works? Run glxinfo, glxgears, vulkaninfo and vkcube:
 
 ```
 ./conty.sh glxinfo | grep direct
 ./conty.sh glxgears
 ./conty.sh vulkaninfo
+./conty.sh vkcube
 ```
 
 You can even use Conty for compilation:
@@ -99,6 +100,8 @@ There are many more integrated programs. You can list all of them with:
 ```
 ./conty.sh ls /usr/bin
 ```
+
+Let me know if you want something else to be included in the container.
 
 ## Sandbox
 
