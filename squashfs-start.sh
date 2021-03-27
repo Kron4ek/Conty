@@ -24,7 +24,7 @@ working_dir=/tmp/"$(basename "$0")"_"$(id -un)"_$RANDOM
 # a problem with mounting the squashfs image due to an incorrectly calculated offset.
 
 # The size of this script
-scriptsize=4076
+scriptsize=4101
 
 # The size of the utils.tar archive
 # utils.tar contains bwrap and squashfuse binaries
@@ -133,7 +133,7 @@ run_bwrap () {
 			--proc /proc \
 			--ro-bind-try /usr/local /usr/local \
 			${dirs} ${unshare} ${net} \
-			--setenv PATH "/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin:${PATH}" \
+			--setenv PATH "/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin:/usr/lib/jvm/default/bin:${PATH}" \
 			"$@"
 }
 
