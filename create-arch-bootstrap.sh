@@ -372,7 +372,8 @@ packagelist="base base-devel nano mesa lib32-mesa vulkan-radeon lib32-vulkan-rad
 			lib32-vkd3d vkd3d lib32-libva vulkan-intel lib32-vulkan-intel \
 			winetricks lutris steam firefox mpv geany pcmanfm ppsspp dolphin-emu \
 			git wget htop qbittorrent speedcrunch gpicview qpdfview squashfs-tools \
-			file-roller xorg-xwayland steam-native-runtime nvidia-prime"
+			file-roller xorg-xwayland steam-native-runtime nvidia-prime \
+			meson mingw-w64-gcc"
 
 wget -q "https://archlinux.org/download/"
 current_release="$(cat index.html | grep "Current Release" | tail -c -16 | head -c +10)"
