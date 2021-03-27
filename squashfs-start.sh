@@ -8,7 +8,7 @@ if [ -z $ALLOW_ROOT ]; then
 		echo "Do not run this app as root!"
 		echo
 		echo "If you really need to run it as root, set ALLOW_ROOT env variable."
-   
+
 		exit 1
 	fi
 fi
@@ -24,7 +24,7 @@ working_dir=/tmp/"$(basename "$0")"_"$(id -un)"_$RANDOM
 # a problem with mounting the squashfs image due to an incorrectly calculated offset.
 
 # The size of this script
-scriptsize=4178
+scriptsize=4172
 
 # The size of the utils.tar archive
 # utils.tar contains bwrap and squashfuse binaries
@@ -40,7 +40,7 @@ if [ "$1" = "--help" ] || [ "$1" = "-h" ] || [ -z "$1" ]; then
 	echo
 	echo -e "-e \tExtract app files"
 	echo -e "-o \tShow squashfs offset"
-	
+
 	echo
 	echo "Environment variables:"
 	echo
@@ -62,11 +62,11 @@ elif [ "$1" = "-e" ]; then
 	else
 		echo "To extract the image install squashfs-tools."
 	fi
-	
+
 	exit
 elif [ "$1" = "-o" ]; then
 	echo $offset
-	
+
 	exit
 fi
 
@@ -75,7 +75,7 @@ if command -v fusermount 1>/dev/null; then
 	fmount=fusermount
 else
 	echo "Please install fuse2 and run the app again"
-	
+
 	exit 1
 fi
 
@@ -93,32 +93,32 @@ chmod +x "${sfuse}"
 chmod +x "${bwrap}"
 
 run_bwrap () {
-	unshare="--unshare-user --unshare-pid --unshare-uts --unshare-cgroup"
-
 	if [ -n "$DISABLE_NET" ]; then
 		echo "Network is disabled"
-		
+
 		net="--unshare-net"
 	fi
-	
+
 	if [ -n "$SANDBOX" ]; then
 		echo "Filesystem sandbox is enabled"
-	
+
 		dirs="--tmpfs /home --tmpfs /opt --tmpfs /mnt --dir ${HOME}"
 
 		if [ -n "$WHITELIST_DIRS" ]; then
 			echo "Allowed directories: ${WHITELIST_DIRS}"
-		
+
 			for i in ${WHITELIST_DIRS}; do
 				whitelist="${whitelist} --bind ${i} ${i}"
 			done
 		fi
 
 		dirs="${dirs} ${whitelist}"
+		unshare="--unshare-user-try --unshare-pid --unshare-uts --unshare-cgroup-try \
+				--hostname Conty"
 	else
 		dirs="--bind /home /home --bind-try /mnt /mnt --bind-try /opt /opt"
 	fi
-	
+
 	echo
 
 	"${bwrap}" --ro-bind "${working_dir}"/mnt / \
@@ -133,7 +133,6 @@ run_bwrap () {
 			--proc /proc \
 			--ro-bind-try /usr/local /usr/local \
 			${dirs} ${unshare} ${net} \
-			--hostname Conty \
 			--setenv PATH "/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin" \
 			"$@"
 }
@@ -150,7 +149,7 @@ if [ $? = 0 ]; then
 	"${fmount}" -uz "${working_dir}"/mnt 2>/dev/null || umount --lazy "${working_dir}"/mnt 2>/dev/null
 else
 	echo "Mounting the squashfs image failed!"
-	
+
 	exit 1
 fi
 
