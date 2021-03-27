@@ -39,7 +39,7 @@ echo
 
 # Create the squashfs image
 rm -f bootstrap.squashfs
-mksquashfs "${bootstrap}" bootstrap.squashfs -comp $squashfs_compressor $compressor_arguments
+mksquashfs "${bootstrap}" bootstrap.squashfs -b 256K -comp $squashfs_compressor $compressor_arguments
 
 # Combine the files into a single executable using cat
 cat squashfs-start.sh utils.tar bootstrap.squashfs > conty.sh
