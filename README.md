@@ -63,7 +63,7 @@ For example, if you want to run an application from your HOME or from somewhere 
 ./conty.sh /full/path/to/a/binary
 ```
 
-Conty also contains Steam, Lutris, Wine-Staging and much more.
+Conty also contains Steam, Lutris, Wine-Staging and many more.
 
 ```
 ./conty.sh steam
@@ -71,20 +71,37 @@ Conty also contains Steam, Lutris, Wine-Staging and much more.
 ./conty.sh wine app.exe
 ```
 
-Want to check if graphics acceleration works? Run glxinfo and glxgears:
+It has a builtin file manager (pcmanfm):
+
+```
+./conty.sh pcmanfm
+```
+
+Want to check if graphics acceleration works? Run glxinfo, glxgears and vulkaninfo:
 
 ```
 ./conty.sh glxinfo | grep direct
 ./conty.sh glxgears
+./conty.sh vulkaninfo
 ```
 
-List all built-in binaries with:
+You can even use Conty for compilation:
+
+```
+./conty.sh gcc src.c
+./conty.sh git clone https://something.git
+cd something && ./conty.sh ./configure
+./conty.sh make
+```
+
+There are many more integrated programs. You can list all of them with:
 
 ```
 ./conty.sh ls /usr/bin
 ```
 
 ## Sandbox
+
 
 Conty uses bubblewrap and thus supports filesystem sandboxing. By default
 it's disabled and all directories on your system are available for the container. 
