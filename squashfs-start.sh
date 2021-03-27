@@ -24,7 +24,7 @@ working_dir=/tmp/"$(basename "$0")"_"$(id -un)"_$RANDOM
 # a problem with mounting the squashfs image due to an incorrectly calculated offset.
 
 # The size of this script
-scriptsize=4172
+scriptsize=4043
 
 # The size of the utils.tar archive
 # utils.tar contains bwrap and squashfuse binaries
@@ -46,12 +46,11 @@ if [ "$1" = "--help" ] || [ "$1" = "-h" ] || [ -z "$1" ]; then
 	echo
 	echo -e "DISABLE_NET \tDisables network access"
 	echo -e "SANDBOX \tEnables filesystem sandbox"
-	echo -e "WHITELIST_DIRS \tWorks together with SANDBOX variable"
-	echo -e "\t\tAllows access to directories specified (separated by space)"
-	echo -e "\t\tin this variable. All specified directories must exist."
-	echo -e "\t\tFor example, WHITELIST_DIRS=\"/home/username/.config /opt/bin\""
+	echo -e "BIND \t\tBinds directories and files (separated by space) from host"
+	echo -e "\t\tsystem to the container. All specified items must exist."
+	echo -e "\t\tFor example, BIND=\"/home/username/.config /etc/pacman.conf\""
 	echo
-	echo "If you enable SANDBOX but don't set WHITELIST_DIRS, then"
+	echo "If you enable SANDBOX but don't set BIND, then"
 	echo "no directories will be available at all. And a fake temporary HOME"
 	echo "directory will be created inside the container."
 
@@ -104,19 +103,20 @@ run_bwrap () {
 
 		dirs="--tmpfs /home --tmpfs /opt --tmpfs /mnt --dir ${HOME}"
 
-		if [ -n "$WHITELIST_DIRS" ]; then
-			echo "Allowed directories: ${WHITELIST_DIRS}"
-
-			for i in ${WHITELIST_DIRS}; do
-				whitelist="${whitelist} --bind ${i} ${i}"
-			done
-		fi
-
-		dirs="${dirs} ${whitelist}"
 		unshare="--unshare-user-try --unshare-pid --unshare-uts --unshare-cgroup-try \
 				--hostname Conty"
 	else
 		dirs="--bind /home /home --bind-try /mnt /mnt --bind-try /opt /opt"
+	fi
+
+	if [ -n "$BIND" ]; then
+		echo "Binded items: ${BIND}"
+
+		for i in ${BIND}; do
+			bind="${bind} --bind ${i} ${i}"
+		done
+
+		dirs="${dirs} ${bind}"
 	fi
 
 	echo
