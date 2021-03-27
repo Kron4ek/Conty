@@ -408,6 +408,7 @@ run_in_chroot pacman --noconfirm -Scc
 run_in_chroot locale-gen
 
 rm "${bootstrap}"/var/cache/pacman/pkg/*
+mkdir "${bootstrap}"/media
 
 unmount_chroot
 
