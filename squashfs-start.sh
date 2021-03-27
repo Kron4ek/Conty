@@ -106,7 +106,7 @@ run_bwrap () {
 		unshare="--unshare-user-try --unshare-pid --unshare-uts --unshare-cgroup-try \
 				--hostname Conty"
 	else
-		dirs="--bind /home /home --bind-try /mnt /mnt --bind-try /opt /opt"
+		dirs="--bind /home /home --bind-try /mnt /mnt --bind-try /opt /opt --bind-try /media /media"
 	fi
 
 	if [ -n "$BIND" ]; then
