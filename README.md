@@ -90,13 +90,13 @@ Conty uses bubblewrap and thus supports filesystem sandboxing. By default
 it's disabled and all directories on your system are available for the container. 
 
 You can enable sandboxing with the **SANDBOX** environment variable. You can allow 
-access to directories you want with the **WHITELIST_DIRS** variable. And it's 
+access to directories and/or files you want with the **BIND** variable. And it's 
 also possible to disable network with the **DISABLE_NET**. For instance:
 
 ```
 export DISABLE_NET=1
 export SANDBOX=1
-export WHITELIST_DIRS="/home/username/.steam /home/username/.local/share/Steam"
+export BIND="/home/username/.steam /home/username/.local/share/Steam"
 ./conty.sh steam
 ```
 
