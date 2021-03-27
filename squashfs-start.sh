@@ -133,7 +133,7 @@ run_bwrap () {
 			--proc /proc \
 			--ro-bind-try /usr/local /usr/local \
 			${dirs} ${unshare} ${net} \
-			--setenv PATH "/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin" \
+			--setenv PATH "/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin:${PATH}" \
 			"$@"
 }
 
