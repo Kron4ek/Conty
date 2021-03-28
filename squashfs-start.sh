@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-## Dependencies: fuse2 tar
+## Dependencies: bash fuse2 tar coreutils
 
 # Prevent launching as root
 if [ -z $ALLOW_ROOT ]; then
@@ -26,7 +26,7 @@ working_dir=/tmp/"$(basename "${script}")"_"$(id -un)"_$RANDOM
 # a problem with mounting the squashfs image due to an incorrectly calculated offset.
 
 # The size of this script
-scriptsize=5817
+scriptsize=6583
 
 # The size of the utils.tar archive
 # utils.tar contains bwrap and squashfuse binaries
@@ -61,6 +61,12 @@ if [ "$1" = "--help" ] || [ "$1" = "-h" ] || ([ -z "$1" ] && [ -z "${AUTOSTART}"
 	echo -e "HOME_DIR \tSets HOME directory to a custom location."
 	echo -e "\t\tCan be used only together with SANDBOX enabled."
 	echo -e "\t\tFor example, HOME_DIR=\"/home/username/custom_home\""
+	echo -e "USE_SYS_UTILS \tMakes the script to use squashfuse and bwrap"
+	echo -e "\t\tinstalled on the system instead of the builtin ones."
+	echo -e "\t\tIf you want to enable this variable, please make sure"
+	echo -e "\t\tthan bubblewrap and squashfuse are installed on your system"
+	echo -e "\t\tand that squashfuse supports the compression algo the image"
+	echo -e "\t\twas built with."
 	echo
 	echo "If you enable SANDBOX but don't set BIND or HOME_DIR, then"
 	echo "no directories will be available at all. And a fake temporary HOME"
@@ -91,23 +97,37 @@ fi
 if command -v fusermount 1>/dev/null; then
 	fmount=fusermount
 else
-	echo "Please install fuse2 and run the app again"
-
+	echo "Please install fuse2 and run the script again!"
 	exit 1
 fi
 
 # Extract utils.tar
 mkdir -p "${working_dir}"
-tail -c +$((scriptsize+1)) "${script}" | head -c $utilssize > "${working_dir}"/utils.tar
-tar -C "${working_dir}" -xf "${working_dir}"/utils.tar
-rm "${working_dir}"/utils.tar
 
-export LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:${working_dir}/utils"
-sfuse="${working_dir}"/utils/squashfuse
-bwrap="${working_dir}"/utils/bwrap
+if [ -z "${USE_SYS_UTILS}" ]; then
+	tail -c +$((scriptsize+1)) "${script}" | head -c $utilssize > "${working_dir}"/utils.tar
+	tar -C "${working_dir}" -xf "${working_dir}"/utils.tar
+	rm "${working_dir}"/utils.tar
 
-chmod +x "${sfuse}"
-chmod +x "${bwrap}"
+	export LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:${working_dir}/utils"
+	sfuse="${working_dir}"/utils/squashfuse
+	bwrap="${working_dir}"/utils/bwrap
+
+	chmod +x "${sfuse}"
+	chmod +x "${bwrap}"
+else
+	if ! command -v squashfuse 1>/dev/null || ! command -v bwrap 1>/dev/null; then
+		echo "USE_SYS_UTILS is enabled, but squshfuse or bwrap are not installed!"
+		echo "Please install them and run the script again."
+		
+		exit 1
+	fi
+	
+	echo "Using system squashfuse and bwrap"
+	
+	sfuse=squashfuse
+	bwrap=bwrap
+fi
 
 run_bwrap () {
 	if [ -n "$DISABLE_NET" ]; then
@@ -126,7 +146,7 @@ run_bwrap () {
 		fi
 
 #		unshare="--unshare-user-try --unshare-pid --unshare-uts --unshare-cgroup-try \
-				--hostname Conty"
+#				--hostname Conty"
 	else
 		dirs="--bind /home /home --bind-try /mnt /mnt --bind-try /opt /opt --bind-try /media /media"
 	fi
