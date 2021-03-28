@@ -64,7 +64,7 @@ if [ "$1" = "--help" ] || [ "$1" = "-h" ] || ([ -z "$1" ] && [ -z "${AUTOSTART}"
 	echo -e "USE_SYS_UTILS \tMakes the script to use squashfuse and bwrap"
 	echo -e "\t\tinstalled on the system instead of the builtin ones."
 	echo -e "\t\tIf you want to enable this variable, please make sure"
-	echo -e "\t\tthan bubblewrap and squashfuse are installed on your system"
+	echo -e "\t\tthat bubblewrap and squashfuse are installed on your system"
 	echo -e "\t\tand that squashfuse supports the compression algo the image"
 	echo -e "\t\twas built with."
 	echo
