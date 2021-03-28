@@ -136,7 +136,7 @@ export HOME_DIR="/home/username/custom_home_dir"
 
 ## How to create your own Conty executables
 
-If you want to create Arch-based container then use the **create-arch-bootstrap.sh** script. Root rights
+If you want to create Arch-based container, then use the **create-arch-bootstrap.sh** script. Root rights
 are required for this step, because chrooting is used here.
 
 ```
