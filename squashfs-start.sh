@@ -26,7 +26,7 @@ working_dir=/tmp/"$(basename "${script}")"_"$(id -un)"_$RANDOM
 # a problem with mounting the squashfs image due to an incorrectly calculated offset.
 
 # The size of this script
-scriptsize="$(wget -q https://raw.githubusercontent.com/Kron4ek/Conty/master/${0##*/} -O - | wc -c)"
+scriptsize=6583
 
 # The size of the utils.tar archive
 # utils.tar contains bwrap and squashfuse binaries
