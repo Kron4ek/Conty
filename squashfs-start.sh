@@ -141,8 +141,7 @@ run_bwrap () {
 mkdir -p "${working_dir}"/mnt
 "${fmount}" -u "${working_dir}"/mnt 2>/dev/null || umount "${working_dir}"/mnt 2>/dev/null
 
-"${sfuse}" -o offset="${offset}" "${script}" "${working_dir}"/mnt
-if [ $? = 0 ]; then
+if "${sfuse}" -o offset="${offset}" "${script}" "${working_dir}"/mnt ; then
 	echo "Running Conty"
 	run_bwrap "$@"
 
