@@ -376,12 +376,11 @@ packagelist="base base-devel nano mesa lib32-mesa vulkan-radeon lib32-vulkan-rad
 			meson mingw-w64-gcc gamemode lib32-gamemode cmake jre8-openjdk \
 			libva-mesa-driver"
 
-wget -q "https://archlinux.org/download/"
-current_release="$(cat index.html | grep "Current Release" | tail -c -16 | head -c +10)"
-rm index.html
+
+current_release="$(wget -q "https://archlinux.org/download/" -O - | grep "Current Release" | tail -c -16 | head -c +10)"
 
 echo "Downloading ${current_release} release"
-wget -q --show-progress -O arch.tar.gz https://mirror.rackspace.com/archlinux/iso/${current_release}/archlinux-bootstrap-${current_release}-x86_64.tar.gz
+wget -q --show-progress -O arch.tar.gz "https://mirror.rackspace.com/archlinux/iso/${current_release}/archlinux-bootstrap-${current_release}-x86_64.tar.gz"
 tar xf arch.tar.gz
 rm arch.tar.gz
 
