@@ -26,7 +26,7 @@ working_dir=/tmp/"$(basename "${script}")"_"$(id -un)"_$RANDOM
 # a problem with mounting the squashfs image due to an incorrectly calculated offset.
 
 # The size of this script
-scriptsize=5358
+scriptsize=5483
 
 # The size of the utils.tar archive
 # utils.tar contains bwrap and squashfuse binaries
@@ -167,8 +167,13 @@ if [ $? = 0 ]; then
 			autostart="${script_name}"
 		fi
 	fi
+	
+	if [ -n "${AUTOARGS}" ]; then
+		echo "Automatically append arguments: ${AUTOARGS}"
+	fi
 
 	if [ -n "${autostart}" ]; then
+		echo "Autostarting ${autostart}"
 		run_bwrap "${autostart}" "$@" ${AUTOARGS}
 	else
 		run_bwrap "$@" ${AUTOARGS}
