@@ -14,17 +14,19 @@ if [ -z $ALLOW_ROOT ]; then
 fi
 
 # Full path to the script
-script="$(readlink -f "${BASH_SOURCE[0]}")"
+script_literal="${BASH_SOURCE[0]}"
+script_name="$(basename "${script_literal}")"
+script="$(readlink -f "${script_literal}")"
 
 # Working directory where squashfs image will be mounted
 # Default path: /tmp/scriptname_username_randomnumber
-working_dir=/tmp/"$(basename "$0")"_"$(id -un)"_$RANDOM
+working_dir=/tmp/"$(basename "${script}")"_"$(id -un)"_$RANDOM
 
 # It's important to set correct sizes below, otherwise there will be
 # a problem with mounting the squashfs image due to an incorrectly calculated offset.
 
 # The size of this script
-scriptsize=4109
+scriptsize=5369
 
 # The size of the utils.tar archive
 # utils.tar contains bwrap and squashfuse binaries
@@ -33,17 +35,24 @@ utilssize=1259520
 # Offset where the squashfs image is stored
 offset=$((scriptsize+utilssize))
 
-if [ "$1" = "--help" ] || [ "$1" = "-h" ] || [ -z "$1" ]; then
-    echo "Usage: ./conty.sh command command_arguments"
-    echo
+
+if [ "$1" = "--help" ] || [ "$1" = "-h" ] || ([ -z "$1" ] && [ -z "${AUTOSTART}" ] && [ ! -L "${script_literal}" ]); then
+	echo "Usage: ./conty.sh command command_arguments"
+	echo
 	echo "Arguments:"
 	echo
-	echo -e "-e \tExtract app files"
-	echo -e "-o \tShow squashfs offset"
+	echo -e "-e \tExtract squashfs image"
+	echo -e "-o \tShow squashfs image offset"
 
 	echo
 	echo "Environment variables:"
 	echo
+	echo -e "AUTOSTART \tAutostarts an application specified in this variable"
+	echo -e "\t\tFor example, AUTOSTART=\"steam\" or AUTOSTART=\"/home/username/"
+	echo -e "\t\tprogram\""
+	echo -e "AUTOARGS \tAutomatically appends arguments from this variable to a"
+	echo -e "\t\tlaunched application. For example, AUTOARGS=\"--version\""
+	echo -e "\t\tCan be used together with AUTOSTART, but also without it."
 	echo -e "DISABLE_NET \tDisables network access"
 	echo -e "SANDBOX \tEnables filesystem sandbox"
 	echo -e "BIND \t\tBinds directories and files (separated by space) from host"
@@ -53,11 +62,17 @@ if [ "$1" = "--help" ] || [ "$1" = "-h" ] || [ -z "$1" ]; then
 	echo "If you enable SANDBOX but don't set BIND, then"
 	echo "no directories will be available at all. And a fake temporary HOME"
 	echo "directory will be created inside the container."
+	echo
+	echo "Also, if the script is a symlink to itself but with different name,"
+	echo "then the symlinked script will automatically run a program according it's name."
+	echo "For instance, if the script is a symlink with the name \"wine\", then it will"
+	echo "automatically run wine during launch. This is an alternative"
+	echo "to AUTOSTART variable, but the variable has higher priority."
 
 	exit
 elif [ "$1" = "-e" ]; then
 	if command -v unsquashfs 1>/dev/null; then
-		unsquashfs -o $offset -d "$(basename "$0")"_files "${script}"
+		unsquashfs -o $offset -d "$(basename "${script}")"_files "${script}"
 	else
 		echo "To extract the image install squashfs-tools."
 	fi
@@ -144,7 +159,20 @@ mkdir -p "${working_dir}"/mnt
 "${sfuse}" -o offset="${offset}" "${script}" "${working_dir}"/mnt
 if [ $? = 0 ]; then
 	echo "Running Conty"
-	run_bwrap "$@"
+
+	if [ -n "${AUTOSTART}" ]; then
+		autostart="${AUTOSTART}"
+	elif [ -L "${script_literal}" ]; then
+		if [ -f "${working_dir}"/mnt/usr/bin/"${script_name}" ]; then
+			autostart="${script_name}"
+		fi
+	fi
+
+	if [ -n "${autostart}" ]; then
+		run_bwrap "${autostart}" "$@" ${AUTOARGS}
+	else
+		run_bwrap "$@" ${AUTOARGS}
+	fi
 
 	"${fmount}" -uz "${working_dir}"/mnt 2>/dev/null || umount --lazy "${working_dir}"/mnt 2>/dev/null
 else
