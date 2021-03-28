@@ -103,6 +103,12 @@ There are many more integrated programs. You can list all of them with:
 
 Let me know if you want something else to be included in the container.
 
+There are some other features, see the internal help for more information.
+
+```
+./conty.sh --help
+```
+
 ## Sandbox
 
 
@@ -111,12 +117,20 @@ it's disabled and all directories on your system are available for the container
 
 You can enable sandboxing with the **SANDBOX** environment variable. You can allow 
 access to directories and/or files you want with the **BIND** variable. And it's 
-also possible to disable network with the **DISABLE_NET**. For instance:
+also possible to disable network with the **DISABLE_NET**. And you can set custom HOME directory
+with the **HOME_DIR** variable. For instance:
 
 ```
 export DISABLE_NET=1
 export SANDBOX=1
 export BIND="/home/username/.steam /home/username/.local/share/Steam"
+./conty.sh steam
+```
+Or
+```
+export DISABLE_NET=1
+export SANDBOX=1
+export HOME_DIR="/home/username/custom_home_dir"
 ./conty.sh steam
 ```
 
