@@ -3,7 +3,7 @@
 ## Dependencies: fuse2 tar
 
 # Prevent launching as root
-if [ -z $ALLOW_ROOT ]; then
+if [ -z "$ALLOW_ROOT" ]; then
 	if [ $EUID = 0 ]; then
 		echo "Do not run this app as root!"
 		echo
@@ -141,8 +141,7 @@ run_bwrap () {
 mkdir -p "${working_dir}"/mnt
 "${fmount}" -u "${working_dir}"/mnt 2>/dev/null || umount "${working_dir}"/mnt 2>/dev/null
 
-"${sfuse}" -o offset="${offset}" "${script}" "${working_dir}"/mnt
-if [ $? = 0 ]; then
+if "${sfuse}" -o offset="${offset}" "${script}" "${working_dir}"/mnt ; then
 	echo "Running Conty"
 	run_bwrap "$@"
 
