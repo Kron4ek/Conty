@@ -154,7 +154,7 @@ For the sake of convenience, there are compiled binaries of bwrap and squashfuse
 ./create-utils.sh
 ```
 
-When distro bootsrap is obtained, use the **create-conty.sh** script to pack
+When distro bootsrap and utils.tar are obtained, use the **create-conty.sh** script to pack
 everything into a single executable.
 
 ```
