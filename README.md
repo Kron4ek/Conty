@@ -33,7 +33,7 @@ use container at all.
 
 ## Requirements
 
-The only requirements are **bash**, **fuse2** and **tar**. And your /tmp directory
+The only requirements are **bash**, **fuse2**, **tar** and **coreutils**. And your /tmp directory
 should allow binaries execution (which it does by default on most distros).
 
 Also, your Linux kernel must support unprivileged user namespaces. On some 
