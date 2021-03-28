@@ -364,6 +364,12 @@ cd "${script_dir}" || exit 1
 
 bootstrap="${script_dir}"/root.x86_64
 
+add_chaoticaur_repo="true"
+install_wine_tkg="true"
+
+chaoticaur_keyring="https://random-mirror.chaotic.cx/chaotic-aur/x86_64/chaotic-keyring-20201229-1-any.pkg.tar.zst"
+chaoticaur_mirrorlist="https://random-mirror.chaotic.cx/chaotic-aur/x86_64/chaotic-mirrorlist-20210317-1-any.pkg.tar.zst"
+
 packagelist="base base-devel nano mesa lib32-mesa vulkan-radeon lib32-vulkan-radeon \
 			vulkan-icd-loader lib32-vulkan-icd-loader nvidia-utils \
 			lib32-nvidia-utils lib32-alsa-plugins wine-staging mesa-demos \
@@ -375,7 +381,6 @@ packagelist="base base-devel nano mesa lib32-mesa vulkan-radeon lib32-vulkan-rad
 			file-roller xorg-xwayland steam-native-runtime nvidia-prime \
 			meson mingw-w64-gcc gamemode lib32-gamemode cmake jre8-openjdk \
 			libva-mesa-driver"
-
 
 current_release="$(wget -q "https://archlinux.org/download/" -O - | grep "Current Release" | tail -c -16 | head -c +10)"
 
@@ -397,6 +402,7 @@ rm "${bootstrap}"/etc/pacman.d/mirrorlist
 cp mirrorlist "${bootstrap}"/etc/pacman.d/mirrorlist
 rm mirrorlist
 
+echo >> "${bootstrap}"/etc/pacman.conf
 echo "[multilib]" >> "${bootstrap}"/etc/pacman.conf
 echo "Include = /etc/pacman.d/mirrorlist" >> "${bootstrap}"/etc/pacman.conf
 
@@ -406,6 +412,24 @@ run_in_chroot pacman -Syu --noconfirm
 run_in_chroot pacman --noconfirm -S ${packagelist}
 run_in_chroot pacman --noconfirm -Scc
 run_in_chroot locale-gen
+
+if [ "${add_chaoticaur_repo}" = "true" ]; then
+	run_in_chroot wget -O /opt/chaoticaur-keyring.tar.zst "${chaoticaur_keyring}"
+	run_in_chroot wget -O /opt/chaoticaur-mirrorlist.tar.zst "${chaoticaur_mirrorlist}"
+	run_in_chroot pacman --noconfirm -U /opt/chaoticaur-keyring.tar.zst
+	run_in_chroot pacman --noconfirm -U /opt/chaoticaur-mirrorlist.tar.zst
+
+	echo >> "${bootstrap}"/etc/pacman.conf
+	echo "[chaotic-aur]" >> "${bootstrap}"/etc/pacman.conf
+	echo "Include = /etc/pacman.d/chaotic-mirrorlist" >> "${bootstrap}"/etc/pacman.conf
+
+	run_in_chroot pacman -Syu --noconfirm
+
+	if [ "${install_wine_tkg}" = "true" ]; then
+		run_in_chroot pacman --noconfirm -Rdd wine-staging
+		run_in_chroot pacman --noconfirm -S wine-tkg-staging-fsync-git
+	fi
+fi
 
 rm "${bootstrap}"/var/cache/pacman/pkg/*
 mkdir "${bootstrap}"/media
