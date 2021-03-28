@@ -212,7 +212,7 @@ else
 	exit 1
 fi
 
-sleep 2
+sleep 1
 rm -rf "${working_dir}"
 
 exit
