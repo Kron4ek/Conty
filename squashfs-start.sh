@@ -3,7 +3,7 @@
 ## Dependencies: fuse2 tar
 
 # Prevent launching as root
-if [ -z $ALLOW_ROOT ]; then
+if [ -z "$ALLOW_ROOT" ]; then
 	if [ $EUID = 0 ]; then
 		echo "Do not run this app as root!"
 		echo
@@ -24,7 +24,7 @@ working_dir=/tmp/"$(basename "$0")"_"$(id -un)"_$RANDOM
 # a problem with mounting the squashfs image due to an incorrectly calculated offset.
 
 # The size of this script
-scriptsize=4101
+scriptsize="$(sed -n '/#!/,/^#ENDSCRIPT/p' "$0" | wc -c)"
 
 # The size of the utils.tar archive
 # utils.tar contains bwrap and squashfuse binaries
@@ -132,7 +132,7 @@ run_bwrap () {
 			--ro-bind-try /etc/nsswitch.conf /etc/nsswitch.conf \
 			--proc /proc \
 			--ro-bind-try /usr/local /usr/local \
-			${dirs} ${unshare} ${net} \
+			"${dirs}" "${unshare}" "${net}" \
 			--setenv PATH "/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin:/usr/lib/jvm/default/bin:${PATH}" \
 			"$@"
 }
@@ -156,3 +156,4 @@ fi
 rm -rf "${working_dir}"
 
 exit
+#ENDSCRIPT
