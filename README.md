@@ -33,7 +33,7 @@ use container at all.
 
 ## Requirements
 
-The only requirements are **bash**, **fuse2** and **tar**. And your /tmp directory
+The only requirements are **bash**, **fuse2**, **tar** and **coreutils**. And your /tmp directory
 should allow binaries execution (which it does by default on most distros).
 
 Also, your Linux kernel must support unprivileged user namespaces. On some 
@@ -103,6 +103,12 @@ There are many more integrated programs. You can list all of them with:
 
 Let me know if you want something else to be included in the container.
 
+There are some other features, see the internal help for more information.
+
+```
+./conty.sh --help
+```
+
 ## Sandbox
 
 
@@ -111,7 +117,8 @@ it's disabled and all directories on your system are available for the container
 
 You can enable sandboxing with the **SANDBOX** environment variable. You can allow 
 access to directories and/or files you want with the **BIND** variable. And it's 
-also possible to disable network with the **DISABLE_NET**. For instance:
+also possible to disable network with the **DISABLE_NET**. And you can set custom HOME directory
+with the **HOME_DIR** variable. For instance:
 
 ```
 export DISABLE_NET=1
@@ -119,10 +126,17 @@ export SANDBOX=1
 export BIND="/home/username/.steam /home/username/.local/share/Steam"
 ./conty.sh steam
 ```
+Or
+```
+export DISABLE_NET=1
+export SANDBOX=1
+export HOME_DIR="/home/username/custom_home_dir"
+./conty.sh steam
+```
 
 ## How to create your own Conty executables
 
-If you want to create Arch-based container then use the **create-arch-bootstrap.sh** script. Root rights
+If you want to create Arch-based container, then use the **create-arch-bootstrap.sh** script. Root rights
 are required for this step, because chrooting is used here.
 
 ```
@@ -134,7 +148,13 @@ the container.
 
 If you want to use some other distro, then you need to manually obtain it from somewhere.
 
-When distro bootsrap is obtained, use the **create-conty.sh** script to pack
+For the sake of convenience, there are compiled binaries of bwrap and squashfuse and their dependencies (utils.tar) uploaded in this repo, you can use them or you can use your own binaries. Use the **create-utils.sh** script to easily compile your own bwrap and squashfuse. Just make sure to set the correct size of the **utils.tar** in the **squashfs-start.sh**.
+
+```
+./create-utils.sh
+```
+
+When distro bootsrap and utils.tar are obtained, use the **create-conty.sh** script to pack
 everything into a single executable.
 
 ```
