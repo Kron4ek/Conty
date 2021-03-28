@@ -26,7 +26,7 @@ working_dir=/tmp/"$(basename "${script}")"_"$(id -un)"_$RANDOM
 # a problem with mounting the squashfs image due to an incorrectly calculated offset.
 
 # The size of this script
-scriptsize=5483
+scriptsize=5817
 
 # The size of the utils.tar archive
 # utils.tar contains bwrap and squashfuse binaries
@@ -58,16 +58,19 @@ if [ "$1" = "--help" ] || [ "$1" = "-h" ] || ([ -z "$1" ] && [ -z "${AUTOSTART}"
 	echo -e "BIND \t\tBinds directories and files (separated by space) from host"
 	echo -e "\t\tsystem to the container. All specified items must exist."
 	echo -e "\t\tFor example, BIND=\"/home/username/.config /etc/pacman.conf\""
+	echo -e "HOME_DIR \tSets HOME directory to a custom location."
+	echo -e "\t\tCan be used only together with SANDBOX enabled."
+	echo -e "\t\tFor example, HOME_DIR=\"/home/username/custom_home\""
 	echo
-	echo "If you enable SANDBOX but don't set BIND, then"
+	echo "If you enable SANDBOX but don't set BIND or HOME_DIR, then"
 	echo "no directories will be available at all. And a fake temporary HOME"
 	echo "directory will be created inside the container."
 	echo
 	echo "Also, if the script is a symlink to itself but with different name,"
-	echo "then the symlinked script will automatically run a program according it's name."
-	echo "For instance, if the script is a symlink with the name \"wine\", then it will"
-	echo "automatically run wine during launch. This is an alternative"
-	echo "to AUTOSTART variable, but the variable has higher priority."
+	echo "then the symlinked script will automatically run a program according"
+	echo "to its name. For instance, if the script is a symlink with the name \"wine\","
+	echo "then it will automatically run wine during launch. This is an alternative"
+	echo "to the AUTOSTART variable, but the variable has a higher priority."
 
 	exit
 elif [ "$1" = "-e" ]; then
@@ -115,10 +118,14 @@ run_bwrap () {
 
 	if [ -n "$SANDBOX" ]; then
 		echo "Filesystem sandbox is enabled"
-
 		dirs="--tmpfs /home --tmpfs /opt --tmpfs /mnt --dir ${HOME}"
+		
+		if [ -n "${HOME_DIR}" ]; then
+			echo "Set HOME to ${HOME_DIR}"
+			dirs="${dirs} --bind ${HOME_DIR} ${HOME}"
+		fi
 
-		unshare="--unshare-user-try --unshare-pid --unshare-uts --unshare-cgroup-try \
+#		unshare="--unshare-user-try --unshare-pid --unshare-uts --unshare-cgroup-try \
 				--hostname Conty"
 	else
 		dirs="--bind /home /home --bind-try /mnt /mnt --bind-try /opt /opt --bind-try /media /media"
