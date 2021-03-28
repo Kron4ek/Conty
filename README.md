@@ -148,7 +148,11 @@ the container.
 
 If you want to use some other distro, then you need to manually obtain it from somewhere.
 
-Also, for the sake of convenience, there are compiled binaries of bwrap and squashfuse and their dependencies (utils.tar) uploaded in this repo, you can use them or you can use your own binaries. Just make sure to set the correct size of the **utils.tar** in the **squashfs-start.sh**.
+For the sake of convenience, there are compiled binaries of bwrap and squashfuse and their dependencies (utils.tar) uploaded in this repo, you can use them or you can use your own binaries. Use the **create-utils.sh** script to easily compile your own bwrap and squashfuse. Just make sure to set the correct size of the **utils.tar** in the **squashfs-start.sh**.
+
+```
+./create-utils.sh
+```
 
 When distro bootsrap is obtained, use the **create-conty.sh** script to pack
 everything into a single executable.
