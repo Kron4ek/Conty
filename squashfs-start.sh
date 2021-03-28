@@ -153,6 +153,7 @@ else
 	exit 1
 fi
 
+sleep 2
 rm -rf "${working_dir}"
 
 exit
