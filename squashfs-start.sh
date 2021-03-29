@@ -20,13 +20,13 @@ script="$(readlink -f "${script_literal}")"
 
 # Working directory where squashfs image will be mounted
 # Default path: /tmp/scriptname_username_randomnumber
-working_dir=/tmp/"$(basename "${script}")"_"$(id -un)"_$RANDOM
+working_dir=/tmp/"$(basename "${script}")"_"${USER}"_${RANDOM}
 
 # It's important to set correct sizes below, otherwise there will be
 # a problem with mounting the squashfs image due to an incorrectly calculated offset.
 
 # The size of this script
-scriptsize=6652
+scriptsize=6608
 
 # The size of the utils.tar archive
 # utils.tar contains bwrap and squashfuse binaries
@@ -34,7 +34,6 @@ utilssize=1259520
 
 # Offset where the squashfs image is stored
 offset=$((scriptsize+utilssize))
-
 
 if [ "$1" = "--help" ] || [ "$1" = "-h" ] || ([ -z "$1" ] && [ -z "${AUTOSTART}" ] && [ ! -L "${script_literal}" ]); then
 	echo "Usage: ./conty.sh command command_arguments"
@@ -181,9 +180,17 @@ run_bwrap () {
 			"$@"
 }
 
+trap_exit () {
+	"${fmount}" -uz "${working_dir}"/mnt 2>/dev/null || umount --lazy "${working_dir}"/mnt 2>/dev/null
+	sleep 1
+	rm -rf "${working_dir}"
+	exit
+}
+
+trap 'trap_exit' EXIT
+
 # Mount boostrap image
 mkdir -p "${working_dir}"/mnt
-"${fmount}" -u "${working_dir}"/mnt 2>/dev/null || umount "${working_dir}"/mnt 2>/dev/null
 
 if "${sfuse}" -o offset="${offset}" "${script}" "${working_dir}"/mnt ; then
 	echo "Running Conty"
@@ -206,15 +213,10 @@ if "${sfuse}" -o offset="${offset}" "${script}" "${working_dir}"/mnt ; then
 	else
 		run_bwrap "$@" ${AUTOARGS}
 	fi
-
-	"${fmount}" -uz "${working_dir}"/mnt 2>/dev/null || umount --lazy "${working_dir}"/mnt 2>/dev/null
 else
 	echo "Mounting the squashfs image failed!"
 
 	exit 1
 fi
-
-sleep 1
-rm -rf "${working_dir}"
 
 exit
