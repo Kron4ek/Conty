@@ -380,7 +380,8 @@ packagelist="base base-devel nano mesa lib32-mesa vulkan-radeon lib32-vulkan-rad
 			git wget htop qbittorrent speedcrunch gpicview qpdfview squashfs-tools \
 			file-roller xorg-xwayland steam-native-runtime nvidia-prime \
 			meson mingw-w64-gcc gamemode lib32-gamemode cmake jre8-openjdk \
-			libva-mesa-driver playonlinux"
+			libva-mesa-driver playonlinux libva-intel-driver lib32-libva-intel-driver \
+			intel-media-driver"
 
 current_release="$(wget -q "https://archlinux.org/download/" -O - | grep "Current Release" | tail -c -16 | head -c +10)"
 
