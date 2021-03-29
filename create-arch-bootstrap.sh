@@ -364,9 +364,6 @@ cd "${script_dir}" || exit 1
 
 bootstrap="${script_dir}"/root.x86_64
 
-add_chaoticaur_repo="true"
-install_wine_tkg="true"
-
 chaoticaur_keyring="https://random-mirror.chaotic.cx/chaotic-aur/x86_64/chaotic-keyring-20201229-1-any.pkg.tar.zst"
 chaoticaur_mirrorlist="https://random-mirror.chaotic.cx/chaotic-aur/x86_64/chaotic-mirrorlist-20210317-1-any.pkg.tar.zst"
 
@@ -382,6 +379,8 @@ packagelist="base base-devel nano mesa lib32-mesa vulkan-radeon lib32-vulkan-rad
 			meson mingw-w64-gcc gamemode lib32-gamemode cmake jre8-openjdk \
 			libva-mesa-driver playonlinux libva-intel-driver lib32-libva-intel-driver \
 			intel-media-driver"
+
+chaotic_packagelist="wine-tkg-staging-fsync-git steamtinkerlaunch"
 
 current_release="$(wget -q "https://archlinux.org/download/" -O - | grep "Current Release" | tail -c -16 | head -c +10)"
 
@@ -411,10 +410,10 @@ run_in_chroot pacman-key --init
 run_in_chroot pacman-key --populate archlinux
 run_in_chroot pacman -Syu --noconfirm
 run_in_chroot pacman --noconfirm -S ${packagelist}
-run_in_chroot pacman --noconfirm -Scc
+run_in_chroot yes | pacman -Scc
 run_in_chroot locale-gen
 
-if [ "${add_chaoticaur_repo}" = "true" ]; then
+if [ -n "${chaotic_packagelist}" ]; then
 	run_in_chroot wget -O /opt/chaoticaur-keyring.tar.zst "${chaoticaur_keyring}"
 	run_in_chroot wget -O /opt/chaoticaur-mirrorlist.tar.zst "${chaoticaur_mirrorlist}"
 	run_in_chroot pacman --noconfirm -U /opt/chaoticaur-keyring.tar.zst
@@ -426,13 +425,9 @@ if [ "${add_chaoticaur_repo}" = "true" ]; then
 
 	run_in_chroot pacman -Syu --noconfirm
 
-	if [ "${install_wine_tkg}" = "true" ]; then
-		run_in_chroot pacman --noconfirm -Rdd wine-staging
-		run_in_chroot pacman --noconfirm -S wine-tkg-staging-fsync-git
-	fi
+	run_in_chroot yes | pacman -S ${chaotic_packagelist}
 fi
 
-rm "${bootstrap}"/var/cache/pacman/pkg/*
 mkdir "${bootstrap}"/media
 
 unmount_chroot
