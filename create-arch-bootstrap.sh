@@ -425,7 +425,7 @@ if [ -n "${chaotic_packagelist}" ]; then
 	run_in_chroot pacman -Syu --noconfirm
 
 	run_in_chroot pacman --noconfirm -Rdd wine-staging
-	run_in_chroot pacman -S ${chaotic_packagelist}
+	run_in_chroot pacman --noconfirm -S ${chaotic_packagelist}
 fi
 
 rm "${bootstrap}"/var/cache/pacman/pkg/*
