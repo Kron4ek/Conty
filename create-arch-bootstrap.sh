@@ -410,7 +410,6 @@ run_in_chroot pacman-key --init
 run_in_chroot pacman-key --populate archlinux
 run_in_chroot pacman -Syu --noconfirm
 run_in_chroot pacman --noconfirm -S ${packagelist}
-run_in_chroot yes | pacman -Scc
 run_in_chroot locale-gen
 
 if [ -n "${chaotic_packagelist}" ]; then
@@ -425,9 +424,11 @@ if [ -n "${chaotic_packagelist}" ]; then
 
 	run_in_chroot pacman -Syu --noconfirm
 
-	run_in_chroot yes | pacman -S ${chaotic_packagelist}
+	run_in_chroot pacman --noconfirm -Rdd wine-staging
+	run_in_chroot pacman -S ${chaotic_packagelist}
 fi
 
+rm "${bootstrap}"/var/cache/pacman/pkg/*
 mkdir "${bootstrap}"/media
 
 unmount_chroot
