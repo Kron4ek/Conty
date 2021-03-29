@@ -119,12 +119,12 @@ else
 	if ! command -v squashfuse 1>/dev/null || ! command -v bwrap 1>/dev/null; then
 		echo "USE_SYS_UTILS is enabled, but squshfuse or bwrap are not installed!"
 		echo "Please install them and run the script again."
-		
+
 		exit 1
 	fi
-	
+
 	echo "Using system squashfuse and bwrap"
-	
+
 	sfuse=squashfuse
 	bwrap=bwrap
 fi
@@ -139,7 +139,7 @@ run_bwrap () {
 	if [ -n "$SANDBOX" ]; then
 		echo "Filesystem sandbox is enabled"
 		dirs="--tmpfs /home --tmpfs /opt --tmpfs /mnt --dir ${HOME}"
-		
+
 		if [ -n "${HOME_DIR}" ]; then
 			echo "Set HOME to ${HOME_DIR}"
 			dirs="${dirs} --bind ${HOME_DIR} ${HOME}"
@@ -172,6 +172,8 @@ run_bwrap () {
 			--ro-bind-try /etc/resolv.conf /etc/resolv.conf \
 			--ro-bind-try /etc/hosts /etc/hosts \
 			--ro-bind-try /etc/nsswitch.conf /etc/nsswitch.conf \
+			--ro-bind-try /etc/passwd /etc/passwd \
+			--ro-bind-try /etc/group /etc/group \
 			--proc /proc \
 			--ro-bind-try /usr/local /usr/local \
 			${dirs} ${net} \
@@ -193,7 +195,7 @@ if "${sfuse}" -o offset="${offset}" "${script}" "${working_dir}"/mnt ; then
 			autostart="${script_name}"
 		fi
 	fi
-	
+
 	if [ -n "${AUTOARGS}" ]; then
 		echo "Automatically append arguments: ${AUTOARGS}"
 	fi
