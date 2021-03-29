@@ -134,6 +134,14 @@ export HOME_DIR="/home/username/custom_home_dir"
 ./conty.sh steam
 ```
 
+## Known issues
+
+Nvidia users will experience problems if their Nvidia kernel module version mismatches the version of the Nvidia libraries inside Conty. 
+
+For example, if the version of your Nvidia kernel module version is 460.56 and the libraries inside the container are from 460.67 version, then graphics acceleration will not work. 
+
+I will try to find a solution for this problem.
+
 ## How to create your own Conty executables
 
 If you want to create Arch-based container, then use the **create-arch-bootstrap.sh** script. Root rights
