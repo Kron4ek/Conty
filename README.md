@@ -140,7 +140,12 @@ Nvidia users will experience problems if their Nvidia kernel module version mism
 
 For example, if the version of your Nvidia kernel module is 460.56 and the libraries inside the container are from 460.67 version, then graphics acceleration will not work. 
 
-I will try to find a solution for this problem.
+There is an experimental solution for this problem in the latest Conty release that can be enabled with the **NVIDIA_FIX** variable. If you encounter this problem, please let me know if this feature does or doesn't fix it for you.
+
+```
+export NVIDIA_FIX=1
+./conty.sh glxgears
+```
 
 ## How to create your own Conty executables
 
