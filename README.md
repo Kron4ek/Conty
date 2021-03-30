@@ -63,11 +63,12 @@ For example, if you want to run an application from your HOME or from somewhere 
 ./conty.sh /full/path/to/a/binary
 ```
 
-Conty also contains Steam, Lutris, Wine-Staging and many more.
+Conty also contains Steam, Lutris, PlayOnLinux, Wine-Staging-TkG and many more.
 
 ```
 ./conty.sh steam
 ./conty.sh lutris
+./conty.sh playonlinux
 ./conty.sh wine app.exe
 ```
 
