@@ -380,7 +380,7 @@ packagelist="base base-devel nano mesa lib32-mesa vulkan-radeon lib32-vulkan-rad
 			libva-mesa-driver playonlinux libva-intel-driver lib32-libva-intel-driver \
 			intel-media-driver"
 
-chaotic_packagelist="wine-tkg-staging-fsync-git steamtinkerlaunch"
+chaotic_packagelist="wine-tkg-staging-fsync-git steamtinkerlaunch wineasio"
 
 current_release="$(wget -q "https://archlinux.org/download/" -O - | grep "Current Release" | tail -c -16 | head -c +10)"
 
