@@ -26,7 +26,7 @@ working_dir=/tmp/"$(basename "${script}")"_"${USER}"_${RANDOM}
 # a problem with mounting the squashfs image due to an incorrectly calculated offset.
 
 # The size of this script
-scriptsize=11912
+scriptsize=12030
 
 # The size of the utils.tar archive
 # utils.tar contains bwrap and squashfuse binaries
@@ -140,7 +140,10 @@ run_bwrap () {
 
 	if [ -n "$SANDBOX" ]; then
 		echo "Filesystem sandbox is enabled"
-		dirs="--tmpfs /home --tmpfs /opt --tmpfs /mnt --dir ${HOME}"
+
+		dirs="--tmpfs /home --dir ${HOME} --tmpfs /opt --tmpfs /mnt \
+			--tmpfs /media --tmpfs /var --tmpfs /run --symlink /run /var/run \
+			--bind-try /run/user /run/user --bind-try /run/dbus /run/dbus"
 
 		if [ -n "${HOME_DIR}" ]; then
 			echo "Set HOME to ${HOME_DIR}"
@@ -150,7 +153,8 @@ run_bwrap () {
 #		unshare="--unshare-user-try --unshare-pid --unshare-uts --unshare-cgroup-try \
 #				--hostname Conty"
 	else
-		dirs="--bind /home /home --bind-try /mnt /mnt --bind-try /opt /opt --bind-try /media /media"
+		dirs="--bind-try /home /home --bind-try /mnt /mnt --bind-try /opt /opt \
+			--bind-try /media /media --bind-try /run /run --bind-try /var /var"
 	fi
 
 	if [ -n "$BIND" ]; then
@@ -168,17 +172,17 @@ run_bwrap () {
 	"${bwrap}" --ro-bind "${working_dir}"/mnt / \
 			--dev-bind /dev /dev \
 			--ro-bind /sys /sys \
-			--bind /run /run \
-			--bind /var /var \
-			--bind /tmp /tmp \
+			--bind-try /tmp /tmp \
+			--proc /proc \
 			--ro-bind-try /etc/resolv.conf /etc/resolv.conf \
 			--ro-bind-try /etc/hosts /etc/hosts \
 			--ro-bind-try /etc/nsswitch.conf /etc/nsswitch.conf \
 			--ro-bind-try /etc/passwd /etc/passwd \
 			--ro-bind-try /etc/group /etc/group \
-			--proc /proc \
 			--ro-bind-try /usr/local /usr/local \
-			${dirs} ${net} ${nvidia_driver_bind} \
+			${dirs} \
+			${net} \
+			${nvidia_driver_bind} \
 			--setenv PATH "${PATH}:/usr/local/bin:/usr/local/sbin:/bin:/sbin:/usr/bin:/usr/sbin:/usr/lib/jvm/default/bin" \
 			"$@"
 }
@@ -197,7 +201,7 @@ bind_nvidia_driver () {
 
 	# Check if the Nvidia module is loaded
 	# If it's loaded, then likely Nvidia GPU is being used
-	if lsmod | grep nvidia 1>/dev/null || nvidia-smi 1>/dev/null; then	
+	if lsmod | grep nvidia 1>/dev/null || nvidia-smi 1>/dev/null; then
 		if nvidia-smi 1>/dev/null; then
 			nvidia_version="$(nvidia-smi --query-gpu=driver_version --format=csv,noheader)"
 		elif modinfo nvidia &>/dev/null; then
@@ -214,19 +218,19 @@ bind_nvidia_driver () {
 		# libraries version inside the container
 		if [ -n "${nvidia_version}" ]; then
 			nvidia_version_inside="$(basename "${working_dir}"/mnt/usr/lib/libGLX_nvidia.so.*.* | tail -c +18)"
-			
+
 			if [ "$(cat "${nvidia_drivers_dir}"/current_version.txt 2>/dev/null)" != "${nvidia_version}" ] \
 			   && [ "${nvidia_version}" != "${nvidia_version_inside}" ]; then
 				echo "Nvidia driver version mismatch detected, trying to fix"
-			   
+
 				mkdir -p "${nvidia_drivers_dir}"
 				cd "${nvidia_drivers_dir}"
 
 				rm -rf nvidia-driver
 				rm -f nvidia.run
-				
+
 				echo "Downloading Nvidia ${nvidia_version}, please wait"
-				
+
 				# Try to download from the default Nvidia url
 				driver_url="https://us.download.nvidia.com/XFree86/Linux-x86_64/${nvidia_version}/NVIDIA-Linux-x86_64-${nvidia_version}.run"
 				wget -q --show-progress "${driver_url}" -O nvidia.run
@@ -236,7 +240,7 @@ bind_nvidia_driver () {
 					rm -f nvidia.run
 					driver_url="https:$(wget -q "https://raw.githubusercontent.com/flathub/org.freedesktop.Platform.GL.nvidia/master/data/nvidia-${nvidia_version}-i386.data" \
 							-O - | cut -d ':' -f 6)"
-							
+
 					wget -q --show-progress "${driver_url}" -O nvidia.run
 				fi
 
@@ -267,25 +271,25 @@ bind_nvidia_driver () {
 						--ro-bind-try ${nvidia_drivers_dir}/nvidia-driver/${lib}.${nvidia_version} \
 						/usr/lib/${lib}.${nvidia_version_inside}"
 					fi
-	
+
 					if [ -f "${working_dir}"/mnt/usr/lib32/${lib}.${nvidia_version_inside} ]; then
 						nvidia_driver_bind="${nvidia_driver_bind} \
 						--ro-bind-try ${nvidia_drivers_dir}/nvidia-driver/32/${lib}.${nvidia_version} \
 						/usr/lib32/${lib}.${nvidia_version_inside}"
 					fi
-					
+
 					if [ -f "${working_dir}"/mnt/usr/lib/nvidia/xorg/libglxserver_nvidia.so.${nvidia_version_inside} ]; then
 						nvidia_driver_bind="${nvidia_driver_bind} \
 						--ro-bind-try ${nvidia_drivers_dir}/nvidia-driver/libglxserver_nvidia.so.${nvidia_version} \
 						/usr/lib/nvidia/xorg/libglxserver_nvidia.so.${nvidia_version_inside}"
 					fi
-					
+
 					if [ -f "${working_dir}"/mnt/usr/lib/vdpau/libvdpau_nvidia.so.${nvidia_version_inside} ]; then
 						nvidia_driver_bind="${nvidia_driver_bind} \
 						--ro-bind-try ${nvidia_drivers_dir}/nvidia-driver/libvdpau_nvidia.so.${nvidia_version} \
 						/usr/lib/vdpau/libvdpau_nvidia.so.${nvidia_version_inside}"
 					fi
-					
+
 					if [ -f "${working_dir}"/mnt/usr/lib32/vdpau/libvdpau_nvidia.so.${nvidia_version_inside} ]; then
 						nvidia_driver_bind="${nvidia_driver_bind} \
 						--ro-bind-try ${nvidia_drivers_dir}/nvidia-driver/32/libvdpau_nvidia.so.${nvidia_version} \
