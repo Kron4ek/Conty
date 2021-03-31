@@ -12,7 +12,7 @@ In other words, it's a portable Arch Linux distro packed into a single executabl
 flatpak and AppImage.
 
 It uses two technologies:
-* SuqashFS (using [squashfuse](https://github.com/vasi/squashfuse))
+* SquashFS (using [squashfuse](https://github.com/vasi/squashfuse))
 * Linux namespaces (using [bubblewrap](https://github.com/containers/bubblewrap))
 
 ## Benefits
