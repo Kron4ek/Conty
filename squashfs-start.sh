@@ -26,7 +26,7 @@ export working_dir=/tmp/"$(basename "${script}")"_"${USER}"_${RANDOM}
 # a problem with mounting the squashfs image due to an incorrectly calculated offset.
 
 # The size of this script
-scriptsize=13213
+scriptsize=13272
 
 # The size of the utils.tar archive
 # utils.tar contains bwrap and squashfuse binaries
@@ -102,12 +102,12 @@ elif [ "$1" = "-o" ]; then
 	exit
 fi
 
-# Check if FUSE2 is installed
-if command -v fusermount 1>/dev/null; then
-	fmount=fusermount
-else
+# Check if FUSE2 is installed when SUDO_MOUNT is not enabled
+if [ -z "${SUDO_MOUNT}" ] && ! command -v fusermount 1>/dev/null; then
 	echo "Please install fuse2 and run the script again!"
 	exit 1
+else
+	fmount=fusermount
 fi
 
 if  [ -n "${BASE_DIR}" ]; then
