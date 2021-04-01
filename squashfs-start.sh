@@ -26,7 +26,7 @@ export working_dir=/tmp/"$(basename "${script}")"_"${USER}"_${RANDOM}
 # a problem with mounting the squashfs image due to an incorrectly calculated offset.
 
 # The size of this script
-scriptsize=13095
+scriptsize=13213
 
 # The size of the utils.tar archive
 # utils.tar contains bwrap and squashfuse binaries
@@ -205,7 +205,7 @@ run_bwrap () {
 			${dirs} \
 			${net} \
 			${nvidia_driver_bind} \
-			--setenv PATH "${PATH}:/usr/local/bin:/usr/local/sbin:/bin:/sbin:/usr/bin:/usr/sbin:/usr/lib/jvm/default/bin" \
+			--setenv PATH "${CUSTOM_PATH}" \
 			"$@"
 }
 
@@ -364,9 +364,13 @@ if ${sudo_mount} "${sfuse}" -o offset="${offset}" "${script}" "${working_dir}"/m
 	fi
 
 	if [ -n "${autostart}" ]; then
+		export CUSTOM_PATH="/bin:/sbin:/usr/bin:/usr/sbin:/usr/lib/jvm/default/bin"
+
 		echo "Autostarting ${autostart}"
 		run_bwrap "${autostart}" "$@" ${AUTOARGS}
 	else
+		export CUSTOM_PATH="/bin:/sbin:/usr/bin:/usr/sbin:/usr/lib/jvm/default/bin:/usr/local/bin:/usr/local/sbin:${PATH}"
+
 		run_bwrap "$@" ${AUTOARGS}
 	fi
 else
