@@ -19,14 +19,14 @@ script_name="$(basename "${script_literal}")"
 script="$(readlink -f "${script_literal}")"
 
 # Working directory where squashfs image will be mounted
-# Default path: /tmp/scriptname_username_randomnumber
-working_dir=/tmp/"$(basename "${script}")"_"${USER}"_${RANDOM}
+# The default path is /tmp/scriptname_username_randomnumber
+export working_dir=/tmp/"$(basename "${script}")"_"${USER}"_${RANDOM}
 
 # It's important to set correct sizes below, otherwise there will be
 # a problem with mounting the squashfs image due to an incorrectly calculated offset.
 
 # The size of this script
-scriptsize=12742
+scriptsize=13095
 
 # The size of the utils.tar archive
 # utils.tar contains bwrap and squashfuse binaries
@@ -73,6 +73,9 @@ if [ "$1" = "--help" ] || [ "$1" = "-h" ] || ([ -z "$1" ] && [ -z "${AUTOSTART}"
 	echo -e "\t\tthe regular mount command instead of squashfuse. In this"
 	echo -e "\t\tcase root rights will be requested (via sudo) when mounting"
 	echo -e "\t\tand unmounting."
+	echo -e "BASE_DIR \tSets custom directory where Conty will extract"
+	echo -e "\t\tits builtin utilities and mount the squashfs image."
+	echo -e "\t\tThe default location is /tmp."
 	echo
 	echo "If you enable SANDBOX but don't set BIND or HOME_DIR, then"
 	echo "no directories will be available at all. And a fake temporary HOME"
@@ -105,6 +108,12 @@ if command -v fusermount 1>/dev/null; then
 else
 	echo "Please install fuse2 and run the script again!"
 	exit 1
+fi
+
+if  [ -n "${BASE_DIR}" ]; then
+	echo "Using custom BASE_DIR: ${BASE_DIR}"
+
+	export working_dir="${BASE_DIR}"/"$(basename "${script}")"_"${USER}"_${RANDOM}
 fi
 
 # Extract utils.tar
