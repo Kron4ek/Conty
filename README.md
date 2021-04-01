@@ -47,6 +47,13 @@ or
 echo 1 > /proc/sys/kernel/unprivileged_userns_clone
 ```
 
+Even if unprivileged user namespaces are not supported in your kernel, you can still use Conty if you have bwrap with SUID bit in your system, in this case just tell Conty to use system-wide bwrap and squashfuse instead of the builtin ones.
+
+```
+export USE_SYS_UTILS=1
+./conty.sh command command_arguments
+```
+
 ## Usage
 
 Either download ready-to-use executable from the [**releases**](https://github.com/Kron4ek/Conty/releases) page or create your
