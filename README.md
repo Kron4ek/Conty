@@ -36,7 +36,7 @@ use container at all.
 The only requirements are **bash**, **fuse2**, **tar** and **coreutils**. And your /tmp directory
 should allow binaries execution (which it does by default on most distros).
 
-Also, your Linux kernel must support unprivileged user namespaces. On some 
+Besides, your Linux kernel should support unprivileged user namespaces. On some 
 Linux distros this feature is disabled by default and can be enabled with sysfs:
 
 ```
