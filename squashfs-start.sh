@@ -5,7 +5,7 @@
 # Prevent launching as root
 if [ -z "$ALLOW_ROOT" ]; then
 	if [ $EUID = 0 ]; then
-		echo "Do not run this app as root!"
+		echo "Do not run this script as root!"
 		echo
 		echo "If you really need to run it as root, set ALLOW_ROOT env variable."
 
@@ -26,7 +26,7 @@ working_dir=/tmp/"$(basename "${script}")"_"${USER}"_${RANDOM}
 # a problem with mounting the squashfs image due to an incorrectly calculated offset.
 
 # The size of this script
-scriptsize=12030
+scriptsize=12742
 
 # The size of the utils.tar archive
 # utils.tar contains bwrap and squashfuse binaries
@@ -69,6 +69,10 @@ if [ "$1" = "--help" ] || [ "$1" = "-h" ] || ([ -z "$1" ] && [ -z "${AUTOSTART}"
 	echo -e "\t\tlibraries if the kernel module version in the system differs"
 	echo -e "\t\tfrom the Nvidia libraries version inside the container."
 	echo -e "\t\tThis should fix the graphics acceleration problems on Nvidia."
+	echo -e "SUDO_MOUNT \tMakes the script to mount the squashfs image by using"
+	echo -e "\t\tthe regular mount command instead of squashfuse. In this"
+	echo -e "\t\tcase root rights will be requested (via sudo) when mounting"
+	echo -e "\t\tand unmounting."
 	echo
 	echo "If you enable SANDBOX but don't set BIND or HOME_DIR, then"
 	echo "no directories will be available at all. And a fake temporary HOME"
@@ -118,9 +122,18 @@ if [ -z "${USE_SYS_UTILS}" ]; then
 	chmod +x "${sfuse}"
 	chmod +x "${bwrap}"
 else
-	if ! command -v squashfuse 1>/dev/null || ! command -v bwrap 1>/dev/null; then
-		echo "USE_SYS_UTILS is enabled, but squshfuse or bwrap are not installed!"
-		echo "Please install them and run the script again."
+	if ! command -v bwrap 1>/dev/null; then
+		echo "USE_SYS_UTILS is enabled, but bwrap is not installed!"
+		echo "Please install it and run the script again."
+
+		exit 1
+	fi
+
+	if ! command -v squashfuse 1>/dev/null && [ -z "${SUDO_MOUNT}" ]; then
+		echo "USE_SYS_UTILS is enabled, but squshfuse is not installed!"
+		echo "Please install it and run the script again."
+		echo "Or enable SUDO_MOUNT to mount the image using the regular"
+		echo "mount command instead of squashfuse."
 
 		exit 1
 	fi
@@ -302,7 +315,8 @@ bind_nvidia_driver () {
 }
 
 trap_exit () {
-	"${fmount}" -uz "${working_dir}"/mnt 2>/dev/null || umount --lazy "${working_dir}"/mnt 2>/dev/null
+	"${fmount}" -uz "${working_dir}"/mnt 2>/dev/null || \
+	${sudo_umount} umount --lazy "${working_dir}"/mnt 2>/dev/null
 	sleep 1
 	rm -rf "${working_dir}"
 	exit
@@ -310,10 +324,18 @@ trap_exit () {
 
 trap 'trap_exit' EXIT
 
+if [ -n "${SUDO_MOUNT}" ]; then
+	echo "Using regular mount command (sudo mount) instead of squashfuse"
+
+	sfuse=mount
+	sudo_mount=sudo
+	sudo_umount=sudo
+fi
+
 # Mount boostrap image
 mkdir -p "${working_dir}"/mnt
 
-if "${sfuse}" -o offset="${offset}" "${script}" "${working_dir}"/mnt ; then
+if ${sudo_mount} "${sfuse}" -o offset="${offset}" "${script}" "${working_dir}"/mnt ; then
 	echo "Running Conty"
 
 	if [ -n "${NVIDIA_FIX}" ]; then
