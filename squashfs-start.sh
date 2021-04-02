@@ -26,7 +26,7 @@ export working_dir=/tmp/"$(basename "${script}")"_"${USER}"_${RANDOM}
 # a problem with mounting the squashfs image due to an incorrectly calculated offset.
 
 # The size of this script
-scriptsize=13272
+scriptsize=13275
 
 # The size of the utils.tar archive
 # utils.tar contains bwrap and squashfuse binaries
@@ -344,7 +344,7 @@ fi
 # Mount boostrap image
 mkdir -p "${working_dir}"/mnt
 
-if ${sudo_mount} "${sfuse}" -o offset="${offset}" "${script}" "${working_dir}"/mnt ; then
+if ${sudo_mount} "${sfuse}" -o offset="${offset}",ro "${script}" "${working_dir}"/mnt ; then
 	echo "Running Conty"
 
 	if [ -n "${NVIDIA_FIX}" ]; then
