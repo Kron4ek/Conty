@@ -18,15 +18,20 @@ script_literal="${BASH_SOURCE[0]}"
 script_name="$(basename "${script_literal}")"
 script="$(readlink -f "${script_literal}")"
 
+# MD5 of the last 1 MB of the script
+script_md5="$(tail -c 1000000 "${script}" | md5sum | head -c 7)"
+
+script_id="${RANDOM}"
+
 # Working directory where squashfs image will be mounted
 # The default path is /tmp/scriptname_username_randomnumber
-export working_dir=/tmp/"$(basename "${script}")"_"${USER}"_${RANDOM}
+export working_dir=/tmp/"$(basename "${script}")"_"${USER}"_"${script_md5}"
 
 # It's important to set correct sizes below, otherwise there will be
 # a problem with mounting the squashfs image due to an incorrectly calculated offset.
 
 # The size of this script
-scriptsize=13275
+scriptsize=13630
 
 # The size of the utils.tar archive
 # utils.tar contains bwrap and squashfuse binaries
@@ -324,10 +329,16 @@ bind_nvidia_driver () {
 }
 
 trap_exit () {
-	"${fmount}" -uz "${working_dir}"/mnt 2>/dev/null || \
-	${sudo_umount} umount --lazy "${working_dir}"/mnt 2>/dev/null
-	sleep 1
-	rm -rf "${working_dir}"
+	rm -f "${working_dir}"/running_"${script_id}"
+
+	if [ ! "$(ls "${working_dir}"/running_* 2>/dev/null)" ]; then
+		"${fmount}" -uz "${working_dir}"/mnt 2>/dev/null || \
+		${sudo_umount} umount --lazy "${working_dir}"/mnt 2>/dev/null
+
+		sleep 1
+		rm -rf "${working_dir}"
+	fi
+
 	exit
 }
 
@@ -344,7 +355,10 @@ fi
 # Mount boostrap image
 mkdir -p "${working_dir}"/mnt
 
-if ${sudo_mount} "${sfuse}" -o offset="${offset}",ro "${script}" "${working_dir}"/mnt ; then
+if [ "$(ls "${working_dir}"/mnt 2>/dev/null)" ] || \
+	${sudo_mount} "${sfuse}" -o offset="${offset}",ro "${script}" "${working_dir}"/mnt ; then
+	echo 1 > "${working_dir}"/running_"${script_id}"
+
 	echo "Running Conty"
 
 	if [ -n "${NVIDIA_FIX}" ]; then
