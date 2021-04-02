@@ -378,7 +378,7 @@ packagelist="base base-devel nano mesa lib32-mesa vulkan-radeon lib32-vulkan-rad
 			file-roller xorg-xwayland steam-native-runtime nvidia-prime \
 			meson mingw-w64-gcc gamemode lib32-gamemode cmake jre8-openjdk \
 			libva-mesa-driver playonlinux libva-intel-driver lib32-libva-intel-driver \
-			intel-media-driver alsa-tools"
+			intel-media-driver alsa-tools alsa-utils"
 
 chaotic_packagelist="wine-tkg-staging-fsync-git steamtinkerlaunch wineasio"
 
