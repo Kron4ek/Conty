@@ -364,8 +364,8 @@ cd "${script_dir}" || exit 1
 
 bootstrap="${script_dir}"/root.x86_64
 
-chaoticaur_keyring="https://random-mirror.chaotic.cx/chaotic-aur/x86_64/chaotic-keyring-20201229-1-any.pkg.tar.zst"
-chaoticaur_mirrorlist="https://random-mirror.chaotic.cx/chaotic-aur/x86_64/chaotic-mirrorlist-20210317-1-any.pkg.tar.zst"
+chaoticaur_keyring="https://random-mirror.chaotic.cx/chaotic-aur/x86_64/chaotic-keyring-20210330-1-any.pkg.tar.zst"
+chaoticaur_mirrorlist="https://random-mirror.chaotic.cx/chaotic-aur/x86_64/chaotic-mirrorlist-20210329-1-any.pkg.tar.zst"
 
 packagelist="base base-devel nano mesa lib32-mesa vulkan-radeon lib32-vulkan-radeon \
 			vulkan-icd-loader lib32-vulkan-icd-loader nvidia-utils \
