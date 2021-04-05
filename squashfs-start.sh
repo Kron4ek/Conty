@@ -31,7 +31,7 @@ export working_dir=/tmp/"$(basename "${script}")"_"${USER}"_"${script_md5}"
 # a problem with mounting the squashfs image due to an incorrectly calculated offset.
 
 # The size of this script
-scriptsize=13589
+scriptsize=13588
 
 # The size of the utils.tar archive
 # utils.tar contains bwrap and squashfuse binaries
@@ -185,7 +185,7 @@ run_bwrap () {
 	fi
 
 	if [ -n "$BIND" ]; then
-		echo "Binded items: ${BIND}"
+		echo "Bound items: ${BIND}"
 
 		for i in ${BIND}; do
 			bind="${bind} --bind ${i} ${i}"
