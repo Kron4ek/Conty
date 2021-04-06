@@ -428,10 +428,11 @@ if [ -n "${chaotic_packagelist}" ]; then
 	run_in_chroot pacman --noconfirm -S ${chaotic_packagelist}
 fi
 
+unmount_chroot
+
 rm "${bootstrap}"/var/cache/pacman/pkg/*
 mkdir "${bootstrap}"/media
-
-unmount_chroot
+touch "${bootstrap}"/etc/asound.conf
 
 clear
 echo "Done"
