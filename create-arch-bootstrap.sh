@@ -424,13 +424,13 @@ if [ -n "${chaotic_packagelist}" ]; then
 
 	run_in_chroot pacman -Syu --noconfirm
 
-	run_in_chroot pacman --noconfirm -Rdd wine-staging
-	run_in_chroot pacman --noconfirm -S ${chaotic_packagelist}
+	run_in_chroot bash -c "yes | pacman -S ${chaotic_packagelist}"
 fi
 
 unmount_chroot
 
-rm "${bootstrap}"/var/cache/pacman/pkg/*
+rm -f "${bootstrap}"/opt/*
+rm -f "${bootstrap}"/var/cache/pacman/pkg/*
 mkdir "${bootstrap}"/media
 touch "${bootstrap}"/etc/asound.conf
 
