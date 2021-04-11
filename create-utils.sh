@@ -60,6 +60,13 @@ fi
 
 find utils -type f -exec strip --strip-unneeded {} \; 2>/dev/null
 
+cat <<EOF > utils/info
+squashfuse ${squashfuse_version}
+bubblewrap ${bwrap_version}
+lz4 ${lz4_version}
+zstd ${zstd_version}
+EOF
+
 tar -cf utils.tar utils
 mv "${script_dir}"/utils.tar "${script_dir}"/utils_old.tar
 mv utils.tar "${script_dir}"
