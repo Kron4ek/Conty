@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+# Dependencies: wget gcc make autoconf libtool pkgconf libcap fuse2 (or fuse3)
+
 script_dir="$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")"
 
 squashfuse_version="0.1.103"
