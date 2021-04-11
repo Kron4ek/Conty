@@ -31,7 +31,7 @@ export working_dir=/tmp/"$(basename "${script}")"_"${USER}"_"${script_md5}"
 # a problem with mounting the squashfs image due to an incorrectly calculated offset.
 
 # The size of this script
-scriptsize=13755
+scriptsize=13764
 
 # The size of the utils.tar archive
 # utils.tar contains bwrap and squashfuse binaries
@@ -125,7 +125,7 @@ fi
 mkdir -p "${working_dir}"
 
 if [ -z "${USE_SYS_UTILS}" ]; then
-	sfuse="${working_dir}"/utils/squashfuse
+	sfuse="${working_dir}"/utils/squashfuse_ll
 	bwrap="${working_dir}"/utils/bwrap
 
 	if [ ! -f "${sfuse}" ] || [ ! -f "${bwrap}" ]; then
@@ -146,7 +146,7 @@ else
 		exit 1
 	fi
 
-	if ! command -v squashfuse 1>/dev/null && [ -z "${SUDO_MOUNT}" ]; then
+	if ! command -v squashfuse_ll 1>/dev/null && [ -z "${SUDO_MOUNT}" ]; then
 		echo "USE_SYS_UTILS is enabled, but squshfuse is not installed!"
 		echo "Please install it and run the script again."
 		echo "Or enable SUDO_MOUNT to mount the image using the regular"
@@ -157,7 +157,7 @@ else
 
 	echo "Using system squashfuse and bwrap"
 
-	sfuse=squashfuse
+	sfuse=squashfuse_ll
 	bwrap=bwrap
 fi
 
