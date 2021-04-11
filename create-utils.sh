@@ -2,7 +2,7 @@
 
 script_dir="$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")"
 
-squshfuse_version="0.1.103"
+squashfuse_version="0.1.103"
 bwrap_version="0.4.1"
 lz4_version="1.9.3"
 zstd_version="1.4.9"
@@ -18,7 +18,7 @@ cd "${script_dir}"/build-utils || exit 1
 
 wget -q --show-progress -O lz4.tar.gz https://github.com/lz4/lz4/archive/refs/tags/v${lz4_version}.tar.gz
 wget -q --show-progress -O zstd.tar.gz https://github.com/facebook/zstd/archive/refs/tags/v${zstd_version}.tar.gz
-wget -q --show-progress -O squashfuse.tar.gz https://github.com/vasi/squashfuse/archive/refs/tags/${squshfuse_version}.tar.gz
+wget -q --show-progress -O squashfuse.tar.gz https://github.com/vasi/squashfuse/archive/refs/tags/${squashfuse_version}.tar.gz
 wget -q --show-progress -O bwrap.tar.gz https://github.com/containers/bubblewrap/archive/refs/tags/v${bwrap_version}.tar.gz
 
 tar xf lz4.tar.gz
@@ -37,7 +37,7 @@ make -j$(nproc) DESTDIR="${script_dir}"/build-utils/bin install
 cd ../zstd-${zstd_version}
 make -j$(nproc) DESTDIR="${script_dir}"/build-utils/bin install
 
-cd ../squashfuse-${squshfuse_version}
+cd ../squashfuse-${squashfuse_version}
 ./autogen.sh
 ./configure --without-zlib --without-xz --without-lzo
 make -j$(nproc) DESTDIR="${script_dir}"/build-utils/bin install
