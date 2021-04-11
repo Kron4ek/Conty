@@ -22,8 +22,8 @@ if [ ! -f utils.tar ] || [ "$(wc -c < utils.tar)" -lt 1000 ]; then
 	wget -q --show-progress "https://github.com/Kron4ek/Conty/raw/master/utils.tar"
 fi
 
-if [ ! -f squashfs-start.sh ]; then
-	echo "squashfs-start.sh is required!"
+if [ ! -f conty-start.sh ]; then
+	echo "conty-start.sh is required!"
 	exit 1
 fi
 
@@ -48,7 +48,7 @@ if [ ! -f image ] || [ "${use_existing_image}" != "true" ]; then
 fi
 
 # Combine the files into a single executable using cat
-cat squashfs-start.sh utils.tar image > conty.sh
+cat conty-start.sh utils.tar image > conty.sh
 chmod +x conty.sh
 
 clear
