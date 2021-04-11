@@ -4,7 +4,7 @@
 
 script_dir="$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")"
 
-squashfuse_version="0.1.103"
+squashfuse_version="0.1.104"
 bwrap_version="0.4.1"
 lz4_version="1.9.3"
 zstd_version="1.4.9"
