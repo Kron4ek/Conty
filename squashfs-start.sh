@@ -31,7 +31,7 @@ export working_dir=/tmp/"$(basename "${script}")"_"${USER}"_"${script_md5}"
 # a problem with mounting the squashfs image due to an incorrectly calculated offset.
 
 # The size of this script
-scriptsize=13692
+scriptsize=13755
 
 # The size of the utils.tar archive
 # utils.tar contains bwrap and squashfuse binaries
@@ -125,16 +125,19 @@ fi
 mkdir -p "${working_dir}"
 
 if [ -z "${USE_SYS_UTILS}" ]; then
-	tail -c +$((scriptsize+1)) "${script}" | head -c $utilssize > "${working_dir}"/utils.tar
-	tar -C "${working_dir}" -xf "${working_dir}"/utils.tar
-	rm "${working_dir}"/utils.tar
-
-	export LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:${working_dir}/utils"
 	sfuse="${working_dir}"/utils/squashfuse
 	bwrap="${working_dir}"/utils/bwrap
 
-	chmod +x "${sfuse}"
-	chmod +x "${bwrap}"
+	if [ ! -f "${sfuse}" ] || [ ! -f "${bwrap}" ]; then
+		tail -c +$((scriptsize+1)) "${script}" | head -c $utilssize > "${working_dir}"/utils.tar
+		tar -C "${working_dir}" -xf "${working_dir}"/utils.tar
+		rm "${working_dir}"/utils.tar
+
+		chmod +x "${sfuse}"
+		chmod +x "${bwrap}"
+	fi
+
+	export LD_LIBRARY_PATH="${working_dir}/utils:${LD_LIBRARY_PATH}"
 else
 	if ! command -v bwrap 1>/dev/null; then
 		echo "USE_SYS_UTILS is enabled, but bwrap is not installed!"
