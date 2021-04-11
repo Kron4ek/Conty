@@ -352,11 +352,11 @@ EOF
 
 generate_mirrorlist () {
 	cat <<EOF > mirrorlist
-Server = https://ftp.halifax.rwth-aachen.de/archlinux/\$repo/os/\$arch
-Server = https://mirror.pseudoform.org/\$repo/os/\$arch
 Server = https://archlinux.thaller.ws/\$repo/os/\$arch
-Server = https://mirror.chaoticum.net/arch/\$repo/os/\$arch
+Server = https://mirror.pseudoform.org/\$repo/os/\$arch
+Server = https://mirror.pkgbuild.com/\$repo/os/\$arch
 Server = https://mirror.f4st.host/archlinux/\$repo/os/\$arch
+Server = https://mirror.chaoticum.net/arch/\$repo/os/\$arch
 EOF
 }
 
