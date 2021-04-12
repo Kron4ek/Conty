@@ -379,7 +379,7 @@ packagelist="base base-devel nano mesa lib32-mesa vulkan-radeon lib32-vulkan-rad
 			meson mingw-w64-gcc gamemode lib32-gamemode cmake jre8-openjdk \
 			libva-mesa-driver playonlinux libva-intel-driver lib32-libva-intel-driver \
 			intel-media-driver alsa-tools alsa-utils lib32-vulkan-mesa-layers \
-			vulkan-mesa-layers"
+			vulkan-mesa-layers lib32-libva-mesa-driver libva-utils lxterminal wine-nine"
 
 chaotic_packagelist="wine-tkg-staging-fsync-git steamtinkerlaunch wineasio mangohud lib32-mangohud"
 
