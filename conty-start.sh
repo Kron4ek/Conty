@@ -31,7 +31,7 @@ export working_dir=/tmp/"$(basename "${script}")"_"${USER}"_"${script_md5}"
 # a problem with mounting the squashfs image due to an incorrectly calculated offset.
 
 # The size of this script
-scriptsize=13764
+scriptsize=13785
 
 # The size of the utils.tar archive
 # utils.tar contains bwrap and squashfuse binaries
@@ -45,8 +45,8 @@ if [ "$1" = "--help" ] || [ "$1" = "-h" ] || ([ -z "$1" ] && [ -z "${AUTOSTART}"
 	echo
 	echo "Arguments:"
 	echo
-	echo -e "-e \tExtract squashfs image"
-	echo -e "-o \tShow squashfs image offset"
+	echo -e "-e \tExtract the squashfs image"
+	echo -e "-o \tShow the squashfs image offset"
 	echo
 	echo "Environment variables:"
 	echo
@@ -95,7 +95,7 @@ if [ "$1" = "--help" ] || [ "$1" = "-h" ] || ([ -z "$1" ] && [ -z "${AUTOSTART}"
 	exit
 elif [ "$1" = "-e" ]; then
 	if command -v unsquashfs 1>/dev/null; then
-		unsquashfs -o $offset -d "$(basename "${script}")"_files "${script}"
+		unsquashfs -o $offset -user-xattrs -d "$(basename "${script}")"_files "${script}"
 	else
 		echo "To extract the image install squashfs-tools."
 	fi
