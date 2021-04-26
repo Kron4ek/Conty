@@ -26,10 +26,11 @@ need to install anything on your main (host) system. **You can even run 32-bit a
 on pure 64-bit systems**.
 * Based on Arch Linux, so it contains latest software, including latest
 videodrivers.
-* Almost completely seamless experience. All applcations that you run
-with Conty store their configs in your HOME directory as if you wouldn't
-use container at all.
-* Supports filesystem sandboxing.
+* Almost completely seamless experience. All applications that you run
+with Conty read and store their configs in your HOME directory as if you weren't
+using the container at all.
+* No performance overhead. As it's just a container, there is almost no overhead, thus all your applications will run at full speed.
+* Supports filesystem sandboxing (thanks to bubblewrap).
 
 ## Requirements
 
