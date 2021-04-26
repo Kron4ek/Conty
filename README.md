@@ -29,7 +29,7 @@ videodrivers.
 * Almost completely seamless experience. All applications that you run
 with Conty read and store their configs in your HOME directory as if you weren't
 using the container at all.
-* No performance overhead. Since it's just a container, there is almost no overhead, thus all your applications will run at full speed.
+* No performance overhead. Since it's just a container, there is almost no overhead, thus all applications will run at full speed.
 * Supports filesystem sandboxing (thanks to bubblewrap).
 
 ## Requirements
