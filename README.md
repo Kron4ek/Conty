@@ -1,15 +1,11 @@
 ## Conty
 
-This is an easy to use non-root container compressed into squashfs and packed 
-into a single executable that runs (or at least should run) on most Linux distros.
+This is an easy to use unprivileged Linux container compressed into squashfs and packed 
+into a single executable that runs (or at least should run) on most Linux distros. It's designed to be as simple and user-friendly as possible.
 
 You can use it to run any applications, including games (Vulkan and OpenGL).
 
-Besides, due to bubblewrap, Conty also supports true filesystem sandboxing, so you can even use it to sandbox
-your applications.
-
-In other words, it's a portable Arch Linux distro packed into a single executable that can be used to run any applications. Conty combines benefits of
-flatpak and AppImage.
+Besides, due to bubblewrap, Conty also supports true filesystem sandboxing, so you can even use it to isolate applications.
 
 It uses two technologies:
 * SquashFS (using [squashfuse](https://github.com/vasi/squashfuse))
@@ -20,7 +16,7 @@ It uses two technologies:
 * Single executable - download (or create) and run, nothing else it required.
 * Root rights are **not required**.
 * Compressed into squashfs, so it takes much less disk space than
-unpacked containers.
+uncompressed containers.
 * Contains many libraries and packages so it can run almost everything. And you don't
 need to install anything on your main (host) system. **You can even run 32-bit applications
 on pure 64-bit systems**.
@@ -35,7 +31,7 @@ using the container at all.
 ## Requirements
 
 The only requirements are **bash**, **fuse2**, **tar** and **coreutils**. And your /tmp directory
-should allow binaries execution (which it does by default on most distros).
+should allow files execution (which it does by default on most distros).
 
 Besides, your Linux kernel should support unprivileged user namespaces. On some 
 Linux distros this feature is disabled by default and can be enabled with sysfs:
@@ -65,10 +61,10 @@ chmod +x conty.sh
 ./conty.sh command command_arguments
 ```
 
-For example, if you want to run an application from your HOME or from somewhere on your storage run something like:
+For example, if you want to run an application from somewhere on your storage run something like:
 
 ```
-./conty.sh /full/path/to/a/binary
+./conty.sh /path/to/a/binary
 ```
 
 Conty also contains Steam, Lutris, PlayOnLinux, Wine-Staging-TkG and many more.
@@ -86,10 +82,10 @@ It has a builtin file manager (pcmanfm):
 ./conty.sh pcmanfm
 ```
 
-Want to check if graphics acceleration works? Run glxinfo, glxgears, vulkaninfo and vkcube:
+Want to check if graphics acceleration works (OpenGL and Vulkan)? Run glxinfo, glxgears, vulkaninfo and vkcube:
 
 ```
-./conty.sh glxinfo | grep direct
+./conty.sh glxinfo -B
 ./conty.sh glxgears
 ./conty.sh vulkaninfo
 ./conty.sh vkcube
@@ -122,10 +118,10 @@ There are some other features, see the internal help for more information.
 
 
 Conty uses bubblewrap and thus supports filesystem sandboxing. By default
-it's disabled and all directories on your system are available for the container. 
+it's disabled and almost all directories on your system are available for the container. 
 
 You can enable sandboxing with the **SANDBOX** environment variable. You can allow 
-access to directories and/or files you want with the **BIND** variable. And it's 
+access to directories and/or files you want with the **BIND** variable. It's 
 also possible to disable network with the **DISABLE_NET**. And you can set custom HOME directory
 with the **HOME_DIR** variable. For instance:
 
