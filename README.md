@@ -139,7 +139,7 @@ export HOME_DIR="/home/username/custom_home_dir"
 ./conty.sh steam
 ```
 
-If you just want a sandboxing functionality but don't need a container with a full-size Linux ditro inside (which is what Conty mainly is), i recommend to take a look directly at these projects: [bubblewrap](https://github.com/containers/bubblewrap) and [firejail](https://github.com/netblue30/firejail). Sandboxing is a good additional feature of Conty, but is not its main purpose.
+If you just want a sandboxing functionality but don't need a container with a full-size Linux distro inside (which is what Conty mainly is), i recommend to take a look directly at these projects: [bubblewrap](https://github.com/containers/bubblewrap) and [firejail](https://github.com/netblue30/firejail). Sandboxing is a good additional feature of Conty, but is not its main purpose.
 
 ## Known issues
 
