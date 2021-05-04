@@ -24,14 +24,14 @@ script_md5="$(tail -c 1000000 "${script}" | md5sum | head -c 7)"
 script_id="${RANDOM}"
 
 # Working directory where squashfs image will be mounted
-# The default path is /tmp/scriptname_username_randomnumber
+# The default path is /tmp/scriptname_username_md5
 export working_dir=/tmp/"$(basename "${script}")"_"${USER}"_"${script_md5}"
 
 # It's important to set correct sizes below, otherwise there will be
 # a problem with mounting the squashfs image due to an incorrectly calculated offset.
 
 # The size of this script
-scriptsize=13776
+scriptsize=16805
 
 # The size of the utils.tar archive
 # utils.tar contains bwrap and squashfuse binaries
@@ -47,6 +47,18 @@ if [ "$1" = "--help" ] || [ "$1" = "-h" ] || ([ -z "$1" ] && [ -z "${AUTOSTART}"
 	echo
 	echo -e "-e \tExtract the squashfs image"
 	echo -e "-o \tShow the squashfs image offset"
+	echo -e "-u \tUpdate all packages inside the container"
+	echo -e "\tThis will update all packages inside the container and will rebuild"
+	echo -e "\tthe squashfs image. This may take quite a lot of time, depending"
+	echo -e "\ton your hardware and an internet speed. Additional disk space"
+	echo -e "\t(about 5x the size of the current file) is needed during"
+	echo -e "\tthe update process."
+	echo -e "\tIf you want to install additional packages, specify them as additional"
+	echo -e "\targuments. For example: ./conty.sh -u pkgname1 pkgname2"
+	echo -e "\tIn this case Conty will update all packages and will additionally"
+	echo -e "\tinstall specified packages."
+	echo -e "-U \tThe same as -u but will also update the init script (conty-start.sh)"
+	echo -e "\tand the integrated utils directly from the GitHub repo."
 	echo
 	echo "Environment variables:"
 	echo
@@ -83,10 +95,10 @@ if [ "$1" = "--help" ] || [ "$1" = "-h" ] || ([ -z "$1" ] && [ -z "${AUTOSTART}"
 	echo -e "\t\tThe default location is /tmp."
 	echo
 	echo "If you enable SANDBOX but don't set BIND or HOME_DIR, then"
-	echo "no directories will be available at all. And a fake temporary HOME"
-	echo "directory will be created inside the container."
+	echo "no directories will be available at all and a fake temporary HOME"
+	echo "directory will be used."
 	echo
-	echo "Also, if the script is a symlink to itself but with different name,"
+	echo "If the script is a symlink to itself but with a different name,"
 	echo "then the symlinked script will automatically run a program according"
 	echo "to its name. For instance, if the script is a symlink with the name \"wine\","
 	echo "then it will automatically run wine during launch. This is an alternative"
@@ -103,6 +115,76 @@ elif [ "$1" = "-e" ]; then
 	exit
 elif [ "$1" = "-o" ]; then
 	echo $offset
+
+	exit
+elif [ "$1" = "-u" ] || [ "$1" = "-U" ]; then
+	OLD_PWD="${PWD}"
+
+	mkdir -p conty_update_temp
+	cd conty_update_temp || exit 1
+
+	# Since Conty is used here to update itself, it's necessary to disable
+	# SANDBOX and DISABLE_NET (if they are enabled) for this to work properly
+	unset DISABLE_NET
+	unset SANDBOX
+
+	# Extract the squashfs image
+	clear
+	echo "Extracting the squashfs image"
+	"${script}" unsquashfs -o $offset -user-xattrs -d sqfs "${script}"
+
+	# Download or extract the utils.tar and the init script depending
+	# on what command line argument is used (-u or -U)
+	clear
+	if [ "$1" = "-U" ] && command -v wget 1>/dev/null; then
+		echo "Downloading the init script and the utils"
+		wget -q --show-progress "https://github.com/Kron4ek/Conty/raw/master/conty-start.sh"
+		wget -q --show-progress "https://github.com/Kron4ek/Conty/raw/master/utils.tar"
+	else
+		echo "Extracting the init script and the integrated utils"
+		tail -c +$((scriptsize+1)) "${script}" | head -c $utilssize > utils.tar
+		head -c $scriptsize "${script}" > conty-start.sh
+	fi
+
+	# Update Arch mirrorlist
+	clear
+	echo "Updating Arch mirrorlist"
+	"${script}" reflector --protocol https --score 5 --sort rate --save sqfs/etc/pacman.d/mirrorlist
+
+	# Update all packages installed inside the container
+	clear
+	echo "Updating packages"
+	mkdir -p pacman_pkg_cache
+	"${script}" bash -c 'yes | fakeroot pacman -q -r sqfs --cachedir pacman_pkg_cache --overwrite "*" -Syu 2>/dev/null'
+
+	# Install additional packages if requested
+	shift
+	if [ -n "$1" ]; then
+		clear
+		echo "Installing additional packages"
+		export packagelist="$@"
+		"${script}" bash -c 'yes | fakeroot pacman -q -r sqfs --cachedir pacman_pkg_cache -S ${packagelist} 2>/dev/null'
+	fi
+
+	# Create a squashfs image
+	clear
+	echo "Creating a squashfs image"
+	"${script}" mksquashfs sqfs image -b 256K -comp zstd -Xcompression-level 19
+
+	# Combine into a single executable
+	clear
+	echo "Combining everything into a single executable"
+	cat conty-start.sh utils.tar image > conty_new.sh
+	chmod +x conty_new.sh
+
+	mv conty_new.sh "${OLD_PWD}"
+	mv "${script}" "${script}".old && mv "${OLD_PWD}"/conty_new.sh "${script}"
+
+	chmod -R 700 sqfs
+	rm -rf "${OLD_PWD}"/conty_update_temp
+
+	clear
+	echo "Conty has been updated!"
 
 	exit
 fi
