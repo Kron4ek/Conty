@@ -31,7 +31,7 @@ export working_dir=/tmp/"$(basename "${script}")"_"${USER}"_"${script_md5}"
 # a problem with mounting the squashfs image due to an incorrectly calculated offset.
 
 # The size of this script
-scriptsize=16805
+scriptsize=16811
 
 # The size of the utils.tar archive
 # utils.tar contains bwrap and squashfuse binaries
@@ -200,7 +200,7 @@ fi
 if  [ -n "${BASE_DIR}" ]; then
 	echo "Using custom BASE_DIR: ${BASE_DIR}"
 
-	export working_dir="${BASE_DIR}"/"$(basename "${script}")"_"${USER}"_${RANDOM}
+	export working_dir="${BASE_DIR}"/"$(basename "${script}")"_"${USER}"_"${script_md5}"
 fi
 
 # Extract utils.tar
