@@ -31,7 +31,7 @@ export working_dir=/tmp/"$(basename "${script}")"_"${USER}"_"${script_md5}"
 # a problem with mounting the squashfs image due to an incorrectly calculated offset.
 
 # The size of this script
-scriptsize=17428
+scriptsize=17635
 
 # The size of the utils.tar archive
 # utils.tar contains bwrap and squashfuse binaries
@@ -153,7 +153,9 @@ elif [ "$1" = "-u" ] || [ "$1" = "-U" ]; then
 		echo "Downloading the init script and the utils"
 		wget -q --show-progress "https://github.com/Kron4ek/Conty/raw/master/conty-start.sh"
 		wget -q --show-progress "https://github.com/Kron4ek/Conty/raw/master/utils.tar"
-	else
+	fi
+
+	if [ ! -s conty-start.sh ] || [ ! -s utils.tar ]; then
 		echo "Extracting the init script and the integrated utils"
 		tail -c +$((scriptsize+1)) "${script}" | head -c $utilssize > utils.tar
 		head -c $scriptsize "${script}" > conty-start.sh
@@ -164,11 +166,16 @@ elif [ "$1" = "-u" ] || [ "$1" = "-U" ]; then
 	echo "Updating Arch mirrorlist"
 	bash "${script}" reflector --protocol https --score 5 --sort rate --save sqfs/etc/pacman.d/mirrorlist
 
+	bind_items="--bind sqfs/var /var --bind sqfs/etc /etc --bind sqfs/usr /usr \
+          --ro-bind-try /etc/resolv.conf /etc/resolv.conf \
+          --ro-bind-try /etc/nsswitch.conf /etc/nsswitch.conf \
+          --ro-bind-try /etc/hosts /etc/hosts"
+
 	# Update all packages installed inside the container
 	clear
 	echo "Updating packages"
 	mkdir -p pacman_pkg_cache
-	bash "${script}" --bind sqfs/var /var --bind sqfs/etc /etc --bind sqfs/usr /usr \
+	bash "${script}" ${bind_items} \
 	bash -c 'yes | fakeroot pacman -q --cachedir pacman_pkg_cache --overwrite "*" -Syu 2>/dev/null'
 
 	# Install additional packages if requested
@@ -177,7 +184,7 @@ elif [ "$1" = "-u" ] || [ "$1" = "-U" ]; then
 		clear
 		echo "Installing additional packages"
 		export packagelist="$@"
-		bash "${script}" --bind sqfs/var /var --bind sqfs/etc /etc --bind sqfs/usr /usr \
+		bash "${script}" ${bind_items} \
 		bash -c 'yes | fakeroot pacman -q --cachedir pacman_pkg_cache -S ${packagelist} 2>/dev/null'
 	fi
 
