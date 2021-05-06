@@ -31,7 +31,7 @@ export working_dir=/tmp/"$(basename "${script}")"_"${USER}"_"${script_md5}"
 # a problem with mounting the squashfs image due to an incorrectly calculated offset.
 
 # The size of this script
-scriptsize=16811
+scriptsize=17428
 
 # The size of the utils.tar archive
 # utils.tar contains bwrap and squashfuse binaries
@@ -120,8 +120,21 @@ elif [ "$1" = "-o" ]; then
 elif [ "$1" = "-u" ] || [ "$1" = "-U" ]; then
 	OLD_PWD="${PWD}"
 
-	mkdir -p conty_update_temp
-	cd conty_update_temp || exit 1
+	# Check if current directory is writable
+	# And if it's not, use ~/.local/share/Conty as a working directory
+	if ! touch test_rw 2>/dev/null; then
+		update_temp_dir="${HOME}"/.local/share/Conty/conty_update_temp
+	else
+		update_temp_dir="${OLD_PWD}"/conty_update_temp
+	fi
+	rm -f test_rw
+	
+	# Remove conty_update_temp directory if it already exists
+	chmod -R 700 "${update_temp_dir}" 2>/dev/null
+	rm -rf "${update_temp_dir}"
+
+	mkdir -p "${update_temp_dir}"
+	cd "${update_temp_dir}" || exit 1
 
 	# Since Conty is used here to update itself, it's necessary to disable
 	# SANDBOX and DISABLE_NET (if they are enabled) for this to work properly
@@ -131,7 +144,7 @@ elif [ "$1" = "-u" ] || [ "$1" = "-U" ]; then
 	# Extract the squashfs image
 	clear
 	echo "Extracting the squashfs image"
-	"${script}" unsquashfs -o $offset -user-xattrs -d sqfs "${script}"
+	bash "${script}" unsquashfs -o $offset -user-xattrs -d sqfs "${script}"
 
 	# Download or extract the utils.tar and the init script depending
 	# on what command line argument is used (-u or -U)
@@ -149,13 +162,14 @@ elif [ "$1" = "-u" ] || [ "$1" = "-U" ]; then
 	# Update Arch mirrorlist
 	clear
 	echo "Updating Arch mirrorlist"
-	"${script}" reflector --protocol https --score 5 --sort rate --save sqfs/etc/pacman.d/mirrorlist
+	bash "${script}" reflector --protocol https --score 5 --sort rate --save sqfs/etc/pacman.d/mirrorlist
 
 	# Update all packages installed inside the container
 	clear
 	echo "Updating packages"
 	mkdir -p pacman_pkg_cache
-	"${script}" bash -c 'yes | fakeroot pacman -q -r sqfs --cachedir pacman_pkg_cache --overwrite "*" -Syu 2>/dev/null'
+	bash "${script}" --bind sqfs/var /var --bind sqfs/etc /etc --bind sqfs/usr /usr \
+	bash -c 'yes | fakeroot pacman -q --cachedir pacman_pkg_cache --overwrite "*" -Syu 2>/dev/null'
 
 	# Install additional packages if requested
 	shift
@@ -163,25 +177,28 @@ elif [ "$1" = "-u" ] || [ "$1" = "-U" ]; then
 		clear
 		echo "Installing additional packages"
 		export packagelist="$@"
-		"${script}" bash -c 'yes | fakeroot pacman -q -r sqfs --cachedir pacman_pkg_cache -S ${packagelist} 2>/dev/null'
+		bash "${script}" --bind sqfs/var /var --bind sqfs/etc /etc --bind sqfs/usr /usr \
+		bash -c 'yes | fakeroot pacman -q --cachedir pacman_pkg_cache -S ${packagelist} 2>/dev/null'
 	fi
 
 	# Create a squashfs image
 	clear
 	echo "Creating a squashfs image"
-	"${script}" mksquashfs sqfs image -b 256K -comp zstd -Xcompression-level 19
+	bash "${script}" mksquashfs sqfs image -b 256K -comp zstd -Xcompression-level 19
 
 	# Combine into a single executable
 	clear
 	echo "Combining everything into a single executable"
-	cat conty-start.sh utils.tar image > conty_new.sh
-	chmod +x conty_new.sh
+	cat conty-start.sh utils.tar image > conty_updated.sh
+	chmod +x conty_updated.sh
 
-	mv conty_new.sh "${OLD_PWD}"
-	mv "${script}" "${script}".old && mv "${OLD_PWD}"/conty_new.sh "${script}"
+	mv "${script}" "${script}".old
+	mv conty_updated.sh "${script}" || \
+	mv conty_updated.sh "${OLD_PWD}" || \
+	mv conty_updated.sh "${HOME}"
 
-	chmod -R 700 sqfs
-	rm -rf "${OLD_PWD}"/conty_update_temp
+	chmod -R 700 sqfs 2>/dev/null
+	rm -rf "${update_temp_dir}"
 
 	clear
 	echo "Conty has been updated!"
