@@ -394,7 +394,12 @@ rm arch.tar.gz
 mount_chroot
 
 generate_localegen
-generate_mirrorlist
+
+if command -v reflector 1>/dev/null; then
+	reflector --protocol https --score 5 --sort rate --save mirrorlist
+else
+	generate_mirrorlist
+fi
 
 rm "${bootstrap}"/etc/locale.gen
 cp locale.gen "${bootstrap}"/etc/locale.gen
