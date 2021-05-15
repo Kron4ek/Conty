@@ -35,7 +35,7 @@ scriptsize=17981
 
 # The size of the utils.tar archive
 # utils.tar contains bwrap and squashfuse binaries
-utilssize=1300480
+utilssize=1515520
 
 # Offset where the squashfs image is stored
 offset=$((scriptsize+utilssize))
