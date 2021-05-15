@@ -201,7 +201,7 @@ EOF
 	# Create a squashfs image
 	clear
 	echo "Creating a squashfs image"
-	bash "${script}" mksquashfs sqfs image -b 256K -comp zstd -Xcompression-level 19
+	bash "${script}" mksquashfs sqfs image -b 256K -comp zstd -Xcompression-level 14
 
 	# Combine into a single executable
 	clear
