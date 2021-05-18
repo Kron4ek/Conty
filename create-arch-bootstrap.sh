@@ -364,9 +364,6 @@ cd "${script_dir}" || exit 1
 
 bootstrap="${script_dir}"/root.x86_64
 
-chaoticaur_keyring="https://cdn-mirror.chaotic.cx/chaotic-aur/x86_64/chaotic-keyring-20210406-1-any.pkg.tar.zst"
-chaoticaur_mirrorlist="https://cdn-mirror.chaotic.cx/chaotic-aur/x86_64/chaotic-mirrorlist-20210501-1-any.pkg.tar.zst"
-
 packagelist="base base-devel nano mesa lib32-mesa vulkan-radeon lib32-vulkan-radeon \
 			vulkan-icd-loader lib32-vulkan-icd-loader nvidia-utils \
 			lib32-nvidia-utils lib32-alsa-plugins wine-staging mesa-demos \
@@ -420,10 +417,9 @@ run_in_chroot pacman --noconfirm -S ${packagelist}
 run_in_chroot locale-gen
 
 if [ -n "${chaotic_packagelist}" ]; then
-	run_in_chroot wget -O /opt/chaoticaur-keyring.tar.zst "${chaoticaur_keyring}"
-	run_in_chroot wget -O /opt/chaoticaur-mirrorlist.tar.zst "${chaoticaur_mirrorlist}"
-	run_in_chroot pacman --noconfirm -U /opt/chaoticaur-keyring.tar.zst
-	run_in_chroot pacman --noconfirm -U /opt/chaoticaur-mirrorlist.tar.zst
+	run_in_chroot pacman-key --recv-key 3056513887B78AEB
+	run_in_chroot pacman-key --lsign-key 3056513887B78AEB
+	run_in_chroot pacman --noconfirm -U 'https://cdn-mirror.chaotic.cx/chaotic-aur/chaotic-'{keyring,mirrorlist}'.pkg.tar.zst'
 
 	echo >> "${bootstrap}"/etc/pacman.conf
 	echo "[chaotic-aur]" >> "${bootstrap}"/etc/pacman.conf
