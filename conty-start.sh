@@ -31,7 +31,7 @@ export working_dir=/tmp/"$(basename "${script}")"_"${USER}"_"${script_md5}"
 # a problem with mounting the squashfs image due to an incorrectly calculated offset.
 
 # The size of this script
-scriptsize=17996
+scriptsize=17971
 
 # The size of the utils.tar archive
 # utils.tar contains bwrap and squashfuse binaries
@@ -455,7 +455,7 @@ trap_exit () {
 
 	if [ ! "$(ls "${working_dir}"/running_* 2>/dev/null)" ]; then
 		"${fmount}" -uz "${working_dir}"/mnt 2>/dev/null || \
-		${sudo_umount} umount --lazy "${working_dir}"/mnt 2>/dev/null
+		${use_sudo} umount --lazy "${working_dir}"/mnt 2>/dev/null
 
 		rm -rf "${working_dir}"
 	fi
@@ -469,15 +469,14 @@ if [ -n "${SUDO_MOUNT}" ]; then
 	echo "Using regular mount command (sudo mount) instead of squashfuse"
 
 	sfuse=mount
-	sudo_mount=sudo
-	sudo_umount=sudo
+	use_sudo=sudo
 fi
 
 # Mount boostrap image
 mkdir -p "${working_dir}"/mnt
 
 if [ "$(ls "${working_dir}"/mnt 2>/dev/null)" ] || \
-	${sudo_mount} "${sfuse}" -o offset="${offset}",ro "${script}" "${working_dir}"/mnt ; then
+	${use_sudo} "${sfuse}" -o offset="${offset}",ro "${script}" "${working_dir}"/mnt ; then
 	echo 1 > "${working_dir}"/running_"${script_id}"
 
 	echo "Running Conty"
