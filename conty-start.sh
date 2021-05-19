@@ -31,7 +31,7 @@ export working_dir=/tmp/"$(basename "${script}")"_"${USER}"_"${script_md5}"
 # a problem with mounting the squashfs image due to an incorrectly calculated offset.
 
 # The size of this script
-scriptsize=17981
+scriptsize=18006
 
 # The size of the utils.tar archive
 # utils.tar contains bwrap and squashfuse binaries
@@ -128,7 +128,7 @@ elif [ "$1" = "-u" ] || [ "$1" = "-U" ]; then
 		update_temp_dir="${OLD_PWD}"/conty_update_temp
 	fi
 	rm -f test_rw
-	
+
 	# Remove conty_update_temp directory if it already exists
 	chmod -R 700 "${update_temp_dir}" 2>/dev/null
 	rm -rf "${update_temp_dir}"
@@ -370,6 +370,8 @@ bind_nvidia_driver () {
 			   && [ "${nvidia_version}" != "${nvidia_version_inside}" ]; then
 				echo "Nvidia driver version mismatch detected, trying to fix"
 
+				OLD_PWD="${PWD}"
+
 				mkdir -p "${nvidia_drivers_dir}"
 				cd "${nvidia_drivers_dir}"
 
@@ -400,7 +402,7 @@ bind_nvidia_driver () {
 					echo ${nvidia_version} > current_version.txt
 				fi
 
-				cd "${PWD}"
+				cd "${OLD_PWD}"
 			fi
 
 			# Bind the downloaded Nvidia libs to the container
