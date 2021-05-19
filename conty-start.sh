@@ -31,7 +31,7 @@ export working_dir=/tmp/"$(basename "${script}")"_"${USER}"_"${script_md5}"
 # a problem with mounting the squashfs image due to an incorrectly calculated offset.
 
 # The size of this script
-scriptsize=17971
+scriptsize=18001
 
 # The size of the utils.tar archive
 # utils.tar contains bwrap and squashfuse binaries
@@ -241,15 +241,15 @@ fi
 mkdir -p "${working_dir}"
 
 if [ -z "${USE_SYS_UTILS}" ]; then
-	sfuse="${working_dir}"/utils/squashfuse
+	mount_tool="${working_dir}"/utils/squashfuse
 	bwrap="${working_dir}"/utils/bwrap
 
-	if [ ! -f "${sfuse}" ] || [ ! -f "${bwrap}" ]; then
+	if [ ! -f "${mount_tool}" ] || [ ! -f "${bwrap}" ]; then
 		tail -c +$((scriptsize+1)) "${script}" | head -c $utilssize > "${working_dir}"/utils.tar
 		tar -C "${working_dir}" -xf "${working_dir}"/utils.tar
 		rm "${working_dir}"/utils.tar
 
-		chmod +x "${sfuse}"
+		chmod +x "${mount_tool}"
 		chmod +x "${bwrap}"
 	fi
 
@@ -273,7 +273,7 @@ else
 
 	echo "Using system squashfuse and bwrap"
 
-	sfuse=squashfuse
+	mount_tool=squashfuse
 	bwrap=bwrap
 fi
 
@@ -468,7 +468,7 @@ trap 'trap_exit' EXIT
 if [ -n "${SUDO_MOUNT}" ]; then
 	echo "Using regular mount command (sudo mount) instead of squashfuse"
 
-	sfuse=mount
+	mount_tool=mount
 	use_sudo=sudo
 fi
 
@@ -476,7 +476,7 @@ fi
 mkdir -p "${working_dir}"/mnt
 
 if [ "$(ls "${working_dir}"/mnt 2>/dev/null)" ] || \
-	${use_sudo} "${sfuse}" -o offset="${offset}",ro "${script}" "${working_dir}"/mnt ; then
+	${use_sudo} "${mount_tool}" -o offset="${offset}",ro "${script}" "${working_dir}"/mnt ; then
 	echo 1 > "${working_dir}"/running_"${script_id}"
 
 	echo "Running Conty"
