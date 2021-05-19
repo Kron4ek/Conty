@@ -31,7 +31,7 @@ export working_dir=/tmp/"$(basename "${script}")"_"${USER}"_"${script_md5}"
 # a problem with mounting the squashfs image due to an incorrectly calculated offset.
 
 # The size of this script
-scriptsize=18006
+scriptsize=17996
 
 # The size of the utils.tar archive
 # utils.tar contains bwrap and squashfuse binaries
@@ -457,7 +457,6 @@ trap_exit () {
 		"${fmount}" -uz "${working_dir}"/mnt 2>/dev/null || \
 		${sudo_umount} umount --lazy "${working_dir}"/mnt 2>/dev/null
 
-		sleep 1
 		rm -rf "${working_dir}"
 	fi
 
