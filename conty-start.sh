@@ -23,15 +23,22 @@ script_md5="$(tail -c 1000000 "${script}" | md5sum | head -c 7)"
 
 script_id="${RANDOM}"
 
-# Working directory where squashfs image will be mounted
+# Working directory where the utils will be extracted
+# And where the squashfs image will be mounted
 # The default path is /tmp/scriptname_username_md5
-export working_dir=/tmp/"$(basename "${script}")"_"${USER}"_"${script_md5}"
+if  [ -z "${BASE_DIR}" ]; then
+	export working_dir=/tmp/"$(basename "${script}")"_"${USER}"_"${script_md5}"
+else
+	export working_dir="${BASE_DIR}"/"$(basename "${script}")"_"${USER}"_"${script_md5}"
+fi
+
+mount_point="${working_dir}"/mnt
 
 # It's important to set correct sizes below, otherwise there will be
 # a problem with mounting the squashfs image due to an incorrectly calculated offset.
 
 # The size of this script
-scriptsize=17976
+scriptsize=17967
 
 # The size of the utils.tar archive
 # utils.tar contains bwrap and squashfuse binaries
@@ -229,12 +236,6 @@ if [ -z "${SUDO_MOUNT}" ] && ! command -v fusermount 1>/dev/null; then
 	exit 1
 fi
 
-if  [ -n "${BASE_DIR}" ]; then
-	echo "Using custom BASE_DIR: ${BASE_DIR}"
-
-	export working_dir="${BASE_DIR}"/"$(basename "${script}")"_"${USER}"_"${script_md5}"
-fi
-
 # Extract utils.tar
 mkdir -p "${working_dir}"
 
@@ -313,7 +314,7 @@ run_bwrap () {
 
 	echo
 
-	"${bwrap}" --ro-bind "${working_dir}"/mnt / \
+	"${bwrap}" --ro-bind "${mount_point}" / \
 			--dev-bind /dev /dev \
 			--ro-bind /sys /sys \
 			--bind-try /tmp /tmp \
@@ -362,7 +363,7 @@ bind_nvidia_driver () {
 		# Check if the kernel module version is different from the
 		# libraries version inside the container
 		if [ -n "${nvidia_version}" ]; then
-			nvidia_version_inside="$(basename "${working_dir}"/mnt/usr/lib/libGLX_nvidia.so.*.* | tail -c +18)"
+			nvidia_version_inside="$(basename "${mount_point}"/usr/lib/libGLX_nvidia.so.*.* | tail -c +18)"
 
 			if [ "$(cat "${nvidia_drivers_dir}"/current_version.txt 2>/dev/null)" != "${nvidia_version}" ] \
 			   && [ "${nvidia_version}" != "${nvidia_version_inside}" ]; then
@@ -413,31 +414,31 @@ bind_nvidia_driver () {
 				libnvidia-rtcore.so libnvidia-tls.so libnvoptix.so"
 
 				for lib in ${nvidia_libs_list}; do
-					if [ -f "${working_dir}"/mnt/usr/lib/${lib}.${nvidia_version_inside} ]; then
+					if [ -f "${mount_point}"/usr/lib/${lib}.${nvidia_version_inside} ]; then
 						nvidia_driver_bind="${nvidia_driver_bind} \
 						--ro-bind-try ${nvidia_drivers_dir}/nvidia-driver/${lib}.${nvidia_version} \
 						/usr/lib/${lib}.${nvidia_version_inside}"
 					fi
 
-					if [ -f "${working_dir}"/mnt/usr/lib32/${lib}.${nvidia_version_inside} ]; then
+					if [ -f "${mount_point}"/usr/lib32/${lib}.${nvidia_version_inside} ]; then
 						nvidia_driver_bind="${nvidia_driver_bind} \
 						--ro-bind-try ${nvidia_drivers_dir}/nvidia-driver/32/${lib}.${nvidia_version} \
 						/usr/lib32/${lib}.${nvidia_version_inside}"
 					fi
 
-					if [ -f "${working_dir}"/mnt/usr/lib/nvidia/xorg/libglxserver_nvidia.so.${nvidia_version_inside} ]; then
+					if [ -f "${mount_point}"/usr/lib/nvidia/xorg/libglxserver_nvidia.so.${nvidia_version_inside} ]; then
 						nvidia_driver_bind="${nvidia_driver_bind} \
 						--ro-bind-try ${nvidia_drivers_dir}/nvidia-driver/libglxserver_nvidia.so.${nvidia_version} \
 						/usr/lib/nvidia/xorg/libglxserver_nvidia.so.${nvidia_version_inside}"
 					fi
 
-					if [ -f "${working_dir}"/mnt/usr/lib/vdpau/libvdpau_nvidia.so.${nvidia_version_inside} ]; then
+					if [ -f "${mount_point}"/usr/lib/vdpau/libvdpau_nvidia.so.${nvidia_version_inside} ]; then
 						nvidia_driver_bind="${nvidia_driver_bind} \
 						--ro-bind-try ${nvidia_drivers_dir}/nvidia-driver/libvdpau_nvidia.so.${nvidia_version} \
 						/usr/lib/vdpau/libvdpau_nvidia.so.${nvidia_version_inside}"
 					fi
 
-					if [ -f "${working_dir}"/mnt/usr/lib32/vdpau/libvdpau_nvidia.so.${nvidia_version_inside} ]; then
+					if [ -f "${mount_point}"/usr/lib32/vdpau/libvdpau_nvidia.so.${nvidia_version_inside} ]; then
 						nvidia_driver_bind="${nvidia_driver_bind} \
 						--ro-bind-try ${nvidia_drivers_dir}/nvidia-driver/32/libvdpau_nvidia.so.${nvidia_version} \
 						/usr/lib32/vdpau/libvdpau_nvidia.so.${nvidia_version_inside}"
@@ -452,8 +453,8 @@ trap_exit () {
 	rm -f "${working_dir}"/running_"${script_id}"
 
 	if [ ! "$(ls "${working_dir}"/running_* 2>/dev/null)" ]; then
-		fusermount -uz "${working_dir}"/mnt 2>/dev/null || \
-		${use_sudo} umount --lazy "${working_dir}"/mnt 2>/dev/null
+		fusermount -uz "${mount_point}" 2>/dev/null || \
+		${use_sudo} umount --lazy "${mount_point}" 2>/dev/null
 
 		rm -rf "${working_dir}"
 	fi
@@ -470,11 +471,11 @@ if [ -n "${SUDO_MOUNT}" ]; then
 	use_sudo=sudo
 fi
 
-# Mount boostrap image
-mkdir -p "${working_dir}"/mnt
+# Mount the squashfs image
+mkdir -p "${mount_point}"
 
-if [ "$(ls "${working_dir}"/mnt 2>/dev/null)" ] || \
-	${use_sudo} "${mount_tool}" -o offset="${offset}",ro "${script}" "${working_dir}"/mnt ; then
+if [ "$(ls "${mount_point}" 2>/dev/null)" ] || \
+	${use_sudo} "${mount_tool}" -o offset="${offset}",ro "${script}" "${mount_point}" ; then
 	echo 1 > "${working_dir}"/running_"${script_id}"
 
 	echo "Running Conty"
@@ -486,7 +487,7 @@ if [ "$(ls "${working_dir}"/mnt 2>/dev/null)" ] || \
 	if [ -n "${AUTOSTART}" ]; then
 		autostart="${AUTOSTART}"
 	elif [ -L "${script_literal}" ]; then
-		if [ -f "${working_dir}"/mnt/usr/bin/"${script_name}" ]; then
+		if [ -f "${mount_point}"/usr/bin/"${script_name}" ]; then
 			autostart="${script_name}"
 		fi
 	fi
