@@ -38,7 +38,7 @@ mount_point="${working_dir}"/mnt
 # a problem with mounting the squashfs image due to an incorrectly calculated offset.
 
 # The size of this script
-scriptsize=17967
+scriptsize=18029
 
 # The size of the utils.tar archive
 # utils.tar contains bwrap and squashfuse binaries
@@ -288,7 +288,8 @@ run_bwrap () {
 
 		dirs="--tmpfs /home --dir ${HOME} --tmpfs /opt --tmpfs /mnt \
 			--tmpfs /media --tmpfs /var --tmpfs /run --symlink /run /var/run \
-			--bind-try /run/user /run/user --bind-try /run/dbus /run/dbus"
+			--bind-try /run/user /run/user --bind-try /run/dbus /run/dbus \
+			--tmpfs /tmp --ro-bind-try /tmp/.X11-unix /tmp/.X11-unix"
 
 		if [ -n "${HOME_DIR}" ]; then
 			echo "Set HOME to ${HOME_DIR}"
