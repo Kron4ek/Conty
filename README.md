@@ -11,7 +11,7 @@ It uses two technologies:
 * SquashFS (using [squashfuse](https://github.com/vasi/squashfuse))
 * Linux namespaces (using [bubblewrap](https://github.com/containers/bubblewrap))
 
-## Benefits
+## Features
 
 * Single executable - download (or create) and run, nothing else it required.
 * Root rights are **not required**.
