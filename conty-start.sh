@@ -38,7 +38,7 @@ mount_point="${working_dir}"/mnt
 # a problem with mounting the squashfs image due to an incorrectly calculated offset.
 
 # The size of this script
-scriptsize=17972
+scriptsize=17196
 
 # The size of the utils.tar archive
 # utils.tar contains bwrap and squashfuse binaries
@@ -47,7 +47,7 @@ utilssize=1515520
 # Offset where the squashfs image is stored
 offset=$((scriptsize+utilssize))
 
-if [ "$1" = "--help" ] || [ "$1" = "-h" ] || ([ -z "$1" ] && [ -z "${AUTOSTART}" ] && [ ! -L "${script_literal}" ]); then
+if [ "$1" = "--help" ] || [ "$1" = "-h" ] || ([ -z "$1" ] && [ ! -L "${script_literal}" ]); then
 	echo "Usage: ./conty.sh command command_arguments"
 	echo
 	echo "Arguments:"
@@ -58,7 +58,7 @@ if [ "$1" = "--help" ] || [ "$1" = "-h" ] || ([ -z "$1" ] && [ -z "${AUTOSTART}"
 	echo -e "\tThis will update all packages inside the container and will rebuild"
 	echo -e "\tthe squashfs image. This may take quite a lot of time, depending"
 	echo -e "\ton your hardware and an internet speed. Additional disk space"
-	echo -e "\t(about 5x the size of the current file) is needed during"
+	echo -e "\t(about 6x the size of the current file) is needed during"
 	echo -e "\tthe update process."
 	echo -e "\tIf you want to install additional packages, specify them as additional"
 	echo -e "\targuments. For example: ./conty.sh -u pkgname1 pkgname2"
@@ -69,12 +69,6 @@ if [ "$1" = "--help" ] || [ "$1" = "-h" ] || ([ -z "$1" ] && [ -z "${AUTOSTART}"
 	echo
 	echo "Environment variables:"
 	echo
-	echo -e "AUTOSTART \tAutostarts an application specified in this variable"
-	echo -e "\t\tFor example, AUTOSTART=\"steam\" or AUTOSTART=\"/home/username/"
-	echo -e "\t\tprogram\""
-	echo -e "AUTOARGS \tAutomatically appends arguments from this variable to a"
-	echo -e "\t\tlaunched application. For example, AUTOARGS=\"--version\""
-	echo -e "\t\tCan be used together with AUTOSTART, but also without it."
 	echo -e "DISABLE_NET \tDisables network access"
 	echo -e "SANDBOX \tEnables filesystem sandbox"
 	echo -e "BIND \t\tBinds directories and files (separated by space) from host"
@@ -107,8 +101,7 @@ if [ "$1" = "--help" ] || [ "$1" = "-h" ] || ([ -z "$1" ] && [ -z "${AUTOSTART}"
 	echo "If the script is a symlink to itself but with a different name,"
 	echo "then the symlinked script will automatically run a program according"
 	echo "to its name. For instance, if the script is a symlink with the name \"wine\","
-	echo "then it will automatically run wine during launch. This is an alternative"
-	echo "to the AUTOSTART variable, but the variable has a higher priority."
+	echo "then it will automatically run wine during launch."
 
 	exit
 elif [ "$1" = "-e" ]; then
@@ -476,6 +469,7 @@ mkdir -p "${mount_point}"
 
 if [ "$(ls "${mount_point}" 2>/dev/null)" ] || \
 	${use_sudo} "${mount_tool}" -o offset="${offset}",ro "${script}" "${mount_point}" ; then
+
 	echo 1 > "${working_dir}"/running_"${script_id}"
 
 	echo "Running Conty"
@@ -484,27 +478,15 @@ if [ "$(ls "${mount_point}" 2>/dev/null)" ] || \
 		bind_nvidia_driver
 	fi
 
-	if [ -n "${AUTOSTART}" ]; then
-		autostart="${AUTOSTART}"
-	elif [ -L "${script_literal}" ]; then
-		if [ -f "${mount_point}"/usr/bin/"${script_name}" ]; then
-			autostart="${script_name}"
-		fi
-	fi
-
-	if [ -n "${AUTOARGS}" ]; then
-		echo "Automatically append arguments: ${AUTOARGS}"
-	fi
-
-	if [ -n "${autostart}" ]; then
+	if [ -L "${script_literal}" ] && [ -f "${mount_point}"/usr/bin/"${script_name}" ]; then
 		export CUSTOM_PATH="/bin:/sbin:/usr/bin:/usr/sbin:/usr/lib/jvm/default/bin"
 
-		echo "Autostarting ${autostart}"
-		run_bwrap "${autostart}" "$@" ${AUTOARGS}
+		echo "Autostarting ${script_name}"
+		run_bwrap "${script_name}" "$@"
 	else
 		export CUSTOM_PATH="/bin:/sbin:/usr/bin:/usr/sbin:/usr/lib/jvm/default/bin:/usr/local/bin:/usr/local/sbin:${PATH}"
 
-		run_bwrap "$@" ${AUTOARGS}
+		run_bwrap "$@"
 	fi
 else
 	echo "Mounting the squashfs image failed!"
