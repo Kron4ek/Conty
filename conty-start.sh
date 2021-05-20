@@ -38,7 +38,7 @@ mount_point="${working_dir}"/mnt
 # a problem with mounting the squashfs image due to an incorrectly calculated offset.
 
 # The size of this script
-scriptsize=18029
+scriptsize=17972
 
 # The size of the utils.tar archive
 # utils.tar contains bwrap and squashfuse binaries
@@ -81,7 +81,6 @@ if [ "$1" = "--help" ] || [ "$1" = "-h" ] || ([ -z "$1" ] && [ -z "${AUTOSTART}"
 	echo -e "\t\tsystem to the container. All specified items must exist."
 	echo -e "\t\tFor example, BIND=\"/home/username/.config /etc/pacman.conf\""
 	echo -e "HOME_DIR \tSets HOME directory to a custom location."
-	echo -e "\t\tCan be used only together with SANDBOX enabled."
 	echo -e "\t\tFor example, HOME_DIR=\"/home/username/custom_home\""
 	echo -e "USE_SYS_UTILS \tMakes the script to use squashfuse and bwrap"
 	echo -e "\t\tinstalled on the system instead of the builtin ones."
@@ -291,16 +290,16 @@ run_bwrap () {
 			--bind-try /run/user /run/user --bind-try /run/dbus /run/dbus \
 			--tmpfs /tmp --ro-bind-try /tmp/.X11-unix /tmp/.X11-unix"
 
-		if [ -n "${HOME_DIR}" ]; then
-			echo "Set HOME to ${HOME_DIR}"
-			dirs="${dirs} --bind ${HOME_DIR} ${HOME}"
-		fi
-
 #		unshare="--unshare-user-try --unshare-pid --unshare-uts --unshare-cgroup-try \
 #				--hostname Conty"
 	else
 		dirs="--bind-try /home /home --bind-try /mnt /mnt --bind-try /opt /opt \
 			--bind-try /media /media --bind-try /run /run --bind-try /var /var"
+	fi
+
+	if [ -n "${HOME_DIR}" ]; then
+		echo "Set home directory to ${HOME_DIR}"
+		dirs="${dirs} --bind ${HOME_DIR} ${HOME}"
 	fi
 
 	if [ -n "$BIND" ]; then
