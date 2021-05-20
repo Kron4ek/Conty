@@ -13,7 +13,7 @@ It uses two technologies:
 
 ## Features
 
-* Single executable - download (or create) and run, nothing else it required.
+* Single executable - download (or create) and run, nothing else is required.
 * Root rights are **not required**.
 * Compressed into squashfs, so it takes much less disk space than
 uncompressed containers.
