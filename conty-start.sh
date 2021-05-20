@@ -38,7 +38,7 @@ mount_point="${working_dir}"/mnt
 # a problem with mounting the squashfs image due to an incorrectly calculated offset.
 
 # The size of this script
-scriptsize=17196
+scriptsize=17206
 
 # The size of the utils.tar archive
 # utils.tar contains bwrap and squashfuse binaries
@@ -223,7 +223,7 @@ EOF
 fi
 
 # Check if FUSE2 is installed when SUDO_MOUNT is not enabled
-if [ -z "${SUDO_MOUNT}" ] && ! command -v fusermount 1>/dev/null; then
+if [ "${SUDO_MOUNT}" != 1 ] && ! command -v fusermount 1>/dev/null; then
 	echo "Please install fuse2 and run the script again!"
 	exit 1
 fi
@@ -231,7 +231,7 @@ fi
 # Extract utils.tar
 mkdir -p "${working_dir}"
 
-if [ -z "${USE_SYS_UTILS}" ]; then
+if [ "${USE_SYS_UTILS}" != 1 ]; then
 	mount_tool="${working_dir}"/utils/squashfuse
 	bwrap="${working_dir}"/utils/bwrap
 
@@ -253,7 +253,7 @@ else
 		exit 1
 	fi
 
-	if ! command -v squashfuse 1>/dev/null && [ -z "${SUDO_MOUNT}" ]; then
+	if ! command -v squashfuse 1>/dev/null && [ "${SUDO_MOUNT}" != 1 ]; then
 		echo "USE_SYS_UTILS is enabled, but squshfuse is not installed!"
 		echo "Please install it and run the script again."
 		echo "Or enable SUDO_MOUNT to mount the image using the regular"
@@ -269,13 +269,13 @@ else
 fi
 
 run_bwrap () {
-	if [ -n "$DISABLE_NET" ]; then
+	if [ "$DISABLE_NET" = 1 ]; then
 		echo "Network is disabled"
 
 		net="--unshare-net"
 	fi
 
-	if [ -n "$SANDBOX" ]; then
+	if [ "$SANDBOX" = 1 ]; then
 		echo "Filesystem sandbox is enabled"
 
 		dirs="--tmpfs /home --dir ${HOME} --tmpfs /opt --tmpfs /mnt \
@@ -457,7 +457,7 @@ trap_exit () {
 
 trap 'trap_exit' EXIT
 
-if [ -n "${SUDO_MOUNT}" ]; then
+if [ "${SUDO_MOUNT}" = 1 ]; then
 	echo "Using regular mount command (sudo mount) instead of squashfuse"
 
 	mount_tool=mount
@@ -474,7 +474,7 @@ if [ "$(ls "${mount_point}" 2>/dev/null)" ] || \
 
 	echo "Running Conty"
 
-	if [ -n "${NVIDIA_FIX}" ]; then
+	if [ "${NVIDIA_FIX}" = 1 ]; then
 		bind_nvidia_driver
 	fi
 
