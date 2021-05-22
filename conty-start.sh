@@ -38,7 +38,7 @@ mount_point="${working_dir}"/mnt
 # a problem with mounting the squashfs image due to an incorrectly calculated offset.
 
 # The size of this script
-scriptsize=17206
+scriptsize=17859
 
 # The size of the utils.tar archive
 # utils.tar contains bwrap and squashfuse binaries
@@ -60,10 +60,6 @@ if [ "$1" = "--help" ] || [ "$1" = "-h" ] || ([ -z "$1" ] && [ ! -L "${script_li
 	echo -e "\ton your hardware and an internet speed. Additional disk space"
 	echo -e "\t(about 6x the size of the current file) is needed during"
 	echo -e "\tthe update process."
-	echo -e "\tIf you want to install additional packages, specify them as additional"
-	echo -e "\targuments. For example: ./conty.sh -u pkgname1 pkgname2"
-	echo -e "\tIn this case Conty will update all packages and will additionally"
-	echo -e "\tinstall specified packages."
 	echo -e "-U \tThe same as -u but will also update the init script (conty-start.sh)"
 	echo -e "\tand the integrated utils directly from the GitHub repo."
 	echo
@@ -94,6 +90,8 @@ if [ "$1" = "--help" ] || [ "$1" = "-h" ] || ([ -z "$1" ] && [ ! -L "${script_li
 	echo -e "\t\tits builtin utilities and mount the squashfs image."
 	echo -e "\t\tThe default location is /tmp."
 	echo
+	echo "Additional notes:"
+	echo
 	echo "If you enable SANDBOX but don't set BIND or HOME_DIR, then"
 	echo "no directories will be available at all and a fake temporary HOME"
 	echo "directory will be used."
@@ -102,7 +100,14 @@ if [ "$1" = "--help" ] || [ "$1" = "-h" ] || ([ -z "$1" ] && [ ! -L "${script_li
 	echo "then the symlinked script will automatically run a program according"
 	echo "to its name. For instance, if the script is a symlink with the name \"wine\","
 	echo "then it will automatically run wine during launch."
-
+	echo
+	echo "Besides updating all packages, you can also remove and install packages using"
+	echo "the same -u (or -U) argument. To install packages add them as additional"
+	echo "arguments, and to remove packages add a minus sign (-) before their names."
+	echo "To install: ./conty.sh -u pkgname1 pkgname2 pkgname3"
+	echo "To remove: ./conty.sh -u -pkgname1 -pkgname2 -pkgname3"
+	echo "In this case Conty will update all packages and will additionally"
+	echo "install and/or remove specified packages."
 	exit
 elif [ "$1" = "-e" ]; then
 	if command -v unsquashfs 1>/dev/null; then
@@ -163,7 +168,16 @@ elif [ "$1" = "-u" ] || [ "$1" = "-U" ]; then
 	# Check if there are additional arguments passed
 	shift
 	if [ -n "$1" ]; then
-		export packagelist="$@"
+		packagelist="$@"
+
+		# Check which packages to install and which ones to remove
+		for i in ${packagelist}; do
+			if [ "$(echo "${i}" | head -c 1)" = "-" ]; then
+				export pkgsremove="${pkgsremove} $(echo "${i}" | tail -c +2)"
+			else
+				export pkgsinstall="${pkgsinstall} ${i}"
+			fi
+		done
 	fi
 
 	# Generate a script to perform inside Conty
@@ -171,7 +185,9 @@ elif [ "$1" = "-u" ] || [ "$1" = "-U" ]; then
 	# Updates keyrings
 	# Updates all installed packages
 	# Installs additional packages (if requested)
+	# Removes packages (if requested)
 	# Clears package cache
+	# Updates SSL CA certificates
 	cat <<EOF > container-update.sh
 reflector --protocol https --score 5 --sort rate --save /etc/pacman.d/mirrorlist
 fakeroot -- pacman -q -Syy 2>/dev/null
@@ -182,7 +198,8 @@ fakeroot -- pacman-key --init
 fakeroot -- pacman-key --populate archlinux
 fakeroot -- pacman-key --populate chaotic
 yes | fakeroot -- pacman -q --overwrite "*" -Su 2>/dev/null
-yes | fakeroot -- pacman -q -S ${packagelist} 2>/dev/null
+yes | fakeroot -- pacman -q -S ${pkgsinstall} 2>/dev/null
+yes | fakeroot -- pacman -Runs ${pkgsremove} 2>/dev/null
 rm -f /var/cache/pacman/pkg/*
 update-ca-trust
 EOF
