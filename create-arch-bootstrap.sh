@@ -432,10 +432,15 @@ fi
 
 unmount_chroot
 
-rm -f "${bootstrap}"/opt/*
+# Clear pacman package cache
 rm -f "${bootstrap}"/var/cache/pacman/pkg/*
+
+# Create some empty files and directories
+# This is needed for bubblewrap to be able to bind real files/dirs to them
+# later in the conty-start.sh script
 mkdir "${bootstrap}"/media
 touch "${bootstrap}"/etc/asound.conf
+touch "${bootstrap}"/etc/localtime
 
 clear
 echo "Done"
