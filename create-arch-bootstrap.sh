@@ -373,13 +373,12 @@ packagelist="base base-devel nano mesa lib32-mesa vulkan-radeon lib32-vulkan-rad
 			lib32-gst-plugins-good ttf-dejavu ttf-liberation lib32-openal \
 			lib32-vkd3d vkd3d lib32-libva vulkan-intel lib32-vulkan-intel \
 			winetricks lutris steam firefox mpv geany pcmanfm ppsspp dolphin-emu \
-			git wget htop qbittorrent speedcrunch gpicview qpdfview squashfs-tools \
+			git wget htop qbittorrent speedcrunch gpicview qpdfview \
 			file-roller xorg-xwayland steam-native-runtime nvidia-prime \
 			meson mingw-w64-gcc gamemode lib32-gamemode cmake jre8-openjdk \
 			libva-mesa-driver playonlinux libva-intel-driver lib32-libva-intel-driver \
 			intel-media-driver alsa-tools alsa-utils lib32-vulkan-mesa-layers \
-			vulkan-mesa-layers lib32-libva-mesa-driver libva-utils lxterminal wine-nine \
-			reflector"
+			vulkan-mesa-layers lib32-libva-mesa-driver libva-utils lxterminal wine-nine"
 
 # List of packages to install from the Chaotic-AUR repository
 # If you leave this variable empty, Chaotic-AUR will not be added at all
@@ -418,7 +417,9 @@ run_in_chroot pacman-key --init
 run_in_chroot pacman-key --populate archlinux
 run_in_chroot pacman -Syu --noconfirm
 run_in_chroot pacman --noconfirm -S ${packagelist}
-run_in_chroot locale-gen
+
+# These packages are required for the self-update feature to work properly
+run_in_chroot pacman --noconfirm --needed -S reflector squashfs-tools fakeroot
 
 if [ -n "${chaotic_packagelist}" ]; then
 	run_in_chroot pacman-key --recv-key 3056513887B78AEB
@@ -433,6 +434,8 @@ if [ -n "${chaotic_packagelist}" ]; then
 
 	run_in_chroot bash -c "yes | pacman -S ${chaotic_packagelist}"
 fi
+
+run_in_chroot locale-gen
 
 unmount_chroot
 
