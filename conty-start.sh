@@ -13,6 +13,8 @@ if [ -z "$ALLOW_ROOT" ]; then
 	fi
 fi
 
+script_version="1.11"
+
 # Full path to the script
 script_literal="${BASH_SOURCE[0]}"
 script_name="$(basename "${script_literal}")"
@@ -38,7 +40,7 @@ mount_point="${working_dir}"/mnt
 # a problem with mounting the squashfs image due to an incorrectly calculated offset.
 
 # The size of this script
-scriptsize=17859
+scriptsize=17984
 
 # The size of the utils.tar archive
 # utils.tar contains bwrap and squashfuse binaries
@@ -52,12 +54,13 @@ if [ "$1" = "--help" ] || [ "$1" = "-h" ] || ([ -z "$1" ] && [ ! -L "${script_li
 	echo
 	echo "Arguments:"
 	echo
+	echo -e "-v \tShow version of this script"
 	echo -e "-e \tExtract the squashfs image"
 	echo -e "-o \tShow the squashfs image offset"
 	echo -e "-u \tUpdate all packages inside the container"
 	echo -e "\tThis will update all packages inside the container and will rebuild"
 	echo -e "\tthe squashfs image. This may take quite a lot of time, depending"
-	echo -e "\ton your hardware and an internet speed. Additional disk space"
+	echo -e "\ton your hardware and internet speed. Additional disk space"
 	echo -e "\t(about 6x the size of the current file) is needed during"
 	echo -e "\tthe update process."
 	echo -e "-U \tThe same as -u but will also update the init script (conty-start.sh)"
@@ -108,6 +111,10 @@ if [ "$1" = "--help" ] || [ "$1" = "-h" ] || ([ -z "$1" ] && [ ! -L "${script_li
 	echo "To remove: ./conty.sh -u -pkgname1 -pkgname2 -pkgname3"
 	echo "In this case Conty will update all packages and will additionally"
 	echo "install and/or remove specified packages."
+	exit
+elif [ "$1" = "-v" ]; then
+	echo "${script_version}"
+	
 	exit
 elif [ "$1" = "-e" ]; then
 	if command -v unsquashfs 1>/dev/null; then
