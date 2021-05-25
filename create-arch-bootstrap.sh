@@ -364,6 +364,8 @@ cd "${script_dir}" || exit 1
 
 bootstrap="${script_dir}"/root.x86_64
 
+# List of packages to install
+# You can remove packages that you don't need
 packagelist="base base-devel nano mesa lib32-mesa vulkan-radeon lib32-vulkan-radeon \
 			vulkan-icd-loader lib32-vulkan-icd-loader nvidia-utils \
 			lib32-nvidia-utils lib32-alsa-plugins wine-staging mesa-demos \
@@ -379,6 +381,8 @@ packagelist="base base-devel nano mesa lib32-mesa vulkan-radeon lib32-vulkan-rad
 			vulkan-mesa-layers lib32-libva-mesa-driver libva-utils lxterminal wine-nine \
 			reflector"
 
+# List of packages to install from the Chaotic-AUR repository
+# If you leave this variable empty, Chaotic-AUR will not be added at all
 chaotic_packagelist="wine-tkg-staging-fsync-git steamtinkerlaunch wineasio mangohud lib32-mangohud zsync2-git"
 
 current_release="$(wget -q "https://archlinux.org/download/" -O - | grep "Current Release" | tail -c -16 | head -c +10)"
