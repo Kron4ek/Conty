@@ -16,12 +16,13 @@ mount_chroot () {
 	umount -Rl "${bootstrap}"
 
 	mount --bind "${bootstrap}" "${bootstrap}"
-	mount --bind /dev "${bootstrap}"/dev
-	mount --bind /dev/shm "${bootstrap}"/dev/shm
-	mount --bind /dev/pts "${bootstrap}"/dev/pts
-	mount --bind /proc "${bootstrap}"/proc
-	mount --bind /sys "${bootstrap}"/sys
-	mount --bind /etc/resolv.conf "${bootstrap}"/etc/resolv.conf
+	mount -t proc /proc "${bootstrap}"/proc
+	mount --make-rslave --rbind /sys "${bootstrap}"/sys
+	mount --make-rslave --rbind /dev "${bootstrap}"/dev
+	mount --make-rslave --rbind /run "${bootstrap}"/run
+
+	rm -f "${bootstrap}"/etc/resolv.conf
+	cp /etc/resolv.conf "${bootstrap}"/etc/resolv.conf
 }
 
 unmount_chroot () {
@@ -142,7 +143,7 @@ if [ -n "${chaotic_packagelist}" ]; then
 
 	run_in_chroot pacman -Syu --noconfirm
 
-	run_in_chroot bash -c "yes | pacman --needed -S ${chaotic_packagelist}"
+	run_in_chroot pacman --noconfirm --needed -S ${chaotic_packagelist}
 fi
 
 run_in_chroot locale-gen
