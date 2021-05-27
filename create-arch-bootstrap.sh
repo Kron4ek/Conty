@@ -75,7 +75,7 @@ bootstrap="${script_dir}"/root.x86_64
 
 # List of packages to install
 # You can remove packages that you don't need
-packagelist="base base-devel nano mesa lib32-mesa vulkan-radeon lib32-vulkan-radeon \
+packagelist="base-devel nano mesa lib32-mesa vulkan-radeon lib32-vulkan-radeon \
 			vulkan-icd-loader lib32-vulkan-icd-loader nvidia-utils \
 			lib32-nvidia-utils lib32-alsa-plugins wine-staging mesa-demos \
 			vulkan-tools gst-plugins-good gst-plugins-bad gst-plugins-ugly \
@@ -125,10 +125,11 @@ echo "Include = /etc/pacman.d/mirrorlist" >> "${bootstrap}"/etc/pacman.conf
 run_in_chroot pacman-key --init
 run_in_chroot pacman-key --populate archlinux
 run_in_chroot pacman -Syu --noconfirm
-run_in_chroot pacman --noconfirm -S ${packagelist}
 
 # These packages are required for the self-update feature to work properly
-run_in_chroot pacman --noconfirm --needed -S reflector squashfs-tools fakeroot
+run_in_chroot pacman --noconfirm --needed -S base reflector squashfs-tools fakeroot
+
+run_in_chroot pacman --noconfirm --needed -S ${packagelist}
 
 if [ -n "${chaotic_packagelist}" ]; then
 	run_in_chroot pacman-key --recv-key 3056513887B78AEB
@@ -141,7 +142,7 @@ if [ -n "${chaotic_packagelist}" ]; then
 
 	run_in_chroot pacman -Syu --noconfirm
 
-	run_in_chroot bash -c "yes | pacman -S ${chaotic_packagelist}"
+	run_in_chroot bash -c "yes | pacman --needed -S ${chaotic_packagelist}"
 fi
 
 run_in_chroot locale-gen
