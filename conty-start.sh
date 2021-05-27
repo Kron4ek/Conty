@@ -40,7 +40,7 @@ mount_point="${working_dir}"/mnt
 # a problem with mounting the squashfs image due to an incorrectly calculated offset.
 
 # The size of this script
-scriptsize=17984
+scriptsize=18031
 
 # The size of the utils.tar archive
 # utils.tar contains bwrap and squashfuse binaries
@@ -195,20 +195,22 @@ elif [ "$1" = "-u" ] || [ "$1" = "-U" ]; then
 	# Removes packages (if requested)
 	# Clears package cache
 	# Updates SSL CA certificates
+	# Generates locales
 	cat <<EOF > container-update.sh
-reflector --protocol https --score 5 --sort rate --save /etc/pacman.d/mirrorlist
-fakeroot -- pacman -q -Syy 2>/dev/null
-yes | fakeroot -- pacman -q -S archlinux-keyring 2>/dev/null
-yes | fakeroot -- pacman -q -S chaotic-keyring 2>/dev/null
+reflector --protocol https --score 3 --sort rate --save /etc/pacman.d/mirrorlist
+fakeroot -- pacman -Syy 2>/dev/null
+fakeroot -- pacman --noconfirm -S archlinux-keyring 2>/dev/null
+fakeroot -- pacman --noconfirm -S chaotic-keyring 2>/dev/null
 rm -rf /etc/pacman.d/gnupg
 fakeroot -- pacman-key --init
 fakeroot -- pacman-key --populate archlinux
 fakeroot -- pacman-key --populate chaotic
-yes | fakeroot -- pacman -q --overwrite "*" -Su 2>/dev/null
-yes | fakeroot -- pacman -q -S ${pkgsinstall} 2>/dev/null
-yes | fakeroot -- pacman -Runs ${pkgsremove} 2>/dev/null
+fakeroot -- pacman --noconfirm --overwrite "*" -Su 2>/dev/null
+fakeroot -- pacman --noconfirm -S ${pkgsinstall} 2>/dev/null
+fakeroot -- pacman --noconfirm -Runs ${pkgsremove} 2>/dev/null
 rm -f /var/cache/pacman/pkg/*
 update-ca-trust
+locale-gen
 EOF
 
 	bind_items="--bind sqfs/var /var --bind sqfs/etc /etc --bind sqfs/usr /usr \
