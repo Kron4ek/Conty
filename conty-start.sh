@@ -40,7 +40,7 @@ mount_point="${working_dir}"/mnt
 # a problem with mounting the squashfs image due to an incorrectly calculated offset.
 
 # The size of this script
-scriptsize=18031
+scriptsize=18030
 
 # The size of the utils.tar archive
 # utils.tar contains bwrap and squashfuse binaries
@@ -114,7 +114,7 @@ if [ "$1" = "--help" ] || [ "$1" = "-h" ] || ([ -z "$1" ] && [ ! -L "${script_li
 	exit
 elif [ "$1" = "-v" ]; then
 	echo "${script_version}"
-	
+
 	exit
 elif [ "$1" = "-e" ]; then
 	if command -v unsquashfs 1>/dev/null; then
@@ -206,8 +206,8 @@ fakeroot -- pacman-key --init
 fakeroot -- pacman-key --populate archlinux
 fakeroot -- pacman-key --populate chaotic
 fakeroot -- pacman --noconfirm --overwrite "*" -Su 2>/dev/null
-fakeroot -- pacman --noconfirm -S ${pkgsinstall} 2>/dev/null
 fakeroot -- pacman --noconfirm -Runs ${pkgsremove} 2>/dev/null
+fakeroot -- pacman --noconfirm -S ${pkgsinstall} 2>/dev/null
 rm -f /var/cache/pacman/pkg/*
 update-ca-trust
 locale-gen
