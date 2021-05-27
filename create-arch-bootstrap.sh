@@ -9,6 +9,16 @@ if [ $EUID != 0 ]; then
 	exit 1
 fi
 
+if ! command -v wget 1>/dev/null; then
+	echo "wget is required!"
+	exit 1
+fi
+
+if ! command -v gzip 1>/dev/null; then
+	echo "gzip is required!"
+	exit 1
+fi
+
 script_dir="$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")"
 
 mount_chroot () {
