@@ -27,16 +27,23 @@ mount_chroot () {
 
 	mount --bind "${bootstrap}" "${bootstrap}"
 	mount -t proc /proc "${bootstrap}"/proc
-	mount --make-rslave --rbind /sys "${bootstrap}"/sys
-	mount --make-rslave --rbind /dev "${bootstrap}"/dev
-	mount --make-rslave --rbind /run "${bootstrap}"/run
+	mount --rbind /sys "${bootstrap}"/sys
+	mount --make-rslave "${bootstrap}"/sys
+	mount --rbind /dev "${bootstrap}"/dev
+	mount --make-rslave "${bootstrap}"/dev
+	mount --rbind /run "${bootstrap}"/run
+	mount --make-rslave "${bootstrap}"/run
 
 	rm -f "${bootstrap}"/etc/resolv.conf
 	cp /etc/resolv.conf "${bootstrap}"/etc/resolv.conf
 }
 
 unmount_chroot () {
-	umount -Rl "${bootstrap}"
+	umount -f "${bootstrap}"/proc
+	umount -f "${bootstrap}"/sys
+	umount -f "${bootstrap}"/dev
+	umount -f "${bootstrap}"/run
+	umount -f "${bootstrap}"
 }
 
 run_in_chroot () {
