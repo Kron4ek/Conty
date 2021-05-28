@@ -3,14 +3,13 @@
 ## Dependencies: bash fuse2 tar coreutils
 
 # Prevent launching as root
-if [ -z "$ALLOW_ROOT" ]; then
-	if [ $EUID = 0 ]; then
-		echo "Do not run this script as root!"
-		echo
-		echo "If you really need to run it as root, set ALLOW_ROOT env variable."
+if [ $EUID = 0 ] && [ -z "$ALLOW_ROOT" ]; then
+	echo "Do not run this script as root!"
+	echo
+	echo "If you really need to run it as root and you know what you are doing,"
+	echo "set ALLOW_ROOT environment variable."
 
-		exit 1
-	fi
+	exit 1
 fi
 
 script_version="1.11"
@@ -40,7 +39,7 @@ mount_point="${working_dir}"/mnt
 # a problem with mounting the squashfs image due to an incorrectly calculated offset.
 
 # The size of this script
-scriptsize=18249
+scriptsize=18331
 
 # The size of the utils.tar archive
 # utils.tar contains bwrap and squashfuse binaries
@@ -351,6 +350,7 @@ run_bwrap () {
 			--ro-bind-try /etc/group /etc/group \
 			--ro-bind-try /etc/machine-id /etc/machine-id \
 			--ro-bind-try /etc/asound.conf /etc/asound.conf \
+			--ro-bind-try /etc/localtime /etc/localtime \
 			${dirs} \
 			${net} \
 			${nvidia_driver_bind} \
