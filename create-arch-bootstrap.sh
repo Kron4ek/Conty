@@ -93,9 +93,11 @@ bootstrap="${script_dir}"/root.x86_64
 
 # List of packages to install
 # You can remove packages that you don't need
+# Besides packages from the official Arch repos, you can list
+# packages from the Chaotic-AUR repo here
 packagelist="base-devel nano mesa lib32-mesa vulkan-radeon lib32-vulkan-radeon \
 			vulkan-icd-loader lib32-vulkan-icd-loader nvidia-utils \
-			lib32-nvidia-utils lib32-alsa-plugins wine-staging mesa-demos \
+			lib32-nvidia-utils lib32-alsa-plugins wine-tkg-staging-fsync-git mesa-demos \
 			vulkan-tools gst-plugins-good gst-plugins-bad gst-plugins-ugly \
 			lib32-gst-plugins-good ttf-dejavu ttf-liberation lib32-openal \
 			lib32-vkd3d vkd3d lib32-libva vulkan-intel lib32-vulkan-intel \
@@ -105,11 +107,8 @@ packagelist="base-devel nano mesa lib32-mesa vulkan-radeon lib32-vulkan-radeon \
 			meson mingw-w64-gcc gamemode lib32-gamemode cmake jre8-openjdk \
 			libva-mesa-driver playonlinux libva-intel-driver lib32-libva-intel-driver \
 			intel-media-driver alsa-tools alsa-utils lib32-vulkan-mesa-layers \
-			vulkan-mesa-layers lib32-libva-mesa-driver libva-utils lxterminal wine-nine"
-
-# List of packages to install from the Chaotic-AUR repository
-# If you leave this variable empty, Chaotic-AUR will not be added at all
-chaotic_packagelist="wine-tkg-staging-fsync-git steamtinkerlaunch wineasio mangohud lib32-mangohud zsync2-git"
+			vulkan-mesa-layers lib32-libva-mesa-driver libva-utils lxterminal wine-nine \
+			steamtinkerlaunch wineasio mangohud lib32-mangohud zsync2-git"
 
 current_release="$(wget -q "https://archlinux.org/download/" -O - | grep "Current Release" | tail -c -16 | head -c +10)"
 
@@ -142,26 +141,22 @@ echo "Include = /etc/pacman.d/mirrorlist" >> "${bootstrap}"/etc/pacman.conf
 
 run_in_chroot pacman-key --init
 run_in_chroot pacman-key --populate archlinux
+
+# Add Chaotic-AUR repo
+run_in_chroot pacman-key --recv-key 3056513887B78AEB
+run_in_chroot pacman-key --lsign-key 3056513887B78AEB
+run_in_chroot pacman --noconfirm -U 'https://cdn-mirror.chaotic.cx/chaotic-aur/chaotic-'{keyring,mirrorlist}'.pkg.tar.zst'
+
+echo >> "${bootstrap}"/etc/pacman.conf
+echo "[chaotic-aur]" >> "${bootstrap}"/etc/pacman.conf
+echo "Include = /etc/pacman.d/chaotic-mirrorlist" >> "${bootstrap}"/etc/pacman.conf
+
 run_in_chroot pacman -Syu --noconfirm
 
 # These packages are required for the self-update feature to work properly
 run_in_chroot pacman --noconfirm --needed -S base reflector squashfs-tools fakeroot
 
 run_in_chroot pacman --noconfirm --needed -S ${packagelist}
-
-if [ -n "${chaotic_packagelist}" ]; then
-	run_in_chroot pacman-key --recv-key 3056513887B78AEB
-	run_in_chroot pacman-key --lsign-key 3056513887B78AEB
-	run_in_chroot pacman --noconfirm -U 'https://cdn-mirror.chaotic.cx/chaotic-aur/chaotic-'{keyring,mirrorlist}'.pkg.tar.zst'
-
-	echo >> "${bootstrap}"/etc/pacman.conf
-	echo "[chaotic-aur]" >> "${bootstrap}"/etc/pacman.conf
-	echo "Include = /etc/pacman.d/chaotic-mirrorlist" >> "${bootstrap}"/etc/pacman.conf
-
-	run_in_chroot pacman -Syu --noconfirm
-
-	run_in_chroot pacman --noconfirm --needed -S ${chaotic_packagelist}
-fi
 
 run_in_chroot locale-gen
 
