@@ -40,7 +40,7 @@ mount_point="${working_dir}"/mnt
 # a problem with mounting the squashfs image due to an incorrectly calculated offset.
 
 # The size of this script
-scriptsize=18217
+scriptsize=18249
 
 # The size of the utils.tar archive
 # utils.tar contains bwrap and squashfuse binaries
@@ -313,7 +313,8 @@ run_bwrap () {
 #				--hostname Conty"
 	else
 		dirs="--bind-try /home /home --bind-try /mnt /mnt --bind-try /opt /opt \
-			--bind-try /media /media --bind-try /run /run --bind-try /var /var"
+			--bind-try /media /media --bind-try /run /run --bind-try /var /var \
+			--bind-try ${HOME} ${HOME}"
 	fi
 
 	if [ -n "${HOME_DIR}" ]; then
