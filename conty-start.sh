@@ -40,7 +40,7 @@ mount_point="${working_dir}"/mnt
 # a problem with mounting the squashfs image due to an incorrectly calculated offset.
 
 # The size of this script
-scriptsize=18030
+scriptsize=18217
 
 # The size of the utils.tar archive
 # utils.tar contains bwrap and squashfuse binaries
@@ -331,6 +331,11 @@ run_bwrap () {
 		dirs="${dirs} ${bind}"
 	fi
 
+	# Set XAUTHORITY variable if it's missing (which is unlikely)
+	if [ -z "${XAUTHORITY}" ]; then
+		XAUTHORITY="${HOME}"/.Xauthority
+	fi
+
 	echo
 
 	"${bwrap}" --ro-bind "${mount_point}" / \
@@ -348,6 +353,7 @@ run_bwrap () {
 			${dirs} \
 			${net} \
 			${nvidia_driver_bind} \
+			--ro-bind-try "${XAUTHORITY}" "${XAUTHORITY}" \
 			--setenv PATH "${CUSTOM_PATH}" \
 			"$@"
 }
