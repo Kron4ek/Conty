@@ -12,7 +12,7 @@ if [ $EUID = 0 ] && [ -z "$ALLOW_ROOT" ]; then
 	exit 1
 fi
 
-script_version="1.11"
+script_version="1.12"
 
 # Full path to the script
 script_literal="${BASH_SOURCE[0]}"
@@ -39,7 +39,7 @@ mount_point="${working_dir}"/mnt
 # a problem with mounting the squashfs image due to an incorrectly calculated offset.
 
 # The size of this script
-scriptsize=18331
+scriptsize=18334
 
 # The size of the utils.tar archive
 # utils.tar contains bwrap and squashfuse binaries
@@ -150,6 +150,7 @@ elif [ "$1" = "-u" ] || [ "$1" = "-U" ]; then
 	# SANDBOX and DISABLE_NET (if they are enabled) for this to work properly
 	unset DISABLE_NET
 	unset SANDBOX
+	unset HOME_DIR
 
 	# Extract the squashfs image
 	clear
@@ -212,15 +213,16 @@ update-ca-trust
 locale-gen
 EOF
 
-	bind_items="--bind sqfs/var /var --bind sqfs/etc /etc --bind sqfs/usr /usr \
-          --ro-bind-try /etc/resolv.conf /etc/resolv.conf \
-          --ro-bind-try /etc/nsswitch.conf /etc/nsswitch.conf \
-          --ro-bind-try /etc/hosts /etc/hosts"
+    rm -f sqfs/etc/resolv.conf
+    cp /etc/resolv.conf sqfs/etc/resolv.conf
+    mkdir -p sqfs/run/shm
 
 	# Execute the previously generated script
 	clear
 	echo "Updating and installing packages"
-	bash "${script}" ${bind_items} bash container-update.sh
+	bash "${script}" --bind sqfs / --ro-bind /sys /sys --dev-bind /dev /dev \
+				--proc /proc --bind "${update_temp_dir}" "${update_temp_dir}" \
+				bash container-update.sh
 
 	# Create a squashfs image
 	clear
@@ -233,7 +235,7 @@ EOF
 	cat conty-start.sh utils.tar image > conty_updated.sh
 	chmod +x conty_updated.sh
 
-	mv "${script}" "${script}".old
+	mv -f "${script}" "${script}".old."${script_md5}"
 	mv conty_updated.sh "${script}" || \
 	mv conty_updated.sh "${OLD_PWD}" || \
 	mv conty_updated.sh "${HOME}"
