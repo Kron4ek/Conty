@@ -120,23 +120,26 @@ There are some other features, see the internal help for more information.
 Conty uses bubblewrap and thus supports filesystem sandboxing. By default
 it's disabled and almost all directories on your system are available for the container. 
 
-You can enable sandboxing with the **SANDBOX** environment variable. You can allow 
-access to directories and/or files you want with the **BIND** variable. It's 
-also possible to disable network with the **DISABLE_NET**. And you can set custom HOME directory
-with the **HOME_DIR** variable. For instance:
+Here are the environment variables that you can use to control the sandbox:
+* **SANDBOX** - enables the sandboxing feature itself. Isolates all directories, creates a fake temporary home directory (in RAM), which is destroyed after closing the container.
+* **DISABLE_NET** - completely disables internet access.
+* **HOME_DIR** - sets a custom home directory. If you set this, HOME inside the container will still appear as /home/username, but actually a custom directory will be used for it.
+* **BIND** - list of files/directories (separated by space) to bind to the container. You can use this variable to allow access to any files or directories.
+
+Example:
 
 ```
-export DISABLE_NET=1
 export SANDBOX=1
 export BIND="/home/username/.steam /home/username/.local/share/Steam"
 ./conty.sh steam
 ```
-Or
+Another example:
 ```
+mkdir "/home/username/custom_home_dir"
 export DISABLE_NET=1
 export SANDBOX=1
 export HOME_DIR="/home/username/custom_home_dir"
-./conty.sh steam
+./conty.sh lutris
 ```
 
 If you just want a sandboxing functionality but don't need a container with a full-size Linux distro inside (which is what Conty mainly is), i recommend to take a look directly at these projects: [bubblewrap](https://github.com/containers/bubblewrap) and [firejail](https://github.com/netblue30/firejail). Sandboxing is a good additional feature of Conty, but is not its main purpose.
