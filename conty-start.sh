@@ -12,7 +12,7 @@ if [ $EUID = 0 ] && [ -z "$ALLOW_ROOT" ]; then
 	exit 1
 fi
 
-script_version="1.12"
+script_version="1.13"
 
 # Full path to the script
 script_literal="${BASH_SOURCE[0]}"
@@ -26,11 +26,15 @@ script_id="${RANDOM}"
 
 # Working directory where the utils will be extracted
 # And where the squashfs image will be mounted
-# The default path is /tmp/scriptname_username_md5
+# The default path is /tmp/scriptname_username_scriptmd5
+# And if /tmp is mounted with noexec, the default path
+# is ~/.local/share/Conty/scriptname_username_scriptmd5
+conty_dir_name="$(basename "${script}")"_"${USER}"_"${script_md5}"
+
 if  [ -z "${BASE_DIR}" ]; then
-	export working_dir=/tmp/"$(basename "${script}")"_"${USER}"_"${script_md5}"
+	export working_dir=/tmp/"${conty_dir_name}"
 else
-	export working_dir="${BASE_DIR}"/"$(basename "${script}")"_"${USER}"_"${script_md5}"
+	export working_dir="${BASE_DIR}"/"${conty_dir_name}"
 fi
 
 mount_point="${working_dir}"/mnt
@@ -39,7 +43,7 @@ mount_point="${working_dir}"/mnt
 # a problem with mounting the squashfs image due to an incorrectly calculated offset.
 
 # The size of this script
-scriptsize=18334
+scriptsize=19305
 
 # The size of the utils.tar archive
 # utils.tar contains bwrap and squashfuse binaries
@@ -259,13 +263,34 @@ fi
 mkdir -p "${working_dir}"
 
 if [ "${USE_SYS_UTILS}" != 1 ]; then
+	# Check if filesystem of the working_dir is mounted without noexec
+	if ! exec_test; then
+		if [ -z "${BASE_DIR}" ]; then
+			export working_dir="${HOME}"/.local/share/Conty/"${conty_dir_name}"
+		fi
+
+		if ! exec_test; then
+			echo "Seems like /tmp is mounted with noexec or you don't have write access!"
+			echo "Please remount it without noexec or set BASE_DIR to a different location."
+
+			exit 1
+		fi
+	fi
+
 	mount_tool="${working_dir}"/utils/squashfuse
 	bwrap="${working_dir}"/utils/bwrap
 
 	if [ ! -f "${mount_tool}" ] || [ ! -f "${bwrap}" ]; then
 		tail -c +$((scriptsize+1)) "${script}" | head -c $utilssize > "${working_dir}"/utils.tar
 		tar -C "${working_dir}" -xf "${working_dir}"/utils.tar
-		rm "${working_dir}"/utils.tar
+		rm -f "${working_dir}"/utils.tar
+
+		if [ ! -f "${mount_tool}" ] || [ ! -f "${bwrap}" ]; then
+			echo "The utilities were not extracted!"
+			echo "Perhaps something is wrong with the integrated utils.tar."
+
+			exit 1
+		fi
 
 		chmod +x "${mount_tool}"
 		chmod +x "${bwrap}"
@@ -289,11 +314,27 @@ else
 		exit 1
 	fi
 
-	echo "Using system squashfuse and bwrap"
+	echo "Using system-wide squashfuse and bwrap"
 
 	mount_tool=squashfuse
 	bwrap=bwrap
 fi
+
+exec_test () {
+	mkdir -p "${working_dir}"
+
+	exec_test_file="${working_dir}"/exec_test
+
+	rm -f "${exec_test_file}"
+	touch "${exec_test_file}"
+	chmod +x "${exec_test_file}"
+
+	if [ ! -x "${exec_test_file}" ]; then
+		return 1
+	else
+		return 0
+	fi
+}
 
 run_bwrap () {
 	if [ "$DISABLE_NET" = 1 ]; then
