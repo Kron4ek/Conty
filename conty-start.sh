@@ -43,7 +43,7 @@ mount_point="${working_dir}"/mnt
 # a problem with mounting the squashfs image due to an incorrectly calculated offset.
 
 # The size of this script
-scriptsize=19305
+scriptsize=19853
 
 # The size of the utils.tar archive
 # utils.tar contains bwrap and squashfuse binaries
@@ -131,7 +131,101 @@ elif [ "$1" = "-o" ]; then
 	echo $offset
 
 	exit
-elif [ "$1" = "-u" ] || [ "$1" = "-U" ]; then
+fi
+
+exec_test () {
+	mkdir -p "${working_dir}"
+
+	exec_test_file="${working_dir}"/exec_test
+
+	rm -f "${exec_test_file}"
+	touch "${exec_test_file}"
+	chmod +x "${exec_test_file}"
+
+	if [ ! -x "${exec_test_file}" ]; then
+		return 1
+	else
+		return 0
+	fi
+}
+
+# Check if FUSE2 is installed when SUDO_MOUNT is not enabled
+if [ "${SUDO_MOUNT}" != 1 ] && ! command -v fusermount 1>/dev/null; then
+	echo "Please install fuse2 and run the script again!"
+	exit 1
+fi
+
+# Extract utils.tar
+mkdir -p "${working_dir}"
+
+if [ "${USE_SYS_UTILS}" != 1 ]; then
+	# Check if filesystem of the working_dir is mounted without noexec
+	if ! exec_test; then
+		if [ -z "${BASE_DIR}" ]; then
+			export working_dir="${HOME}"/.local/share/Conty/"${conty_dir_name}"
+			mount_point="${working_dir}"/mnt
+		fi
+
+		if ! exec_test; then
+			echo "Seems like /tmp is mounted with noexec or you don't have write access!"
+			echo "Please remount it without noexec or set BASE_DIR to a different location."
+
+			exit 1
+		fi
+	fi
+
+	mount_tool="${working_dir}"/utils/squashfuse
+	bwrap="${working_dir}"/utils/bwrap
+
+	if [ ! -f "${mount_tool}" ] || [ ! -f "${bwrap}" ]; then
+		tail -c +$((scriptsize+1)) "${script}" | head -c $utilssize > "${working_dir}"/utils.tar
+		tar -C "${working_dir}" -xf "${working_dir}"/utils.tar
+		rm -f "${working_dir}"/utils.tar
+
+		if [ ! -f "${mount_tool}" ] || [ ! -f "${bwrap}" ]; then
+			clear
+			echo "The utilities were not extracted!"
+			echo "Perhaps something is wrong with the integrated utils.tar."
+
+			exit 1
+		fi
+
+		chmod +x "${mount_tool}"
+		chmod +x "${bwrap}"
+	fi
+
+	export LD_LIBRARY_PATH="${working_dir}/utils:${LD_LIBRARY_PATH}"
+else
+	if ! command -v bwrap 1>/dev/null; then
+		echo "USE_SYS_UTILS is enabled, but bwrap is not installed!"
+		echo "Please install it and run the script again."
+
+		exit 1
+	fi
+
+	if ! command -v squashfuse 1>/dev/null && [ "${SUDO_MOUNT}" != 1 ]; then
+		echo "USE_SYS_UTILS is enabled, but squshfuse is not installed!"
+		echo "Please install it and run the script again."
+		echo "Or enable SUDO_MOUNT to mount the image using the regular"
+		echo "mount command instead of squashfuse."
+
+		exit 1
+	fi
+
+	echo "Using system-wide squashfuse and bwrap"
+
+	mount_tool=squashfuse
+	bwrap=bwrap
+fi
+
+if [ "${SUDO_MOUNT}" = 1 ]; then
+	echo "Using regular mount command (sudo mount) instead of squashfuse"
+
+	mount_tool=mount
+	use_sudo=sudo
+fi
+
+if [ "$1" = "-u" ] || [ "$1" = "-U" ]; then
 	OLD_PWD="${PWD}"
 
 	# Check if current directory is writable
@@ -151,15 +245,21 @@ elif [ "$1" = "-u" ] || [ "$1" = "-U" ]; then
 	cd "${update_temp_dir}" || exit 1
 
 	# Since Conty is used here to update itself, it's necessary to disable
-	# SANDBOX and DISABLE_NET (if they are enabled) for this to work properly
+	# some environment variables for this to work properly
+	unset NVIDIA_FIX
 	unset DISABLE_NET
-	unset SANDBOX
 	unset HOME_DIR
+	unset BIND
+
+	# Enable SANDBOX
+	export SANDBOX=1
 
 	# Extract the squashfs image
 	clear
 	echo "Extracting the squashfs image"
-	bash "${script}" unsquashfs -o $offset -user-xattrs -d sqfs "${script}"
+	bash "${script}" --bind "${update_temp_dir}" "${update_temp_dir}" \
+				--bind "${script}" /tmp/conty.sh \
+				unsquashfs -o $offset -user-xattrs -d sqfs /tmp/conty.sh
 
 	# Download or extract the utils.tar and the init script depending
 	# on what command line argument is used (-u or -U)
@@ -231,7 +331,8 @@ EOF
 	# Create a squashfs image
 	clear
 	echo "Creating a squashfs image"
-	bash "${script}" mksquashfs sqfs image -b 256K -comp zstd -Xcompression-level 14
+	bash "${script}" --bind "${update_temp_dir}" "${update_temp_dir}" \
+				mksquashfs sqfs image -b 256K -comp zstd -Xcompression-level 14
 
 	# Combine into a single executable
 	clear
@@ -239,10 +340,13 @@ EOF
 	cat conty-start.sh utils.tar image > conty_updated.sh
 	chmod +x conty_updated.sh
 
-	mv -f "${script}" "${script}".old."${script_md5}"
-	mv conty_updated.sh "${script}" || \
-	mv conty_updated.sh "${OLD_PWD}" || \
-	mv conty_updated.sh "${HOME}"
+	mv -f "${script}" "${script}".old."${script_md5}" 2>/dev/null
+	mv -f conty_updated.sh "${script}" 2>/dev/null || move_failed=1
+
+	if [ "${move_failed}" = 1 ]; then
+		mv -f conty_updated.sh "${OLD_PWD}" 2>/dev/null || \
+		mv -f conty_updated.sh "${HOME}" 2>/dev/null
+	fi
 
 	chmod -R 700 sqfs 2>/dev/null
 	rm -rf "${update_temp_dir}"
@@ -250,90 +354,15 @@ EOF
 	clear
 	echo "Conty has been updated!"
 
+	if [ "${move_failed}" = 1 ]; then
+		echo
+		echo "Replacing ${script} with the new one failed!"
+		echo
+		echo "You can find conty_updated.sh in the current working"
+		echo "directory or in your HOME."
+	fi
+
 	exit
-fi
-
-exec_test () {
-	mkdir -p "${working_dir}"
-
-	exec_test_file="${working_dir}"/exec_test
-
-	rm -f "${exec_test_file}"
-	touch "${exec_test_file}"
-	chmod +x "${exec_test_file}"
-
-	if [ ! -x "${exec_test_file}" ]; then
-		return 1
-	else
-		return 0
-	fi
-}
-
-# Check if FUSE2 is installed when SUDO_MOUNT is not enabled
-if [ "${SUDO_MOUNT}" != 1 ] && ! command -v fusermount 1>/dev/null; then
-	echo "Please install fuse2 and run the script again!"
-	exit 1
-fi
-
-# Extract utils.tar
-mkdir -p "${working_dir}"
-
-if [ "${USE_SYS_UTILS}" != 1 ]; then
-	# Check if filesystem of the working_dir is mounted without noexec
-	if ! exec_test; then
-		if [ -z "${BASE_DIR}" ]; then
-			export working_dir="${HOME}"/.local/share/Conty/"${conty_dir_name}"
-		fi
-
-		if ! exec_test; then
-			echo "Seems like /tmp is mounted with noexec or you don't have write access!"
-			echo "Please remount it without noexec or set BASE_DIR to a different location."
-
-			exit 1
-		fi
-	fi
-
-	mount_tool="${working_dir}"/utils/squashfuse
-	bwrap="${working_dir}"/utils/bwrap
-
-	if [ ! -f "${mount_tool}" ] || [ ! -f "${bwrap}" ]; then
-		tail -c +$((scriptsize+1)) "${script}" | head -c $utilssize > "${working_dir}"/utils.tar
-		tar -C "${working_dir}" -xf "${working_dir}"/utils.tar
-		rm -f "${working_dir}"/utils.tar
-
-		if [ ! -f "${mount_tool}" ] || [ ! -f "${bwrap}" ]; then
-			echo "The utilities were not extracted!"
-			echo "Perhaps something is wrong with the integrated utils.tar."
-
-			exit 1
-		fi
-
-		chmod +x "${mount_tool}"
-		chmod +x "${bwrap}"
-	fi
-
-	export LD_LIBRARY_PATH="${working_dir}/utils:${LD_LIBRARY_PATH}"
-else
-	if ! command -v bwrap 1>/dev/null; then
-		echo "USE_SYS_UTILS is enabled, but bwrap is not installed!"
-		echo "Please install it and run the script again."
-
-		exit 1
-	fi
-
-	if ! command -v squashfuse 1>/dev/null && [ "${SUDO_MOUNT}" != 1 ]; then
-		echo "USE_SYS_UTILS is enabled, but squshfuse is not installed!"
-		echo "Please install it and run the script again."
-		echo "Or enable SUDO_MOUNT to mount the image using the regular"
-		echo "mount command instead of squashfuse."
-
-		exit 1
-	fi
-
-	echo "Using system-wide squashfuse and bwrap"
-
-	mount_tool=squashfuse
-	bwrap=bwrap
 fi
 
 run_bwrap () {
@@ -532,13 +561,6 @@ trap_exit () {
 }
 
 trap 'trap_exit' EXIT
-
-if [ "${SUDO_MOUNT}" = 1 ]; then
-	echo "Using regular mount command (sudo mount) instead of squashfuse"
-
-	mount_tool=mount
-	use_sudo=sudo
-fi
 
 # Mount the squashfs image
 mkdir -p "${mount_point}"
