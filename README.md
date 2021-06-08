@@ -146,11 +146,11 @@ If you just want a sandboxing functionality but don't need a container with a fu
 
 ## Known issues
 
-Nvidia users will experience problems if their Nvidia kernel module version mismatches the version of the Nvidia libraries inside Conty. 
+Nvidia users will experience graphics acceleration problems if their Nvidia kernel module version mismatches the version of the Nvidia libraries inside Conty. 
 
-For example, if the version of your Nvidia kernel module is 460.56 and the libraries inside the container are from 460.67 version, then graphics acceleration will not work. 
+For example, if the version of your Nvidia kernel module is 460.56 and the libraries inside the container are from 460.67 version, then graphics acceleration will not work.
 
-There is an experimental solution for this problem in the latest Conty release that can be enabled with the **NVIDIA_FIX** variable. If you encounter this problem, please let me know if this feature does or doesn't fix it for you.
+There is an experimental solution for this problem that can be enabled with the **NVIDIA_FIX** variable. If you encounter this problem, please let me know if this feature does or doesn't fix it for you.
 
 ```
 export NVIDIA_FIX=1
@@ -160,7 +160,7 @@ export NVIDIA_FIX=1
 ## How to create your own Conty executables
 
 If you want to create Arch-based container, then use the **create-arch-bootstrap.sh** script. Root rights
-are required for this step, because chrooting is used here.
+are required for this step, because chroot is used here.
 
 ```
 ./create-arch-bootstrap.sh
@@ -177,7 +177,7 @@ For the sake of convenience, there are compiled binaries of bwrap and squashfuse
 ./create-utils.sh
 ```
 
-When distro bootsrap and utils.tar are obtained, use the **create-conty.sh** script to pack
+When distro and utils.tar are obtained, use the **create-conty.sh** script to pack
 everything into a single executable.
 
 ```
