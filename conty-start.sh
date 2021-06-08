@@ -253,6 +253,22 @@ EOF
 	exit
 fi
 
+exec_test () {
+	mkdir -p "${working_dir}"
+
+	exec_test_file="${working_dir}"/exec_test
+
+	rm -f "${exec_test_file}"
+	touch "${exec_test_file}"
+	chmod +x "${exec_test_file}"
+
+	if [ ! -x "${exec_test_file}" ]; then
+		return 1
+	else
+		return 0
+	fi
+}
+
 # Check if FUSE2 is installed when SUDO_MOUNT is not enabled
 if [ "${SUDO_MOUNT}" != 1 ] && ! command -v fusermount 1>/dev/null; then
 	echo "Please install fuse2 and run the script again!"
@@ -319,22 +335,6 @@ else
 	mount_tool=squashfuse
 	bwrap=bwrap
 fi
-
-exec_test () {
-	mkdir -p "${working_dir}"
-
-	exec_test_file="${working_dir}"/exec_test
-
-	rm -f "${exec_test_file}"
-	touch "${exec_test_file}"
-	chmod +x "${exec_test_file}"
-
-	if [ ! -x "${exec_test_file}" ]; then
-		return 1
-	else
-		return 0
-	fi
-}
 
 run_bwrap () {
 	if [ "$DISABLE_NET" = 1 ]; then
