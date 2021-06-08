@@ -157,9 +157,17 @@ export NVIDIA_FIX=1
 ./conty.sh glxgears
 ```
 
+## How to update
+
+There are three ways to update packages inside Conty, choose whichever is more convenient for you. 
+
+* First of all, you can simply download latest release from the [releases page](https://github.com/Kron4ek/Conty/releases), i usually upload a new release every week or every two weeks.
+* You can use the self-update feature (`./conty.sh -u`) integrated into Conty, it will update all packages and will rebuild the squashfs image. Read the integrated help for more information about it.
+* You can manually create a Conty executable with latest packages inside, read the "**How to create your own Conty executables**" section below.
+
 ## How to create your own Conty executables
 
-If you want to create Arch-based container, then use the **create-arch-bootstrap.sh** script. If you want to use any other distro, then you need to manually obtain it from somewhere. Root rights are required for this step, because chroot is used here.
+If you want to create Arch-based container, then use the **create-arch-bootstrap.sh** script, it will download latest Arch Linux bootstrap and will install latest packages to it. If you want to use any other distro, then you need to manually obtain it from somewhere. Root rights are required for this step, because chroot is used here.
 
 ```
 ./create-arch-bootstrap.sh
