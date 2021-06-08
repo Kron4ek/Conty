@@ -159,8 +159,7 @@ export NVIDIA_FIX=1
 
 ## How to create your own Conty executables
 
-If you want to create Arch-based container, then use the **create-arch-bootstrap.sh** script. Root rights
-are required for this step, because chroot is used here.
+If you want to create Arch-based container, then use the **create-arch-bootstrap.sh** script. If you want to use any other distro, then you need to manually obtain it from somewhere. Root rights are required for this step, because chroot is used here.
 
 ```
 ./create-arch-bootstrap.sh
@@ -169,15 +168,7 @@ are required for this step, because chroot is used here.
 You can edit the script if you want to include different set of packages inside
 the container.
 
-If you want to use some other distro, then you need to manually obtain it from somewhere.
-
-For the sake of convenience, there are compiled binaries of bwrap and squashfuse and their dependencies (utils.tar) uploaded in this repo, you can use them or you can use your own binaries. Use the **create-utils.sh** script to easily compile your own bwrap and squashfuse. Just make sure to set the correct size of the **utils.tar** in the **conty-start.sh**.
-
-```
-./create-utils.sh
-```
-
-When distro and utils.tar are obtained, use the **create-conty.sh** script to pack
+When distro is obtained, use the **create-conty.sh** script to pack
 everything into a single executable.
 
 ```
@@ -185,3 +176,5 @@ everything into a single executable.
 ```
 
 Done!
+
+For the sake of convenience, there are compiled binaries (**utils.tar**) of bwrap and squashfuse and their dependencies uploaded in this repo, **create-conty.sh** will use them by default. However, you can easily compile your own binaries by using the **create-utils.sh**, it will compile bwrap and squashfuse and will create utils.tar. If you are going to use your own utils.tar, make sure to set the correct size for it in the **conty-start.sh**.
