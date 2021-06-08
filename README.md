@@ -159,30 +159,27 @@ export NVIDIA_FIX=1
 
 ## How to update
 
-There are three ways to update packages inside Conty, choose whichever is more convenient for you. 
+There are three ways to update Conty and get the latest packages, use whichever is more convenient for you.
 
 * First of all, you can simply download latest release from the [releases page](https://github.com/Kron4ek/Conty/releases), i usually upload a new release every week or every two weeks.
-* You can use the self-update feature (`./conty.sh -u`) integrated into Conty, it will update all packages and will rebuild the squashfs image. Read the integrated help for more information about it.
+* You can use the self-update feature (`./conty.sh -u`) integrated into Conty, it will update all integrated packages and will rebuild the squashfs image. Read the internal help for more information about it.
 * You can manually create a Conty executable with latest packages inside, read the "**How to create your own Conty executables**" section below.
 
 ## How to create your own Conty executables
 
-If you want to create Arch-based container, then use the **create-arch-bootstrap.sh** script, it will download latest Arch Linux bootstrap and will install latest packages to it. If you want to use any other distro, then you need to manually obtain it from somewhere. Root rights are required for this step, because chroot is used here.
-
+If you want to create Arch-based container, use the **create-arch-bootstrap.sh** script, it will download latest Arch Linux bootstrap and will install latest packages into it. If you want to use any other distro, then you need to manually obtain it from somewhere. Root rights are required for this step, because chroot is used here.
 ```
 ./create-arch-bootstrap.sh
 ```
-
 You can edit the script if you want to include different set of packages inside
 the container.
 
-When distro is obtained, use the **create-conty.sh** script to pack
-everything into a single executable.
-
+When distro is obtained, use the **create-conty.sh** script to create a squashfs image and pack everything needed into a single executable.
 ```
 ./create-conty.sh
 ```
+By default it uses the lz4 algorithm for squashfs compression, but you can edit it and set zstd algo to get better compression ratio (keep in mind though that your squashfs-tools should support zstd for that to work).
 
 Done!
 
-For the sake of convenience, there are compiled binaries (**utils.tar**) of bwrap and squashfuse and their dependencies uploaded in this repo, **create-conty.sh** will use them by default. However, you can easily compile your own binaries by using the **create-utils.sh**, it will compile bwrap and squashfuse and will create utils.tar. If you are going to use your own utils.tar, make sure to set the correct size for it in the **conty-start.sh**.
+For the sake of convenience, there are compiled binaries (**utils.tar**) of bwrap and squashfuse and their dependencies uploaded in this repo, **create-conty.sh** uses them by default. However, you can easily compile your own binaries by using the **create-utils.sh**, it will compile bwrap and squashfuse and will create utils.tar. If you are going to use your own utils.tar, make sure to set the correct size for it in the **conty-start.sh**.
