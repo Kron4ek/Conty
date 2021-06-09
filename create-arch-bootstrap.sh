@@ -176,5 +176,9 @@ touch "${bootstrap}"/etc/asound.conf
 touch "${bootstrap}"/etc/localtime
 chmod 755 "${bootstrap}"/root
 
+# Enable full font hinting
+rm -f "${bootstrap}"/etc/fonts/conf.d/10-hinting-slight.conf
+ln -s /usr/share/fontconfig/conf.avail/10-hinting-full.conf "${bootstrap}"/etc/fonts/conf.d
+
 clear
 echo "Done"
