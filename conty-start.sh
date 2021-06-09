@@ -43,11 +43,11 @@ mount_point="${working_dir}"/mnt
 # a problem with mounting the squashfs image due to an incorrectly calculated offset.
 
 # The size of this script
-scriptsize=19853
+scriptsize=20179
 
 # The size of the utils.tar archive
 # utils.tar contains bwrap and squashfuse binaries
-utilssize=1515520
+utilssize=4270080
 
 # Offset where the squashfs image is stored
 offset=$((scriptsize+utilssize))
@@ -149,10 +149,26 @@ exec_test () {
 	fi
 }
 
+launch_wrapper () {
+	if [ "$1" = "mount" ]; then
+		${use_sudo} "$@"
+	elif [ "${USE_SYS_UTILS}" = 1 ]; then
+		"$@"
+	else
+		"${working_dir}"/utils/ld-linux-x86-64.so.2 --library-path "${working_dir}"/utils "$@"
+	fi
+}
+
 # Check if FUSE2 is installed when SUDO_MOUNT is not enabled
-if [ "${SUDO_MOUNT}" != 1 ] && ! command -v fusermount 1>/dev/null; then
-	echo "Please install fuse2 and run the script again!"
-	exit 1
+if [ "${SUDO_MOUNT}" != 1 ]; then
+	if ! command -v fusermount3 1>/dev/null && ! command -v fusermount 1>/dev/null; then
+		echo "Please install fuse2 or fuse3 and run the script again!"
+		exit 1
+	fi
+
+	if command -v fusermount3 1>/dev/null; then
+		fuse_version=3
+	fi
 fi
 
 # Extract utils.tar
@@ -174,7 +190,7 @@ if [ "${USE_SYS_UTILS}" != 1 ]; then
 		fi
 	fi
 
-	mount_tool="${working_dir}"/utils/squashfuse
+	mount_tool="${working_dir}"/utils/squashfuse${fuse_version}
 	bwrap="${working_dir}"/utils/bwrap
 
 	if [ ! -f "${mount_tool}" ] || [ ! -f "${bwrap}" ]; then
@@ -193,8 +209,6 @@ if [ "${USE_SYS_UTILS}" != 1 ]; then
 		chmod +x "${mount_tool}"
 		chmod +x "${bwrap}"
 	fi
-
-	export LD_LIBRARY_PATH="${working_dir}/utils:${LD_LIBRARY_PATH}"
 else
 	if ! command -v bwrap 1>/dev/null; then
 		echo "USE_SYS_UTILS is enabled, but bwrap is not installed!"
@@ -410,7 +424,7 @@ run_bwrap () {
 
 	echo
 
-	"${bwrap}" --ro-bind "${mount_point}" / \
+	launch_wrapper "${bwrap}" --ro-bind "${mount_point}" / \
 			--dev-bind /dev /dev \
 			--ro-bind /sys /sys \
 			--bind-try /tmp /tmp \
@@ -551,7 +565,7 @@ trap_exit () {
 	rm -f "${working_dir}"/running_"${script_id}"
 
 	if [ ! "$(ls "${working_dir}"/running_* 2>/dev/null)" ]; then
-		fusermount -uz "${mount_point}" 2>/dev/null || \
+		fusermount${fuse_version} -uz "${mount_point}" 2>/dev/null || \
 		${use_sudo} umount --lazy "${mount_point}" 2>/dev/null
 
 		rm -rf "${working_dir}"
@@ -566,7 +580,7 @@ trap 'trap_exit' EXIT
 mkdir -p "${mount_point}"
 
 if [ "$(ls "${mount_point}" 2>/dev/null)" ] || \
-	${use_sudo} "${mount_tool}" -o offset="${offset}",ro "${script}" "${mount_point}" ; then
+	launch_wrapper "${mount_tool}" -o offset="${offset}",ro "${script}" "${mount_point}" ; then
 
 	echo 1 > "${working_dir}"/running_"${script_id}"
 

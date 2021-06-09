@@ -54,11 +54,23 @@ mv bin/usr/local/lib/libzstd.so.${zstd_version} utils/libzstd.so.1
 mv bin/usr/local/lib/libfuseprivate.so.0.0.0 utils/libfuseprivate.so.0
 mv bin/usr/local/lib/libsquashfuse.so.0.0.0 utils/libsquashfuse.so.0
 
-if [ -f /usr/lib/libcap.so.2 ]; then
-	cp -L /usr/lib/libcap.so.2 utils/libcap.so.2
-elif [ -f  /lib/x86_64-linux-gnu/libcap.so.2 ]; then
-	cp -L /lib/x86_64-linux-gnu/libcap.so.2 utils/libcap.so.2
+if [ ! "$(ldd utils/squashfuse | grep libfuse.so.2)" ]; then
+	mv utils/squashfuse utils/squashfuse3
+	mv utils/squashfuse_ll utils/squashfuse3_ll
 fi
+
+libs_list="ld-linux-x86-64.so.2 libcap.so.2 libc.so.6 libdl.so.2 \
+		libfuse.so.2 libfuse3.so.3 libpthread.so.0"
+
+if [ -d /lib/x86_64-linux-gnu ]; then
+	syslib_path=/lib/x86_64-linux-gnu
+else
+	syslib_path=/usr/lib
+fi
+
+for i in ${libs_list}; do
+	cp -L "${syslib_path}"/"${i}" utils
+done
 
 find utils -type f -exec strip --strip-unneeded {} \; 2>/dev/null
 
@@ -77,6 +89,3 @@ rm -rf build-utils
 
 clear
 echo "Done!"
-echo
-echo "Keep in mind that your glibc version is: $(ldd --version | head -n 1)"
-echo "The compiled utils will not work with older glibc versions!"
