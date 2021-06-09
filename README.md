@@ -30,7 +30,7 @@ using the container at all.
 
 ## Requirements
 
-The only requirements are **bash**, **fuse2**, **tar** and **coreutils**. And your /tmp directory
+The only requirements are **bash**, **fuse2** (or **fuse3**), **tar** and **coreutils**. And your /tmp directory
 should allow files execution (which it does by default on most distros).
 
 Besides, your Linux kernel should be at least version 4.4 and should support unprivileged user namespaces. On some 
