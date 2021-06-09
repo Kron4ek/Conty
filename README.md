@@ -1,7 +1,7 @@
 ## Conty
 
 This is an easy to use unprivileged Linux container compressed into squashfs and packed 
-into a single executable that runs (or at least should run) on most Linux distros. It's designed to be as simple and user-friendly as possible.
+into a single executable that works on most Linux distros. It's designed to be as simple and user-friendly as possible.
 
 You can use it to run any applications, including games (Vulkan and OpenGL).
 
@@ -33,7 +33,7 @@ using the container at all.
 The only requirements are **bash**, **fuse2**, **tar** and **coreutils**. And your /tmp directory
 should allow files execution (which it does by default on most distros).
 
-Besides, your Linux kernel should support unprivileged user namespaces. On some 
+Besides, your Linux kernel should be at least version 4.4 and should support unprivileged user namespaces. On some 
 Linux distros this feature is disabled by default and can be enabled with sysfs:
 
 ```
