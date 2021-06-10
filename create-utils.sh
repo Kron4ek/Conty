@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# Dependencies: wget gcc make autoconf libtool pkgconf libcap fuse2 (or fuse3)
+# Dependencies: lz4 zstd wget gcc make autoconf libtool pkgconf libcap fuse2 (or fuse3)
 
 script_dir="$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")"
 
@@ -41,7 +41,7 @@ make -j$(nproc) DESTDIR="${script_dir}"/build-utils/bin install
 
 cd ../squashfuse-${squashfuse_version}
 ./autogen.sh
-./configure --without-zlib --without-xz --without-lzo
+./configure
 make -j$(nproc) DESTDIR="${script_dir}"/build-utils/bin install
 
 cd "${script_dir}"/build-utils
@@ -60,16 +60,22 @@ if [ ! "$(ldd utils/squashfuse | grep libfuse.so.2)" ]; then
 fi
 
 libs_list="ld-linux-x86-64.so.2 libcap.so.2 libc.so.6 libdl.so.2 \
-		libfuse.so.2 libfuse3.so.3 libpthread.so.0"
+		libfuse.so.2 libfuse3.so.3 libpthread.so.0 libz.so.1 \
+		liblzma.so.5 liblzo2.so.2"
 
 if [ -d /lib/x86_64-linux-gnu ]; then
-	syslib_path=/lib/x86_64-linux-gnu
+	syslib_path="/lib/x86_64-linux-gnu /usr/lib/x86_64-linux-gnu"
 else
-	syslib_path=/usr/lib
+	syslib_path="/usr/lib /usr/lib64"
 fi
 
 for i in ${libs_list}; do
-	cp -L "${syslib_path}"/"${i}" utils
+	for j in ${syslib_path}; do
+		if [ -f "${j}"/"${i}" ]; then
+			cp -L "${j}"/"${i}" utils
+			break
+		fi
+	done
 done
 
 find utils -type f -exec strip --strip-unneeded {} \; 2>/dev/null

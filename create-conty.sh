@@ -1,15 +1,16 @@
 #!/usr/bin/env bash
 
-# Dependencies: squashfs-tools zstd lz4
+# Dependencies: squashfs-tools
 
 script_dir="$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")"
 
-# Builtin squashfuse supports only lz4 and zstd
-# So choose either lz4 or zstd
+# Supported compression algorithms: lz4, zstd, gzip, xz, lzo
+# These are the algorithms supported by the integrated squashfuse
+# However, your squashfs-tools (mksquashfs) may not support some of them
 squashfs_compressor="lz4"
 compressor_arguments="-Xhc"
 
-# Set to true to use the existing squashfs image if it exists
+# Set to true to use an existing squashfs image if it exists
 # Otherwise the script will always create a new image
 use_existing_image="false"
 
@@ -33,8 +34,26 @@ if ! command -v mksquashfs 1>/dev/null; then
 fi
 
 if [ ! -d "${bootstrap}" ]; then
-	echo "Bootstrap is required!"
+	echo "Distro bootstrap is required!"
+	echo "Use the create-arch-bootstrap.sh script to get it"
 	exit 1
+fi
+
+# Check if selected compression algorithm is supported by mksquashfs
+if command -v grep 1>/dev/null; then
+	# mksquashfs writes its output to stderr instead of stdout
+	mksquashfs &>mksquashfs_out.txt
+
+	if [ ! "$(cat mksquashfs_out.txt | grep ${squashfs_compressor})" ]; then
+		echo "Seems like your mksquashfs doesn't support the selected"
+		echo "compression algorithm (${squashfs_compressor})."
+		echo
+		echo "Choose another algorithm and run the script again"
+		
+		exit 1
+	fi
+	
+	rm -f mksquashfs_out.txt
 fi
 
 echo
