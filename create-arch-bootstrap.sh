@@ -154,6 +154,9 @@ echo >> "${bootstrap}"/etc/pacman.conf
 echo "[chaotic-aur]" >> "${bootstrap}"/etc/pacman.conf
 echo "Include = /etc/pacman.d/chaotic-mirrorlist" >> "${bootstrap}"/etc/pacman.conf
 
+# Enable ParallelDownloads feature of pacman
+sed -i 's/#ParallelDownloads = 5/ParallelDownloads = 5/g' "${bootstrap}"/etc/pacman.conf
+
 run_in_chroot pacman -Syu --noconfirm
 
 # These packages are required for the self-update feature to work properly
