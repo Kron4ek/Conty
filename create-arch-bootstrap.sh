@@ -94,24 +94,40 @@ cd "${script_dir}" || exit 1
 
 bootstrap="${script_dir}"/root.x86_64
 
+# Package groups
+
+audio_pkgs="alsa-lib lib32-alsa-lib alsa-plugins lib32-alsa-plugins libpulse \
+	lib32-libpulse jack2 lib32-jack2 alsa-tools alsa-utils"
+
+video_pkgs="mesa lib32-mesa vulkan-radeon lib32-vulkan-radeon \
+	vulkan-intel lib32-vulkan-intel nvidia-utils lib32-nvidia-utils \
+	vulkan-icd-loader lib32-vulkan-icd-loader vulkan-mesa-layers \
+	lib32-vulkan-mesa-layers libva-mesa-driver lib32-libva-mesa-driver \
+	libva-intel-driver lib32-libva-intel-driver intel-media-driver \
+	mesa-demos vulkan-tools nvidia-prime libva-utils"
+
+wine_pkgs="wine-tkg-staging-fsync-git winetricks wine-nine wineasio \
+	giflib lib32-giflib libpng lib32-libpng libldap lib32-libldap \
+	gnutls lib32-gnutls mpg123 lib32-mpg123 openal lib32-openal \
+	v4l-utils lib32-v4l-utils libpulse lib32-libpulse alsa-plugins \
+	lib32-alsa-plugins alsa-lib lib32-alsa-lib libjpeg-turbo \
+	lib32-libjpeg-turbo libxcomposite lib32-libxcomposite libxinerama \
+	lib32-libxinerama libxslt lib32-libxslt libva lib32-libva gtk3 \
+	lib32-gtk3 vulkan-icd-loader lib32-vulkan-icd-loader sdl2 lib32-sdl2 \
+	vkd3d lib32-vkd3d libgphoto2 ffmpeg gst-plugins-good gst-plugins-bad \
+	gst-plugins-ugly gst-plugins-base lib32-gst-plugins-good lib32-gst-plugins-base"
+
 # List of packages to install
 # You can remove packages that you don't need
 # Besides packages from the official Arch repos, you can list
 # packages from the Chaotic-AUR repo here
-packagelist="base-devel nano mesa lib32-mesa vulkan-radeon lib32-vulkan-radeon \
-			vulkan-icd-loader lib32-vulkan-icd-loader nvidia-utils \
-			lib32-nvidia-utils lib32-alsa-plugins wine-tkg-staging-fsync-git mesa-demos \
-			vulkan-tools gst-plugins-good gst-plugins-bad gst-plugins-ugly \
-			lib32-gst-plugins-good ttf-dejavu ttf-liberation lib32-openal \
-			lib32-vkd3d vkd3d lib32-libva vulkan-intel lib32-vulkan-intel \
-			winetricks lutris steam firefox mpv geany pcmanfm ppsspp dolphin-emu \
-			git wget htop qbittorrent speedcrunch gpicview qpdfview \
-			file-roller xorg-xwayland steam-native-runtime nvidia-prime \
-			meson mingw-w64-gcc gamemode lib32-gamemode cmake jre-openjdk \
-			libva-mesa-driver playonlinux libva-intel-driver lib32-libva-intel-driver \
-			intel-media-driver alsa-tools alsa-utils lib32-vulkan-mesa-layers \
-			vulkan-mesa-layers lib32-libva-mesa-driver libva-utils lxterminal wine-nine \
-			steamtinkerlaunch wineasio mangohud lib32-mangohud zsync2-git"
+packagelist="${audio_pkgs} ${video_pkgs} ${wine_pkgs} \
+	base-devel nano ttf-dejavu ttf-liberation lutris steam firefox \
+	mpv geany pcmanfm ppsspp dolphin-emu git wget htop qbittorrent \
+	speedcrunch gpicview qpdfview file-roller xorg-xwayland steam-native-runtime \
+	meson mingw-w64-gcc gamemode lib32-gamemode cmake jre-openjdk \
+	playonlinux lxterminal steamtinkerlaunch mangohud lib32-mangohud \
+	zsync2-git"
 
 current_release="$(wget -q "https://archlinux.org/download/" -O - | grep "Current Release" | tail -c -16 | head -c +10)"
 
