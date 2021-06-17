@@ -26,6 +26,7 @@ videodrivers.
 with Conty read and store their configs in your HOME directory as if you weren't
 using the container at all.
 * No performance overhead. Since it's just a container, there is almost no overhead, thus all applications will run at full speed.
+* Supports Xorg, Wayland and XWayland.
 * Supports filesystem sandboxing (thanks to bubblewrap).
 
 ## Requirements
