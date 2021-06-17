@@ -107,7 +107,7 @@ packagelist="base-devel nano mesa lib32-mesa vulkan-radeon lib32-vulkan-radeon \
 			winetricks lutris steam firefox mpv geany pcmanfm ppsspp dolphin-emu \
 			git wget htop qbittorrent speedcrunch gpicview qpdfview \
 			file-roller xorg-xwayland steam-native-runtime nvidia-prime \
-			meson mingw-w64-gcc gamemode lib32-gamemode cmake jre8-openjdk \
+			meson mingw-w64-gcc gamemode lib32-gamemode cmake jre-openjdk \
 			libva-mesa-driver playonlinux libva-intel-driver lib32-libva-intel-driver \
 			intel-media-driver alsa-tools alsa-utils lib32-vulkan-mesa-layers \
 			vulkan-mesa-layers lib32-libva-mesa-driver libva-utils lxterminal wine-nine \
