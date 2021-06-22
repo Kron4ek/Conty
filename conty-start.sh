@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-## Dependencies: bash fuse2 tar coreutils
+## Dependencies: bash fuse2 (or fuse3) tar coreutils
 
 # Prevent launching as root
 if [ $EUID = 0 ] && [ -z "$ALLOW_ROOT" ]; then
@@ -12,7 +12,7 @@ if [ $EUID = 0 ] && [ -z "$ALLOW_ROOT" ]; then
 	exit 1
 fi
 
-script_version="1.13"
+script_version="1.13.1"
 
 # Full path to the script
 script_literal="${BASH_SOURCE[0]}"
@@ -43,7 +43,7 @@ mount_point="${working_dir}"/mnt
 # a problem with mounting the squashfs image due to an incorrectly calculated offset.
 
 # The size of this script
-scriptsize=20179
+scriptsize=20149
 
 # The size of the utils.tar archive
 # utils.tar contains bwrap and squashfuse binaries
@@ -142,11 +142,7 @@ exec_test () {
 	touch "${exec_test_file}"
 	chmod +x "${exec_test_file}"
 
-	if [ ! -x "${exec_test_file}" ]; then
-		return 1
-	else
-		return 0
-	fi
+	[ -x "${exec_test_file}" ]
 }
 
 launch_wrapper () {
