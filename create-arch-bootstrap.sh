@@ -159,6 +159,7 @@ echo "[multilib]" >> "${bootstrap}"/etc/pacman.conf
 echo "Include = /etc/pacman.d/mirrorlist" >> "${bootstrap}"/etc/pacman.conf
 
 run_in_chroot pacman-key --init
+echo "keyserver hkps://keyserver.ubuntu.com" >> "${bootstrap}"/etc/pacman.d/gnupg/gpg.conf
 run_in_chroot pacman-key --populate archlinux
 
 # Add Chaotic-AUR repo

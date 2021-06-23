@@ -43,7 +43,7 @@ mount_point="${working_dir}"/mnt
 # a problem with mounting the squashfs image due to an incorrectly calculated offset.
 
 # The size of this script
-scriptsize=20149
+scriptsize=20226
 
 # The size of the utils.tar archive
 # utils.tar contains bwrap and squashfuse binaries
@@ -317,6 +317,7 @@ fakeroot -- pacman --noconfirm -S archlinux-keyring 2>/dev/null
 fakeroot -- pacman --noconfirm -S chaotic-keyring 2>/dev/null
 rm -rf /etc/pacman.d/gnupg
 fakeroot -- pacman-key --init
+echo "keyserver hkps://keyserver.ubuntu.com" >> /etc/pacman.d/gnupg/gpg.conf
 fakeroot -- pacman-key --populate archlinux
 fakeroot -- pacman-key --populate chaotic
 fakeroot -- pacman --noconfirm --overwrite "*" -Su 2>/dev/null
