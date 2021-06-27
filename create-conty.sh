@@ -28,17 +28,6 @@ if [ ! -f conty-start.sh ]; then
 	exit 1
 fi
 
-if ! command -v mksquashfs 1>/dev/null; then
-	echo "Please install squashfs-tools and run the script again"
-	exit 1
-fi
-
-if [ ! -d "${bootstrap}" ]; then
-	echo "Distro bootstrap is required!"
-	echo "Use the create-arch-bootstrap.sh script to get it"
-	exit 1
-fi
-
 # Check if selected compression algorithm is supported by mksquashfs
 if command -v grep 1>/dev/null; then
 	# mksquashfs writes its output to stderr instead of stdout
@@ -49,10 +38,10 @@ if command -v grep 1>/dev/null; then
 		echo "compression algorithm (${squashfs_compressor})."
 		echo
 		echo "Choose another algorithm and run the script again"
-		
+
 		exit 1
 	fi
-	
+
 	rm -f mksquashfs_out.txt
 fi
 
@@ -62,6 +51,17 @@ echo
 
 # Create the squashfs image
 if [ ! -f image ] || [ "${use_existing_image}" != "true" ]; then
+	if ! command -v mksquashfs 1>/dev/null; then
+		echo "Please install squashfs-tools and run the script again"
+		exit 1
+	fi
+
+	if [ ! -d "${bootstrap}" ]; then
+		echo "Distro bootstrap is required!"
+		echo "Use the create-arch-bootstrap.sh script to get it"
+		exit 1
+	fi
+
 	rm -f image
 	mksquashfs "${bootstrap}" image -b 256K -comp ${squashfs_compressor} ${compressor_arguments}
 fi
