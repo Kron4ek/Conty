@@ -12,7 +12,7 @@ if [ $EUID = 0 ] && [ -z "$ALLOW_ROOT" ]; then
 	exit 1
 fi
 
-script_version="1.13.1"
+script_version="1.14"
 
 # Full path to the script
 script_literal="${BASH_SOURCE[0]}"
@@ -43,7 +43,7 @@ mount_point="${working_dir}"/mnt
 # a problem with mounting the squashfs image due to an incorrectly calculated offset.
 
 # The size of this script
-scriptsize=20226
+scriptsize=20449
 
 # The size of the utils.tar archive
 # utils.tar contains bwrap and squashfuse binaries
@@ -95,6 +95,8 @@ if [ "$1" = "--help" ] || [ "$1" = "-h" ] || ([ -z "$1" ] && [ ! -L "${script_li
 	echo -e "BASE_DIR \tSets custom directory where Conty will extract"
 	echo -e "\t\tits builtin utilities and mount the squashfs image."
 	echo -e "\t\tThe default location is /tmp."
+	echo -e "QUIET_MODE \tDisables all non-error Conty messages."
+	echo -e "\t\tDoesn't affect the output of applications."
 	echo
 	echo "Additional notes:"
 	echo
@@ -132,6 +134,12 @@ elif [ "$1" = "-o" ]; then
 
 	exit
 fi
+
+show_msg () {
+	if [ "${QUIET_MODE}" != 1 ]; then
+		echo "$@"
+	fi
+}
 
 exec_test () {
 	mkdir -p "${working_dir}"
@@ -222,14 +230,14 @@ else
 		exit 1
 	fi
 
-	echo "Using system-wide squashfuse and bwrap"
+	show_msg "Using system-wide squashfuse and bwrap"
 
 	mount_tool=squashfuse
 	bwrap=bwrap
 fi
 
 if [ "${SUDO_MOUNT}" = 1 ]; then
-	echo "Using regular mount command (sudo mount) instead of squashfuse"
+	show_msg "Using regular mount command (sudo mount) instead of squashfuse"
 
 	mount_tool=mount
 	use_sudo=sudo
@@ -378,13 +386,13 @@ fi
 
 run_bwrap () {
 	if [ "$DISABLE_NET" = 1 ]; then
-		echo "Network is disabled"
+		show_msg "Network is disabled"
 
 		net="--unshare-net"
 	fi
 
 	if [ "$SANDBOX" = 1 ]; then
-		echo "Filesystem sandbox is enabled"
+		show_msg "Filesystem sandbox is enabled"
 
 		dirs="--tmpfs /home --dir ${HOME} --tmpfs /opt --tmpfs /mnt \
 			--tmpfs /media --tmpfs /var --tmpfs /run --symlink /run /var/run \
@@ -400,12 +408,12 @@ run_bwrap () {
 	fi
 
 	if [ -n "${HOME_DIR}" ]; then
-		echo "Set home directory to ${HOME_DIR}"
+		show_msg "Set home directory to ${HOME_DIR}"
 		dirs="${dirs} --bind ${HOME_DIR} ${HOME}"
 	fi
 
 	if [ -n "$BIND" ]; then
-		echo "Bound items: ${BIND}"
+		show_msg "Bound items: ${BIND}"
 
 		for i in ${BIND}; do
 			bind="${bind} --bind ${i} ${i}"
@@ -419,7 +427,7 @@ run_bwrap () {
 		XAUTHORITY="${HOME}"/.Xauthority
 	fi
 
-	echo
+	show_msg
 
 	launch_wrapper "${bwrap}" --ro-bind "${mount_point}" / \
 			--dev-bind /dev /dev \
@@ -581,7 +589,7 @@ if [ "$(ls "${mount_point}" 2>/dev/null)" ] || \
 
 	echo 1 > "${working_dir}"/running_"${script_id}"
 
-	echo "Running Conty"
+	show_msg "Running Conty"
 
 	if [ "${NVIDIA_FIX}" = 1 ]; then
 		bind_nvidia_driver
@@ -590,7 +598,7 @@ if [ "$(ls "${mount_point}" 2>/dev/null)" ] || \
 	if [ -L "${script_literal}" ] && [ -f "${mount_point}"/usr/bin/"${script_name}" ]; then
 		export CUSTOM_PATH="/bin:/sbin:/usr/bin:/usr/sbin:/usr/lib/jvm/default/bin"
 
-		echo "Autostarting ${script_name}"
+		show_msg "Autostarting ${script_name}"
 		run_bwrap "${script_name}" "$@"
 	else
 		export CUSTOM_PATH="/bin:/sbin:/usr/bin:/usr/sbin:/usr/lib/jvm/default/bin:/usr/local/bin:/usr/local/sbin:${PATH}"
