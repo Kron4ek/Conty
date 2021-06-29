@@ -127,7 +127,7 @@ packagelist="${audio_pkgs} ${video_pkgs} ${wine_pkgs} \
 	speedcrunch gpicview qpdfview file-roller xorg-xwayland steam-native-runtime \
 	meson mingw-w64-gcc gamemode lib32-gamemode cmake jre-openjdk \
 	playonlinux lxterminal steamtinkerlaunch mangohud lib32-mangohud \
-	zsync2-git"
+	zsync2-git wayland lib32-wayland qt5-wayland retroarch"
 
 current_release="$(wget -q "https://archlinux.org/download/" -O - | grep "Current Release" | tail -c -16 | head -c +10)"
 
