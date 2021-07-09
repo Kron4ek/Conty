@@ -10,6 +10,8 @@ script_dir="$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")"
 squashfs_compressor="lz4"
 compressor_arguments="-Xhc"
 
+image_path="${script_dir}"/image
+
 # Set to true to use an existing squashfs image if it exists
 # Otherwise the script will always create a new image
 use_existing_image="false"
@@ -50,7 +52,7 @@ echo "Creating Conty..."
 echo
 
 # Create the squashfs image
-if [ ! -f image ] || [ "${use_existing_image}" != "true" ]; then
+if [ ! -f "${image_path}" ] || [ "${use_existing_image}" != "true" ]; then
 	if ! command -v mksquashfs 1>/dev/null; then
 		echo "Please install squashfs-tools and run the script again"
 		exit 1
@@ -62,12 +64,12 @@ if [ ! -f image ] || [ "${use_existing_image}" != "true" ]; then
 		exit 1
 	fi
 
-	rm -f image
-	mksquashfs "${bootstrap}" image -b 256K -comp ${squashfs_compressor} ${compressor_arguments}
+	rm -f "${image_path}"
+	mksquashfs "${bootstrap}" "${image_path}" -b 256K -comp ${squashfs_compressor} ${compressor_arguments}
 fi
 
 # Combine the files into a single executable using cat
-cat conty-start.sh utils.tar image > conty.sh
+cat conty-start.sh utils.tar "${image_path}" > conty.sh
 chmod +x conty.sh
 
 clear
