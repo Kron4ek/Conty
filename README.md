@@ -162,7 +162,7 @@ export NVIDIA_FIX=1
 
 There are three ways to update Conty and get the latest packages, use whichever is more convenient for you.
 
-* First of all, you can simply download latest release from the [releases page](https://github.com/Kron4ek/Conty/releases), i usually upload a new release every week or every two weeks.
+* First of all, you can simply download latest release from the [releases page](https://github.com/Kron4ek/Conty/releases), i usually upload a new release every two weeks.
 * You can use the self-update feature (`./conty.sh -u`) integrated into Conty, it will update all integrated packages and will rebuild the squashfs image. Read the internal help for more information about it.
 * You can manually create a Conty executable with latest packages inside, read the "**How to create your own Conty executables**" section below.
 
