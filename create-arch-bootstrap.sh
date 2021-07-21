@@ -106,7 +106,7 @@ video_pkgs="mesa lib32-mesa vulkan-radeon lib32-vulkan-radeon \
 	libva-intel-driver lib32-libva-intel-driver intel-media-driver \
 	mesa-demos vulkan-tools nvidia-prime libva-utils"
 
-wine_pkgs="wine-tkg-staging-fsync-git winetricks wine-nine wineasio \
+wine_pkgs="wine-tkg-staging-fsync-git winetricks-git wine-nine wineasio \
 	giflib lib32-giflib libpng lib32-libpng libldap lib32-libldap \
 	gnutls lib32-gnutls mpg123 lib32-mpg123 openal lib32-openal \
 	v4l-utils lib32-v4l-utils libpulse lib32-libpulse alsa-plugins \
