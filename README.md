@@ -28,7 +28,7 @@ Linux distros this feature is disabled by default and can be enabled with sysfs:
 sysctl kernel.unprivileged_userns_clone=1
 ```
 
-Even if unprivileged user namespaces are not supported by your kernel, you can still use Conty if you have bwrap with SUID bit installed on your system, in this case just tell Conty to use system-wide bwrap and squashfuse instead of the builtin ones.
+Even if unprivileged user namespaces are not supported by your kernel, you can still use Conty if you have bwrap with SUID bit installed on your system, in this case just tell Conty to use system-wide utils instead of the builtin ones.
 
 ```
 export USE_SYS_UTILS=1
@@ -84,7 +84,7 @@ There are many more integrated programs. You can list all of them with:
 ./conty.sh ls /usr/bin
 ```
 
-It is possible to run arbitary binaries from your storage. For example, if you want to run an application that resides on your HOME run something like:
+It is possible to run arbitary binaries from your storage. For example, if you want to run an application that resides on your HOME, run something like:
 
 ```
 ./conty.sh /home/username/SomeApplication/binaryfile
