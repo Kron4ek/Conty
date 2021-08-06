@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-## Dependencies: bash fuse2 (or fuse3) tar coreutils
+## Dependencies: bash gzip fuse2 (or fuse3) tar coreutils
 
 # Prevent launching as root
 if [ $EUID = 0 ] && [ -z "$ALLOW_ROOT" ]; then
@@ -12,7 +12,7 @@ if [ $EUID = 0 ] && [ -z "$ALLOW_ROOT" ]; then
 	exit 1
 fi
 
-script_version="1.14"
+script_version="1.15"
 
 # Full path to the script
 script_literal="${BASH_SOURCE[0]}"
@@ -25,7 +25,7 @@ script_md5="$(tail -c 1000000 "${script}" | md5sum | head -c 7)"
 script_id="${RANDOM}"
 
 # Working directory where the utils will be extracted
-# And where the squashfs image will be mounted
+# And where the image will be mounted
 # The default path is /tmp/scriptname_username_scriptmd5
 # And if /tmp is mounted with noexec, the default path
 # is ~/.local/share/Conty/scriptname_username_scriptmd5
@@ -40,17 +40,20 @@ fi
 mount_point="${working_dir}"/mnt
 
 # It's important to set correct sizes below, otherwise there will be
-# a problem with mounting the squashfs image due to an incorrectly calculated offset.
+# a problem with mounting the image due to an incorrectly calculated offset.
 
 # The size of this script
-scriptsize=20449
+scriptsize=21361
 
-# The size of the utils.tar archive
-# utils.tar contains bwrap and squashfuse binaries
-utilssize=4679680
+# The size of the utils.tar.gz archive
+# utils.tar.gz contains bwrap, squashfuse and dwarfs binaries
+utilssize=7418944
 
-# Offset where the squashfs image is stored
+# Offset where the image is stored
 offset=$((scriptsize+utilssize))
+
+# Set to 1 if you are using an image compressed with dwarfs instead of squashfs
+dwarfs_image=0
 
 if [ "$1" = "--help" ] || [ "$1" = "-h" ] || ([ -z "$1" ] && [ ! -L "${script_literal}" ]); then
 	echo "Usage: ./conty.sh command command_arguments"
@@ -58,32 +61,31 @@ if [ "$1" = "--help" ] || [ "$1" = "-h" ] || ([ -z "$1" ] && [ ! -L "${script_li
 	echo "Arguments:"
 	echo
 	echo -e "-v \tShow version of this script"
-	echo -e "-e \tExtract the squashfs image"
-	echo -e "-o \tShow the squashfs image offset"
+	echo -e "-e \tExtract the squashfs/dwarfs image"
+	echo -e "-o \tShow the image offset"
 	echo -e "-u \tUpdate all packages inside the container"
 	echo -e "\tThis will update all packages inside the container and will rebuild"
-	echo -e "\tthe squashfs image. This may take quite a lot of time, depending"
+	echo -e "\tthe image. This may take quite a lot of time, depending"
 	echo -e "\ton your hardware and internet speed. Additional disk space"
 	echo -e "\t(about 6x the size of the current file) is needed during"
 	echo -e "\tthe update process."
 	echo -e "-U \tThe same as -u but will also update the init script (conty-start.sh)"
-	echo -e "\tand the integrated utils directly from the GitHub repo."
+	echo -e "\tand the integrated utils."
 	echo
 	echo "Environment variables:"
 	echo
 	echo -e "DISABLE_NET \tDisables network access"
 	echo -e "SANDBOX \tEnables filesystem sandbox"
-	echo -e "BIND \t\tBinds directories and files (separated by space) from host"
-	echo -e "\t\tsystem to the container. All specified items must exist."
+	echo -e "BIND \t\tBinds directories and files (separated by space) from the"
+	echo -e "\t\thost system to the container. All specified items must exist."
 	echo -e "\t\tFor example, BIND=\"/home/username/.config /etc/pacman.conf\""
-	echo -e "HOME_DIR \tSets HOME directory to a custom location."
+	echo -e "HOME_DIR \tSets the HOME directory to a custom location."
 	echo -e "\t\tFor example, HOME_DIR=\"/home/username/custom_home\""
-	echo -e "USE_SYS_UTILS \tMakes the script to use squashfuse and bwrap"
+	echo -e "\t\tIf you set this, HOME inside the container will still appear"
+	echo -e "\t\tas /home/username, but actually a custom directory will be"
+	echo -e "\t\tused for it."
+	echo -e "USE_SYS_UTILS \tMakes the script to use squashfuse/dwarfs and bwrap"
 	echo -e "\t\tinstalled on the system instead of the builtin ones."
-	echo -e "\t\tIf you want to enable this variable, please make sure"
-	echo -e "\t\tthat bubblewrap and squashfuse are installed on your system"
-	echo -e "\t\tand that squashfuse supports the compression algo the image"
-	echo -e "\t\twas built with."
 	echo -e "NVIDIA_FIX \tAutomatically download and bind the required Nvidia"
 	echo -e "\t\tlibraries if the kernel module version in the system differs"
 	echo -e "\t\tfrom the Nvidia libraries version inside the container."
@@ -91,18 +93,18 @@ if [ "$1" = "--help" ] || [ "$1" = "-h" ] || ([ -z "$1" ] && [ ! -L "${script_li
 	echo -e "SUDO_MOUNT \tMakes the script to mount the squashfs image by using"
 	echo -e "\t\tthe regular mount command instead of squashfuse. In this"
 	echo -e "\t\tcase root rights will be requested (via sudo) when mounting"
-	echo -e "\t\tand unmounting."
-	echo -e "BASE_DIR \tSets custom directory where Conty will extract"
-	echo -e "\t\tits builtin utilities and mount the squashfs image."
+	echo -e "\t\tand unmounting. This doesn't work for dwarfs-compressed images."
+	echo -e "BASE_DIR \tSets a custom directory where Conty will extract"
+	echo -e "\t\tits builtin utilities and mount the image."
 	echo -e "\t\tThe default location is /tmp."
 	echo -e "QUIET_MODE \tDisables all non-error Conty messages."
 	echo -e "\t\tDoesn't affect the output of applications."
 	echo
 	echo "Additional notes:"
 	echo
-	echo "If you enable SANDBOX but don't set BIND or HOME_DIR, then"
-	echo "no directories will be available at all and a fake temporary HOME"
-	echo "directory will be used."
+	echo "If you enable SANDBOX but don't set BIND or HOME_DIR, then no system"
+	echo "directories/files will be available at all inside the container and a fake"
+	echo "temporary HOME directory will be used."
 	echo
 	echo "If the script is a symlink to itself but with a different name,"
 	echo "then the symlinked script will automatically run a program according"
@@ -122,10 +124,18 @@ elif [ "$1" = "-v" ]; then
 
 	exit
 elif [ "$1" = "-e" ]; then
-	if command -v unsquashfs 1>/dev/null; then
-		unsquashfs -o $offset -user-xattrs -d "$(basename "${script}")"_files "${script}"
+	if [ "${dwarfs_image}" = 1 ]; then
+		if command -v dwarfsextract 1>/dev/null; then
+			dwarfsextract -i "${script}" -o "$(basename "${script}")"_files
+		else
+			echo "To extract the image install dwarfs."
+		fi
 	else
-		echo "To extract the image install squashfs-tools."
+		if command -v unsquashfs 1>/dev/null; then
+			unsquashfs -o $offset -user-xattrs -d "$(basename "${script}")"_files "${script}"
+		else
+			echo "To extract the image install squashfs-tools."
+		fi
 	fi
 
 	exit
@@ -163,8 +173,8 @@ launch_wrapper () {
 	fi
 }
 
-# Check if FUSE2 is installed when SUDO_MOUNT is not enabled
-if [ "${SUDO_MOUNT}" != 1 ]; then
+# Check if FUSE is installed when SUDO_MOUNT is not enabled
+if [ "${SUDO_MOUNT}" != 1 ] || [ "${dwarfs_image}" = 1 ]; then
 	if ! command -v fusermount3 1>/dev/null && ! command -v fusermount 1>/dev/null; then
 		echo "Please install fuse2 or fuse3 and run the script again!"
 		exit 1
@@ -175,7 +185,7 @@ if [ "${SUDO_MOUNT}" != 1 ]; then
 	fi
 fi
 
-# Extract utils.tar
+# Extract utils.tar.gz
 mkdir -p "${working_dir}"
 
 if [ "${USE_SYS_UTILS}" != 1 ]; then
@@ -193,19 +203,22 @@ if [ "${USE_SYS_UTILS}" != 1 ]; then
 			exit 1
 		fi
 	fi
+	
+	if [ "${dwarfs_image}" = 1 ]; then
+		mount_tool="${working_dir}"/utils/dwarfs${fuse_version}
+	else
+		mount_tool="${working_dir}"/utils/squashfuse${fuse_version}
+	fi
 
-	mount_tool="${working_dir}"/utils/squashfuse${fuse_version}
 	bwrap="${working_dir}"/utils/bwrap
 
 	if [ ! -f "${mount_tool}" ] || [ ! -f "${bwrap}" ]; then
-		tail -c +$((scriptsize+1)) "${script}" | head -c $utilssize > "${working_dir}"/utils.tar
-		tar -C "${working_dir}" -xf "${working_dir}"/utils.tar
-		rm -f "${working_dir}"/utils.tar
+		tail -c +$((scriptsize+1)) "${script}" | head -c $utilssize | tar -C "${working_dir}" -zxf -
 
 		if [ ! -f "${mount_tool}" ] || [ ! -f "${bwrap}" ]; then
 			clear
 			echo "The utilities were not extracted!"
-			echo "Perhaps something is wrong with the integrated utils.tar."
+			echo "Perhaps something is wrong with the integrated utils.tar.gz."
 
 			exit 1
 		fi
@@ -220,23 +233,35 @@ else
 
 		exit 1
 	fi
+	
+	bwrap=bwrap
+	
+	if [ "${dwarfs_image}" = 1 ]; then
+		if ! command -v dwarfs 1>/dev/null; then
+			echo "USE_SYS_UTILS is enabled, but dwarfs is not installed!"
+			echo "Please install it and run the script again."
 
-	if ! command -v squashfuse 1>/dev/null && [ "${SUDO_MOUNT}" != 1 ]; then
-		echo "USE_SYS_UTILS is enabled, but squshfuse is not installed!"
-		echo "Please install it and run the script again."
-		echo "Or enable SUDO_MOUNT to mount the image using the regular"
-		echo "mount command instead of squashfuse."
+			exit 1
+		fi
+		
+		mount_tool=dwarfs
+	else
+		if ! command -v squashfuse 1>/dev/null && [ "${SUDO_MOUNT}" != 1 ]; then
+			echo "USE_SYS_UTILS is enabled, but squshfuse is not installed!"
+			echo "Please install it and run the script again."
+			echo "Or enable SUDO_MOUNT to mount the image using the regular"
+			echo "mount command instead of squashfuse."
 
-		exit 1
+			exit 1
+		fi
+		
+		mount_tool=squashfuse
 	fi
 
-	show_msg "Using system-wide squashfuse and bwrap"
-
-	mount_tool=squashfuse
-	bwrap=bwrap
+	show_msg "Using system-wide ${mount_tool} and bwrap"
 fi
 
-if [ "${SUDO_MOUNT}" = 1 ]; then
+if [ "${SUDO_MOUNT}" = 1 ] && [ "${dwarfs_image}" != 1 ]; then
 	show_msg "Using regular mount command (sudo mount) instead of squashfuse"
 
 	mount_tool=mount
@@ -244,6 +269,11 @@ if [ "${SUDO_MOUNT}" = 1 ]; then
 fi
 
 if [ "$1" = "-u" ] || [ "$1" = "-U" ]; then
+	if [ "${dwarfs_image}" = 1 ]; then
+		echo "This feature is currently unimplemented for dwarfs-compressed images."
+		exit 1
+	fi
+
 	OLD_PWD="${PWD}"
 
 	# Check if current directory is writable
@@ -279,18 +309,18 @@ if [ "$1" = "-u" ] || [ "$1" = "-U" ]; then
 				--bind "${script}" /tmp/conty.sh \
 				unsquashfs -o $offset -user-xattrs -d sqfs /tmp/conty.sh
 
-	# Download or extract the utils.tar and the init script depending
+	# Download or extract the utils.tar.gz and the init script depending
 	# on what command line argument is used (-u or -U)
 	clear
 	if [ "$1" = "-U" ] && command -v wget 1>/dev/null; then
 		echo "Downloading the init script and the utils"
 		wget -q --show-progress "https://github.com/Kron4ek/Conty/raw/master/conty-start.sh"
-		wget -q --show-progress "https://github.com/Kron4ek/Conty/raw/master/utils.tar"
+		wget -q --show-progress "https://github.com/Kron4ek/Conty/raw/master/utils.tar.gz"
 	fi
 
-	if [ ! -s conty-start.sh ] || [ ! -s utils.tar ]; then
+	if [ ! -s conty-start.sh ] || [ ! -s utils.tar.gz ]; then
 		echo "Extracting the init script and the integrated utils"
-		tail -c +$((scriptsize+1)) "${script}" | head -c $utilssize > utils.tar
+		tail -c +$((scriptsize+1)) "${script}" | head -c $utilssize > utils.tar.gz
 		head -c $scriptsize "${script}" > conty-start.sh
 	fi
 
@@ -356,7 +386,7 @@ EOF
 	# Combine into a single executable
 	clear
 	echo "Combining everything into a single executable"
-	cat conty-start.sh utils.tar image > conty_updated.sh
+	cat conty-start.sh utils.tar.gz image > conty_updated.sh
 	chmod +x conty_updated.sh
 
 	mv -f "${script}" "${script}".old."${script_md5}" 2>/dev/null
@@ -585,7 +615,8 @@ trap 'trap_exit' EXIT
 mkdir -p "${mount_point}"
 
 if [ "$(ls "${mount_point}" 2>/dev/null)" ] || \
-	launch_wrapper "${mount_tool}" -o offset="${offset}",ro "${script}" "${mount_point}" ; then
+	( [ "${dwarfs_image}" != 1 ] && launch_wrapper "${mount_tool}" -o offset="${offset}",ro "${script}" "${mount_point}" ) || \
+	launch_wrapper "${mount_tool}" "${script}" "${mount_point}" -o offset="${offset}" -o debuglevel=error; then
 
 	echo 1 > "${working_dir}"/running_"${script_id}"
 
@@ -606,7 +637,7 @@ if [ "$(ls "${mount_point}" 2>/dev/null)" ] || \
 		run_bwrap "$@"
 	fi
 else
-	echo "Mounting the squashfs image failed!"
+	echo "Mounting the image failed!"
 
 	exit 1
 fi

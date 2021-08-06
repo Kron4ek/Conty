@@ -1,13 +1,21 @@
 #!/usr/bin/env bash
 
-# Dependencies: lz4 zstd wget gcc make autoconf libtool pkgconf libcap fuse2 (or fuse3)
+# Dependencies: gawk grep lz4 zstd wget gcc make autoconf libtool pkgconf libcap fuse2 (or fuse3)
+#
+# Dwarfs dependencies: fuse2 (or fuse3) openssl jemalloc xxhash boost lz4 xz zstd libarchive
+# libunwind google-glod gtest fmt gflags double-conversion cmake ruby-ronn libevent libdwarf
+#
+# Dwarfs compilation is optional and disabled by default.
 
 script_dir="$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")"
+
+build_dwarfs="false"
 
 squashfuse_version="0.1.104"
 bwrap_version="0.4.1"
 lz4_version="1.9.3"
 zstd_version="1.5.0"
+dwarfs_version="0.5.6"
 
 export CC=gcc
 export CXX=g++
@@ -59,23 +67,28 @@ if [ ! "$(ldd utils/squashfuse | grep libfuse.so.2)" ]; then
 	mv utils/squashfuse_ll utils/squashfuse3_ll
 fi
 
-libs_list="ld-linux-x86-64.so.2 libcap.so.2 libc.so.6 libdl.so.2 \
-		libfuse.so.2 libfuse3.so.3 libpthread.so.0 libz.so.1 \
-		liblzma.so.5 liblzo2.so.2"
+if [ "${build_dwarfs}" = "true" ]; then
+	wget -q --show-progress -O dwarfs.tar.xz https://github.com/mhx/dwarfs/releases/download/v${dwarfs_version}/dwarfs-${dwarfs_version}.tar.xz
+	tar xf dwarfs.tar.xz
+	
+	mkdir build
+	cmake -B build -S dwarfs-${dwarfs_version} -DCMAKE_BUILD_TYPE=Release \
+			-DPREFER_SYSTEM_ZSTD=ON -DPREFER_SYSTEM_XXHASH=ON \
+			-DPREFER_SYSTEM_GTEST=ON
 
-if [ -d /lib/x86_64-linux-gnu ]; then
-	syslib_path="/lib/x86_64-linux-gnu /usr/lib/x86_64-linux-gnu"
-else
-	syslib_path="/usr/lib /usr/lib64"
+	make -C build -j$(nproc)
+	make -C build DESTDIR="${script_dir}"/build-utils/bin install
+	
+	mv bin/usr/local/sbin/dwarfs2 utils/dwarfs
+	mv bin/usr/local/sbin/dwarfs utils/dwarfs3
 fi
 
+libs_list="$(ldd utils/* | grep "=> /" | awk '{print $3}' | xargs)"
+
 for i in ${libs_list}; do
-	for j in ${syslib_path}; do
-		if [ -f "${j}"/"${i}" ]; then
-			cp -L "${j}"/"${i}" utils
-			break
-		fi
-	done
+	if [ ! -f utils/"$(basename "${i}")" ]; then
+		cp -L "${i}" utils
+	fi
 done
 
 find utils -type f -exec strip --strip-unneeded {} \; 2>/dev/null
@@ -87,9 +100,13 @@ lz4 ${lz4_version}
 zstd ${zstd_version}
 EOF
 
-tar -cf utils.tar utils
-mv "${script_dir}"/utils.tar "${script_dir}"/utils_old.tar
-mv utils.tar "${script_dir}"
+if [ "${build_dwarfs}" = "true" ]; then
+	echo "dwarfs ${dwarfs_version}" >> utils/info
+fi
+
+tar -zcf utils.tar.gz utils
+mv "${script_dir}"/utils.tar.gz "${script_dir}"/utils_old.tar.gz
+mv utils.tar.gz "${script_dir}"
 cd "${script_dir}" || exit 1
 rm -rf build-utils
 
