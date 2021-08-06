@@ -43,7 +43,7 @@ mount_point="${working_dir}"/mnt
 # a problem with mounting the image due to an incorrectly calculated offset.
 
 # The size of this script
-scriptsize=21361
+scriptsize=22365
 
 # The size of the utils.tar.gz archive
 # utils.tar.gz contains bwrap, squashfuse and dwarfs binaries
@@ -54,6 +54,9 @@ offset=$((scriptsize+utilssize))
 
 # Set to 1 if you are using an image compressed with dwarfs instead of squashfs
 dwarfs_image=0
+
+dwarfs_cache_size="128M"
+dwarfs_num_workers="2"
 
 if [ "$1" = "--help" ] || [ "$1" = "-h" ] || ([ -z "$1" ] && [ ! -L "${script_literal}" ]); then
 	echo "Usage: ./conty.sh command command_arguments"
@@ -126,13 +129,15 @@ elif [ "$1" = "-v" ]; then
 elif [ "$1" = "-e" ]; then
 	if [ "${dwarfs_image}" = 1 ]; then
 		if command -v dwarfsextract 1>/dev/null; then
-			dwarfsextract -i "${script}" -o "$(basename "${script}")"_files
+			mkdir "$(basename "${script}")"_files
+
+			dwarfsextract -i "${script}" -o "$(basename "${script}")"_files -O ${offset}
 		else
 			echo "To extract the image install dwarfs."
 		fi
 	else
 		if command -v unsquashfs 1>/dev/null; then
-			unsquashfs -o $offset -user-xattrs -d "$(basename "${script}")"_files "${script}"
+			unsquashfs -o ${offset} -user-xattrs -d "$(basename "${script}")"_files "${script}"
 		else
 			echo "To extract the image install squashfs-tools."
 		fi
@@ -182,6 +187,31 @@ if [ "${SUDO_MOUNT}" != 1 ] || [ "${dwarfs_image}" = 1 ]; then
 
 	if command -v fusermount3 1>/dev/null; then
 		fuse_version=3
+	fi
+fi
+
+# Set the dwarfs block cache size depending on how much RAM is available
+if [ "${dwarfs_image}" = 1 ]; then
+	if getconf _PHYS_PAGES &>/dev/null && getconf PAGE_SIZE &>/dev/null; then
+		memory_size="$(($(getconf _PHYS_PAGES) * $(getconf PAGE_SIZE) / (1024 * 1024)))"
+		
+		if [ "${memory_size}" -ge 23000 ]; then
+			dwarfs_cache_size="2048M"
+		elif [ "${memory_size}" -ge 15000 ]; then
+			dwarfs_cache_size="1024M"
+		elif [ "${memory_size}" -ge 7000 ]; then
+			dwarfs_cache_size="512M"
+		elif [ "${memory_size}" -ge 3000 ]; then
+			dwarfs_cache_size="256M"
+		elif [ "${memory_size}" -ge 1500 ]; then
+			dwarfs_cache_size="128M"
+		else
+			dwarfs_cache_size="64M"
+		fi
+	fi
+
+	if getconf _NPROCESSORS_ONLN &>/dev/null; then
+		dwarfs_num_workers="$(getconf _NPROCESSORS_ONLN)"
 	fi
 fi
 
@@ -616,7 +646,8 @@ mkdir -p "${mount_point}"
 
 if [ "$(ls "${mount_point}" 2>/dev/null)" ] || \
 	( [ "${dwarfs_image}" != 1 ] && launch_wrapper "${mount_tool}" -o offset="${offset}",ro "${script}" "${mount_point}" ) || \
-	launch_wrapper "${mount_tool}" "${script}" "${mount_point}" -o offset="${offset}" -o debuglevel=error; then
+	launch_wrapper "${mount_tool}" "${script}" "${mount_point}" -o offset="${offset}" -o debuglevel=error -o workers="${dwarfs_num_workers}" \
+	-o mlock=try -o no_cache_image -o cache_files -o cachesize="${dwarfs_cache_size}"; then
 
 	echo 1 > "${working_dir}"/running_"${script_id}"
 

@@ -12,7 +12,8 @@ squashfs_compressor_arguments="-b 256K -comp ${squashfs_compressor} -Xhc"
 
 # Use dwarfs instead of squashfs
 dwarfs="false"
-dwarfs_compressor_arguments="-l7 -C zstd:level=19 --metadata-compression null -S 22"
+dwarfs_compressor_arguments="-l7 -C zstd:level=19 --metadata-compression null \
+					-S 22 -B 3 --bloom-filter-size 5"
 
 # Set to true to use an existing image if it exists
 # Otherwise the script will always create a new image
