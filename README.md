@@ -1,6 +1,6 @@
 ## Conty
 
-This is an easy to use unprivileged compressed Linux container packed into a single executable that works on most Linux distros. It's designed to be as simple and user-friendly as possible. You can use it to run any applications, including games (Vulkan and OpenGL).
+This is an easy to use compressed unprivileged Linux container packed into a single executable that works on most Linux distros. It's designed to be as simple and user-friendly as possible. You can use it to run any applications, including games (Vulkan and OpenGL).
 
 Besides, Conty supports true filesystem sandboxing, so you can even use it to isolate applications.
 
