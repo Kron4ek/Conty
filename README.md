@@ -84,7 +84,7 @@ There are many more integrated programs. You can list all of them with:
 ./conty.sh ls /usr/bin
 ```
 
-It is possible to run arbitary binaries from your storage. For example, if you want to run an application that resides on your HOME, run something like:
+It is also possible to run binaries from your storage. For example, if you want to run an application that resides on your HOME, run something like:
 
 ```
 ./conty.sh /home/username/SomeApplication/binaryfile
