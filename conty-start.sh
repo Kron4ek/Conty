@@ -43,7 +43,7 @@ mount_point="${working_dir}"/mnt
 # a problem with mounting the image due to an incorrectly calculated offset.
 
 # The size of this script
-scriptsize=22365
+scriptsize=22514
 
 # The size of the utils.tar.gz archive
 # utils.tar.gz contains bwrap, squashfuse and dwarfs binaries
@@ -191,6 +191,7 @@ if [ "${SUDO_MOUNT}" != 1 ] || [ "${dwarfs_image}" = 1 ]; then
 fi
 
 # Set the dwarfs block cache size depending on how much RAM is available
+# Also set the number of workers depending on the number of CPU cores
 if [ "${dwarfs_image}" = 1 ]; then
 	if getconf _PHYS_PAGES &>/dev/null && getconf PAGE_SIZE &>/dev/null; then
 		memory_size="$(($(getconf _PHYS_PAGES) * $(getconf PAGE_SIZE) / (1024 * 1024)))"
@@ -212,6 +213,10 @@ if [ "${dwarfs_image}" = 1 ]; then
 
 	if getconf _NPROCESSORS_ONLN &>/dev/null; then
 		dwarfs_num_workers="$(getconf _NPROCESSORS_ONLN)"
+		
+		if [ "${dwarfs_num_workers}" -ge 16 ]; then
+			dwarfs_num_workers=16
+		fi
 	fi
 fi
 
