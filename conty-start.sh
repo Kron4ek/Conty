@@ -43,7 +43,7 @@ mount_point="${working_dir}"/mnt
 # a problem with mounting the image due to an incorrectly calculated offset.
 
 # The size of this script
-scriptsize=22514
+scriptsize=23232
 
 # The size of the utils.tar.gz archive
 # utils.tar.gz contains bwrap, squashfuse and dwarfs binaries
@@ -64,8 +64,12 @@ if [ "$1" = "--help" ] || [ "$1" = "-h" ] || ([ -z "$1" ] && [ ! -L "${script_li
 	echo "Arguments:"
 	echo
 	echo -e "-v \tShow version of this script"
-	echo -e "-e \tExtract the squashfs/dwarfs image"
+	echo -e "-e \tExtract the image"
 	echo -e "-o \tShow the image offset"
+	echo -e "-m \tMount/unmount the image"
+	echo -e "\tThe image will be mounted if it's not mounted, and unmounted otherwise."
+	echo -e "\tMount point can be changed with the BASE_DIR env variable"
+	echo -e "\t(the default is /tmp)."
 	echo -e "-u \tUpdate all packages inside the container"
 	echo -e "\tThis will update all packages inside the container and will rebuild"
 	echo -e "\tthe image. This may take quite a lot of time, depending"
@@ -73,7 +77,8 @@ if [ "$1" = "--help" ] || [ "$1" = "-h" ] || ([ -z "$1" ] && [ ! -L "${script_li
 	echo -e "\t(about 6x the size of the current file) is needed during"
 	echo -e "\tthe update process."
 	echo -e "-U \tThe same as -u but will also update the init script (conty-start.sh)"
-	echo -e "\tand the integrated utils."
+	echo -e "\tand the integrated utils. This option may break Conty in some cases,"
+	echo -e "\tuse with caution."
 	echo
 	echo "Environment variables:"
 	echo
@@ -646,6 +651,10 @@ trap_exit () {
 
 trap 'trap_exit' EXIT
 
+if [ "$(ls "${working_dir}"/running_* 2>/dev/null)" ] && [ ! "$(ls "${mount_point}" 2>/dev/null)" ]; then
+	rm -f "${working_dir}"/running_*
+fi
+
 # Mount the squashfs image
 mkdir -p "${mount_point}"
 
@@ -653,9 +662,21 @@ if [ "$(ls "${mount_point}" 2>/dev/null)" ] || \
 	( [ "${dwarfs_image}" != 1 ] && launch_wrapper "${mount_tool}" -o offset="${offset}",ro "${script}" "${mount_point}" ) || \
 	launch_wrapper "${mount_tool}" "${script}" "${mount_point}" -o offset="${offset}" -o debuglevel=error -o workers="${dwarfs_num_workers}" \
 	-o mlock=try -o no_cache_image -o cache_files -o cachesize="${dwarfs_cache_size}"; then
-
+	
+	if [ "$1" = "-m" ]; then
+		if [ ! -f "${working_dir}"/running_mount ]; then
+			echo 1 > "${working_dir}"/running_mount
+			echo "The image has been mounted to ${mount_point}"
+		else
+			rm -f "${working_dir}"/running_mount
+			echo "The image has been unmounted"
+		fi
+		
+		exit
+	fi
+	
 	echo 1 > "${working_dir}"/running_"${script_id}"
-
+	
 	show_msg "Running Conty"
 
 	if [ "${NVIDIA_FIX}" = 1 ]; then
