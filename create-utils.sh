@@ -1,9 +1,11 @@
 #!/usr/bin/env bash
 
-# Dependencies: gawk grep lz4 zstd wget gcc make autoconf libtool pkgconf libcap fuse2 (or fuse3)
+# Dependencies: gawk grep lz4 zstd wget gcc make autoconf libtool pkgconf
+# 	libcap fuse2 (or fuse3) lzo xz zlib findutils
 #
-# Dwarfs dependencies: fuse2 (or fuse3) openssl jemalloc xxhash boost lz4 xz zstd libarchive
-# libunwind google-glod gtest fmt gflags double-conversion cmake ruby-ronn libevent libdwarf
+# Dwarfs dependencies: fuse2 (or fuse3) openssl jemalloc xxhash boost lz4
+# 	xz zstd libarchive libunwind google-glod gtest fmt gflags double-conversion
+#	cmake ruby-ronn libevent libdwarf
 #
 # Dwarfs compilation is optional and disabled by default.
 
@@ -15,6 +17,7 @@ squashfuse_version="0.1.104"
 bwrap_version="0.4.1"
 lz4_version="1.9.3"
 zstd_version="1.5.0"
+squashfs_tools_version="4.5"
 dwarfs_version="0.5.6"
 
 export CC=gcc
@@ -30,11 +33,13 @@ wget -q --show-progress -O lz4.tar.gz https://github.com/lz4/lz4/archive/refs/ta
 wget -q --show-progress -O zstd.tar.gz https://github.com/facebook/zstd/archive/refs/tags/v${zstd_version}.tar.gz
 wget -q --show-progress -O squashfuse.tar.gz https://github.com/vasi/squashfuse/archive/refs/tags/${squashfuse_version}.tar.gz
 wget -q --show-progress -O bwrap.tar.gz https://github.com/containers/bubblewrap/archive/refs/tags/v${bwrap_version}.tar.gz
+wget -q --show-progress -O sqfstools.tar.gz https://github.com/plougher/squashfs-tools/archive/refs/tags/${squashfs_tools_version}.tar.gz
 
 tar xf lz4.tar.gz
 tar xf zstd.tar.gz
 tar xf squashfuse.tar.gz
 tar xf bwrap.tar.gz
+tar xf sqfstools.tar.gz
 
 cd bubblewrap-${bwrap_version}
 ./autogen.sh
@@ -52,11 +57,18 @@ cd ../squashfuse-${squashfuse_version}
 ./configure
 make -j$(nproc) DESTDIR="${script_dir}"/build-utils/bin install
 
+cd ../squashfs-tools-${squashfs_tools_version}/squashfs-tools
+make -j$(nproc) GZIP_SUPPORT=1 XZ_SUPPORT=1 LZO_SUPPORT=1 LZMA_XZ_SUPPORT=1 \
+		LZ4_SUPPORT=1 ZSTD_SUPPORT=1 XATTR_SUPPORT=1
+make INSTALL_DIR="${script_dir}"/build-utils/bin/usr/local/bin install
+
 cd "${script_dir}"/build-utils
 mkdir utils
 mv bin/usr/local/bin/bwrap utils
 mv bin/usr/local/bin/squashfuse utils
 mv bin/usr/local/bin/squashfuse_ll utils
+mv bin/usr/local/bin/mksquashfs utils
+mv bin/usr/local/bin/unsquashfs utils
 mv bin/usr/local/lib/liblz4.so.${lz4_version} utils/liblz4.so.1
 mv bin/usr/local/lib/libzstd.so.${zstd_version} utils/libzstd.so.1
 mv bin/usr/local/lib/libfuseprivate.so.0.0.0 utils/libfuseprivate.so.0
@@ -70,7 +82,7 @@ fi
 if [ "${build_dwarfs}" = "true" ]; then
 	wget -q --show-progress -O dwarfs.tar.xz https://github.com/mhx/dwarfs/releases/download/v${dwarfs_version}/dwarfs-${dwarfs_version}.tar.xz
 	tar xf dwarfs.tar.xz
-	
+
 	mkdir build
 	cmake -B build -S dwarfs-${dwarfs_version} -DCMAKE_BUILD_TYPE=Release \
 			-DPREFER_SYSTEM_ZSTD=ON -DPREFER_SYSTEM_XXHASH=ON \
@@ -78,9 +90,11 @@ if [ "${build_dwarfs}" = "true" ]; then
 
 	make -C build -j$(nproc)
 	make -C build DESTDIR="${script_dir}"/build-utils/bin install
-	
+
 	mv bin/usr/local/sbin/dwarfs2 utils/dwarfs
 	mv bin/usr/local/sbin/dwarfs utils/dwarfs3
+	mv bin/usr/local/bin/mkdwarfs utils
+	mv bin/usr/local/bin/dwarfsextract utils
 fi
 
 libs_list="$(ldd utils/* | grep "=> /" | awk '{print $3}' | xargs)"
@@ -95,6 +109,7 @@ find utils -type f -exec strip --strip-unneeded {} \; 2>/dev/null
 
 cat <<EOF > utils/info
 squashfuse ${squashfuse_version}
+squashfs-tools ${squashfs_tools_version}
 bubblewrap ${bwrap_version}
 lz4 ${lz4_version}
 zstd ${zstd_version}

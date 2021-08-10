@@ -13,7 +13,7 @@ squashfs_compressor_arguments="-b 256K -comp ${squashfs_compressor} -Xhc"
 # Use dwarfs instead of squashfs
 dwarfs="false"
 dwarfs_compressor_arguments="-l7 -C zstd:level=19 --metadata-compression null \
-					-S 22 -B 3 --bloom-filter-size 5"
+						-S 22 -B 3"
 
 # Set to true to use an existing image if it exists
 # Otherwise the script will always create a new image
@@ -70,14 +70,14 @@ if [ ! -f "${image_path}" ] || [ "${use_existing_image}" != "true" ]; then
 			echo "Please install dwarfs and run the script again"
 			exit 1
 		fi
-	
+
 		mkdwarfs -i "${bootstrap}" -o "${image_path}" ${dwarfs_compressor_arguments}
 	else
 		if ! command -v mksquashfs 1>/dev/null; then
 			echo "Please install squashfs-tools and run the script again"
 			exit 1
 		fi
-	
+
 		mksquashfs "${bootstrap}" "${image_path}" ${squashfs_compressor_arguments}
 	fi
 fi

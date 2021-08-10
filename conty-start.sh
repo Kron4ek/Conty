@@ -43,11 +43,11 @@ mount_point="${working_dir}"/mnt
 # a problem with mounting the image due to an incorrectly calculated offset.
 
 # The size of this script
-scriptsize=23232
+scriptsize=24850
 
 # The size of the utils.tar.gz archive
 # utils.tar.gz contains bwrap, squashfuse and dwarfs binaries
-utilssize=7418944
+utilssize=9144313
 
 # Offset where the image is stored
 offset=$((scriptsize+utilssize))
@@ -57,6 +57,11 @@ dwarfs_image=0
 
 dwarfs_cache_size="128M"
 dwarfs_num_workers="2"
+
+# These arguments are used to rebuild the image when using the self-update function
+squashfs_comp_arguments="-b 256K -comp zstd -Xcompression-level 14"
+dwarfs_comp_arguments="-l7 -C zstd:level=19 --metadata-compression null \
+					-S 22 -B 3"
 
 if [ "$1" = "--help" ] || [ "$1" = "-h" ] || ([ -z "$1" ] && [ ! -L "${script_literal}" ]); then
 	echo "Usage: ./conty.sh command command_arguments"
@@ -150,7 +155,7 @@ elif [ "$1" = "-e" ]; then
 
 	exit
 elif [ "$1" = "-o" ]; then
-	echo $offset
+	echo ${offset}
 
 	exit
 fi
@@ -183,10 +188,16 @@ launch_wrapper () {
 	fi
 }
 
+# Disable the regular mount command when using a dwarfs-compressed image
+# because Linux kernel doesn't support dwarfs directly, only via FUSE
+if [ "${dwarfs_image}" = 1 ]; then
+	unset SUDO_MOUNT
+fi
+
 # Check if FUSE is installed when SUDO_MOUNT is not enabled
-if [ "${SUDO_MOUNT}" != 1 ] || [ "${dwarfs_image}" = 1 ]; then
+if [ "${SUDO_MOUNT}" != 1 ]; then
 	if ! command -v fusermount3 1>/dev/null && ! command -v fusermount 1>/dev/null; then
-		echo "Please install fuse2 or fuse3 and run the script again!"
+		echo "Please install fuse2 or fuse3 and run the script again."
 		exit 1
 	fi
 
@@ -200,7 +211,7 @@ fi
 if [ "${dwarfs_image}" = 1 ]; then
 	if getconf _PHYS_PAGES &>/dev/null && getconf PAGE_SIZE &>/dev/null; then
 		memory_size="$(($(getconf _PHYS_PAGES) * $(getconf PAGE_SIZE) / (1024 * 1024)))"
-		
+
 		if [ "${memory_size}" -ge 23000 ]; then
 			dwarfs_cache_size="2048M"
 		elif [ "${memory_size}" -ge 15000 ]; then
@@ -218,7 +229,7 @@ if [ "${dwarfs_image}" = 1 ]; then
 
 	if getconf _NPROCESSORS_ONLN &>/dev/null; then
 		dwarfs_num_workers="$(getconf _NPROCESSORS_ONLN)"
-		
+
 		if [ "${dwarfs_num_workers}" -ge 16 ]; then
 			dwarfs_num_workers=16
 		fi
@@ -243,7 +254,12 @@ if [ "${USE_SYS_UTILS}" != 1 ]; then
 			exit 1
 		fi
 	fi
-	
+
+	if ! command -v tar 1>/dev/null || ! command -v gzip 1>/dev/null; then
+		echo "Please install tar and gzip and run the script again."
+		exit 1
+	fi
+
 	if [ "${dwarfs_image}" = 1 ]; then
 		mount_tool="${working_dir}"/utils/dwarfs${fuse_version}
 	else
@@ -253,11 +269,11 @@ if [ "${USE_SYS_UTILS}" != 1 ]; then
 	bwrap="${working_dir}"/utils/bwrap
 
 	if [ ! -f "${mount_tool}" ] || [ ! -f "${bwrap}" ]; then
-		tail -c +$((scriptsize+1)) "${script}" | head -c $utilssize | tar -C "${working_dir}" -zxf -
+		tail -c +$((scriptsize+1)) "${script}" | head -c ${utilssize} | tar -C "${working_dir}" -zxf -
 
 		if [ ! -f "${mount_tool}" ] || [ ! -f "${bwrap}" ]; then
 			clear
-			echo "The utilities were not extracted!"
+			echo "The integrated utils were not extracted!"
 			echo "Perhaps something is wrong with the integrated utils.tar.gz."
 
 			exit 1
@@ -268,23 +284,27 @@ if [ "${USE_SYS_UTILS}" != 1 ]; then
 	fi
 else
 	if ! command -v bwrap 1>/dev/null; then
-		echo "USE_SYS_UTILS is enabled, but bwrap is not installed!"
+		echo "USE_SYS_UTILS is enabled, but bubblewrap is not installed!"
 		echo "Please install it and run the script again."
 
 		exit 1
 	fi
-	
+
 	bwrap=bwrap
-	
+
 	if [ "${dwarfs_image}" = 1 ]; then
-		if ! command -v dwarfs 1>/dev/null; then
+		if ! command -v dwarfs 1>/dev/null && ! command -v dwarfs2 1>/dev/null; then
 			echo "USE_SYS_UTILS is enabled, but dwarfs is not installed!"
 			echo "Please install it and run the script again."
 
 			exit 1
 		fi
-		
-		mount_tool=dwarfs
+
+		if command -v dwarfs2 1>/dev/null; then
+			mount_tool=dwarfs2
+		else
+			mount_tool=dwarfs
+		fi
 	else
 		if ! command -v squashfuse 1>/dev/null && [ "${SUDO_MOUNT}" != 1 ]; then
 			echo "USE_SYS_UTILS is enabled, but squshfuse is not installed!"
@@ -294,14 +314,14 @@ else
 
 			exit 1
 		fi
-		
+
 		mount_tool=squashfuse
 	fi
 
 	show_msg "Using system-wide ${mount_tool} and bwrap"
 fi
 
-if [ "${SUDO_MOUNT}" = 1 ] && [ "${dwarfs_image}" != 1 ]; then
+if [ "${SUDO_MOUNT}" = 1 ]; then
 	show_msg "Using regular mount command (sudo mount) instead of squashfuse"
 
 	mount_tool=mount
@@ -309,14 +329,9 @@ if [ "${SUDO_MOUNT}" = 1 ] && [ "${dwarfs_image}" != 1 ]; then
 fi
 
 if [ "$1" = "-u" ] || [ "$1" = "-U" ]; then
-	if [ "${dwarfs_image}" = 1 ]; then
-		echo "This feature is currently unimplemented for dwarfs-compressed images."
-		exit 1
-	fi
-
 	OLD_PWD="${PWD}"
 
-	# Check if current directory is writable
+	# Check if the current directory is writable
 	# And if it's not, use ~/.local/share/Conty as a working directory
 	if ! touch test_rw 2>/dev/null; then
 		update_temp_dir="${HOME}"/.local/share/Conty/conty_update_temp
@@ -332,6 +347,34 @@ if [ "$1" = "-u" ] || [ "$1" = "-U" ]; then
 	mkdir -p "${update_temp_dir}"
 	cd "${update_temp_dir}" || exit 1
 
+	tail -c +$((scriptsize+1)) "${script}" | head -c ${utilssize} | tar -C "${update_temp_dir}" -zxf -
+
+	if [ "${dwarfs_image}" = 1 ]; then
+		chmod +x utils/dwarfsextract 2>/dev/null
+		chmod +x utils/mkdwarfs 2>/dev/null
+
+		if [ ! -x "utils/dwarfsextract" ] || [ ! -x "utils/mkdwarfs" ]; then
+			missing_utils="dwarfsextract and/or mkdwarfs"
+		fi
+	else
+		chmod +x utils/unsquashfs 2>/dev/null
+		chmod +x utils/mksquashfs 2>/dev/null
+
+		if [ ! -x "utils/unsquashfs" ] || [ ! -x "utils/mksquashfs" ]; then
+			missing_utils="unsquashfs and/or mksquashfs"
+		fi
+	fi
+
+	if [ -n "${missing_utils}" ]; then
+		echo "The integrated utils don't contain ${missing_utils}."
+		echo "Or your file system is mounted with noexec."
+		exit 1
+	fi
+
+	tools_wrapper () {
+		"${update_temp_dir}"/utils/ld-linux-x86-64.so.2 --library-path "${update_temp_dir}"/utils "$@"
+	}
+
 	# Since Conty is used here to update itself, it's necessary to disable
 	# some environment variables for this to work properly
 	unset NVIDIA_FIX
@@ -342,12 +385,20 @@ if [ "$1" = "-u" ] || [ "$1" = "-U" ]; then
 	# Enable SANDBOX
 	export SANDBOX=1
 
-	# Extract the squashfs image
+	export QUIET_MODE=1
+
+	# Extract the image
 	clear
-	echo "Extracting the squashfs image"
-	bash "${script}" --bind "${update_temp_dir}" "${update_temp_dir}" \
-				--bind "${script}" /tmp/conty.sh \
-				unsquashfs -o $offset -user-xattrs -d sqfs /tmp/conty.sh
+	echo "Extracting the image"
+	if [ "${dwarfs_image}" = 1 ]; then
+		mkdir sqfs
+		tools_wrapper "${update_temp_dir}"/utils/dwarfsextract \
+		-i "${script}" -o sqfs -O ${offset} --cache-size "${dwarfs_cache_size}" \
+		--num-workers "${dwarfs_num_workers}"
+	else
+		tools_wrapper "${update_temp_dir}"/utils/unsquashfs \
+		-o ${offset} -user-xattrs -d sqfs "${script}"
+	fi
 
 	# Download or extract the utils.tar.gz and the init script depending
 	# on what command line argument is used (-u or -U)
@@ -417,11 +468,16 @@ EOF
 				--proc /proc --bind "${update_temp_dir}" "${update_temp_dir}" \
 				bash container-update.sh
 
-	# Create a squashfs image
+	# Create an image
 	clear
-	echo "Creating a squashfs image"
-	bash "${script}" --bind "${update_temp_dir}" "${update_temp_dir}" \
-				mksquashfs sqfs image -b 256K -comp zstd -Xcompression-level 14
+	echo "Creating an image"
+	if [ "${dwarfs_image}" = 1 ]; then
+		tools_wrapper "${update_temp_dir}"/utils/mkdwarfs \
+		-i sqfs -o image ${dwarfs_comp_arguments}
+	else
+		tools_wrapper "${update_temp_dir}"/utils/mksquashfs \
+		sqfs image ${squashfs_comp_arguments}
+	fi
 
 	# Combine into a single executable
 	clear
@@ -655,14 +711,14 @@ if [ "$(ls "${working_dir}"/running_* 2>/dev/null)" ] && [ ! "$(ls "${mount_poin
 	rm -f "${working_dir}"/running_*
 fi
 
-# Mount the squashfs image
+# Mount the image
 mkdir -p "${mount_point}"
 
 if [ "$(ls "${mount_point}" 2>/dev/null)" ] || \
 	( [ "${dwarfs_image}" != 1 ] && launch_wrapper "${mount_tool}" -o offset="${offset}",ro "${script}" "${mount_point}" ) || \
 	launch_wrapper "${mount_tool}" "${script}" "${mount_point}" -o offset="${offset}" -o debuglevel=error -o workers="${dwarfs_num_workers}" \
 	-o mlock=try -o no_cache_image -o cache_files -o cachesize="${dwarfs_cache_size}"; then
-	
+
 	if [ "$1" = "-m" ]; then
 		if [ ! -f "${working_dir}"/running_mount ]; then
 			echo 1 > "${working_dir}"/running_mount
@@ -671,12 +727,12 @@ if [ "$(ls "${mount_point}" 2>/dev/null)" ] || \
 			rm -f "${working_dir}"/running_mount
 			echo "The image has been unmounted"
 		fi
-		
+
 		exit
 	fi
-	
+
 	echo 1 > "${working_dir}"/running_"${script_id}"
-	
+
 	show_msg "Running Conty"
 
 	if [ "${NVIDIA_FIX}" = 1 ]; then
