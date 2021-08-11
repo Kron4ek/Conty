@@ -25,9 +25,15 @@ bootstrap="${script_dir}"/root.x86_64
 
 cd "${script_dir}" || exit 1
 
-if [ ! -f utils.tar.gz ] || [ "$(wc -c < utils.tar.gz)" -lt 1000 ]; then
-	rm -f utils.tar.gz
-	wget -q --show-progress "https://github.com/Kron4ek/Conty/raw/master/utils.tar.gz"
+if [ "${dwarfs}" = "true" ]; then
+	utils="utils_dwarfs.tar.gz"
+else
+	utils="utils.tar.gz"
+fi
+
+if [ ! -f "${utils}" ] || [ "$(wc -c < "${utils}")" -lt 1000 ]; then
+	rm -f "${utils}"
+	wget -q --show-progress "https://github.com/Kron4ek/Conty/raw/master/${utils}"
 fi
 
 if [ ! -f conty-start.sh ]; then
@@ -83,7 +89,7 @@ if [ ! -f "${image_path}" ] || [ "${use_existing_image}" != "true" ]; then
 fi
 
 # Combine the files into a single executable using cat
-cat conty-start.sh utils.tar.gz "${image_path}" > conty.sh
+cat conty-start.sh "${utils}" "${image_path}" > conty.sh
 chmod +x conty.sh
 
 clear

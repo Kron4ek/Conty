@@ -117,11 +117,14 @@ EOF
 
 if [ "${build_dwarfs}" = "true" ]; then
 	echo "dwarfs ${dwarfs_version}" >> utils/info
+	utils="utils_dwarfs.tar.gz"
+else
+	utils="utils.tar.gz"
 fi
 
-tar -zcf utils.tar.gz utils
-mv "${script_dir}"/utils.tar.gz "${script_dir}"/utils_old.tar.gz
-mv utils.tar.gz "${script_dir}"
+tar -zcf "${utils}" utils
+mv "${script_dir}"/"${utils}" "${script_dir}"/"${utils}".old
+mv "${utils}" "${script_dir}"
 cd "${script_dir}" || exit 1
 rm -rf build-utils
 

@@ -43,11 +43,11 @@ mount_point="${working_dir}"/mnt
 # a problem with mounting the image due to an incorrectly calculated offset.
 
 # The size of this script
-scriptsize=24850
+scriptsize=25303
 
 # The size of the utils.tar.gz archive
 # utils.tar.gz contains bwrap, squashfuse and dwarfs binaries
-utilssize=9144313
+utilssize=2923949
 
 # Offset where the image is stored
 offset=$((scriptsize+utilssize))
@@ -404,15 +404,21 @@ if [ "$1" = "-u" ] || [ "$1" = "-U" ]; then
 	# on what command line argument is used (-u or -U)
 	clear
 	if [ "$1" = "-U" ] && command -v wget 1>/dev/null; then
+		if [ "${dwarfs_image}" = 1 ]; then
+			utils="utils_dwarfs.tar.gz"
+		else
+			utils="utils.tar.gz"
+		fi
+
 		echo "Downloading the init script and the utils"
 		wget -q --show-progress "https://github.com/Kron4ek/Conty/raw/master/conty-start.sh"
-		wget -q --show-progress "https://github.com/Kron4ek/Conty/raw/master/utils.tar.gz"
+		wget -q --show-progress -O utils.tar.gz "https://github.com/Kron4ek/Conty/raw/master/${utils}"
 	fi
 
 	if [ ! -s conty-start.sh ] || [ ! -s utils.tar.gz ]; then
 		echo "Extracting the init script and the integrated utils"
-		tail -c +$((scriptsize+1)) "${script}" | head -c $utilssize > utils.tar.gz
-		head -c $scriptsize "${script}" > conty-start.sh
+		tail -c +$((scriptsize+1)) "${script}" | head -c ${utilssize} > utils.tar.gz
+		head -c ${scriptsize} "${script}" > conty-start.sh
 	fi
 
 	# Check if there are additional arguments passed
@@ -714,6 +720,12 @@ fi
 # Mount the image
 mkdir -p "${mount_point}"
 
+# Since mounting dwarfs images is relatively slow on HDDs, it's better
+# to show a message when the mounting is in process
+if [ "${dwarfs_image}" = 1 ] && [ ! "$(ls "${mount_point}" 2>/dev/null)" ]; then
+	show_msg "Mounting the image, please wait..."
+fi
+
 if [ "$(ls "${mount_point}" 2>/dev/null)" ] || \
 	( [ "${dwarfs_image}" != 1 ] && launch_wrapper "${mount_tool}" -o offset="${offset}",ro "${script}" "${mount_point}" ) || \
 	launch_wrapper "${mount_tool}" "${script}" "${mount_point}" -o offset="${offset}" -o debuglevel=error -o workers="${dwarfs_num_workers}" \
@@ -732,6 +744,10 @@ if [ "$(ls "${mount_point}" 2>/dev/null)" ] || \
 	fi
 
 	echo 1 > "${working_dir}"/running_"${script_id}"
+
+	if [ "${dwarfs_image}" = 1 ] && [ "${QUIET_MODE}" != 1 ]; then
+		clear
+	fi
 
 	show_msg "Running Conty"
 
