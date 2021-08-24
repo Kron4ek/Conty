@@ -47,7 +47,7 @@ scriptsize=25303
 
 # The size of the utils.tar.gz archive
 # utils.tar.gz contains bwrap, squashfuse and dwarfs binaries
-utilssize=2923949
+utilssize=2925482
 
 # Offset where the image is stored
 offset=$((scriptsize+utilssize))
