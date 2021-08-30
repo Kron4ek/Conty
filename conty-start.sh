@@ -12,7 +12,7 @@ if [ $EUID = 0 ] && [ -z "$ALLOW_ROOT" ]; then
 	exit 1
 fi
 
-script_version="1.15"
+script_version="1.16"
 
 # Full path to the script
 script_literal="${BASH_SOURCE[0]}"
@@ -43,7 +43,7 @@ mount_point="${working_dir}"/mnt
 # a problem with mounting the image due to an incorrectly calculated offset.
 
 # The size of this script
-scriptsize=25303
+scriptsize=28712
 
 # The size of the utils.tar.gz archive
 # utils.tar.gz contains bwrap, squashfuse and dwarfs binaries
@@ -88,10 +88,20 @@ if [ "$1" = "--help" ] || [ "$1" = "-h" ] || ([ -z "$1" ] && [ ! -L "${script_li
 	echo "Environment variables:"
 	echo
 	echo -e "DISABLE_NET \tDisables network access"
-	echo -e "SANDBOX \tEnables filesystem sandbox"
-	echo -e "BIND \t\tBinds directories and files (separated by space) from the"
+	echo -e "SANDBOX \tEnables sandbox"
+	echo -e "SANDBOX_LEVEL \tControls the strictness of the sandbox"
+	echo -e "\t\tAvailable levels are 1-3. The default is 1."
+	echo -e "\t\tLevel 1 isolates all user files."
+	echo -e "\t\tLevel 2 isolates all user files, disables dbus and hides"
+	echo -e "\t\tall running processes."
+	echo -e "\t\tLevel 3 does the same as the level 2, but additionally"
+	echo -e "\t\tdisables network access and isolates X11 server with Xephyr."
+	echo -e "XEPHYR_SIZE \tSets the size of the Xephyr window. The default is 800x600."
+	echo -e "BIND \t\tMounts directories and files (separated by space) from the"
 	echo -e "\t\thost system to the container. All specified items must exist."
 	echo -e "\t\tFor example, BIND=\"/home/username/.config /etc/pacman.conf\""
+	echo -e "\t\tThis is mainly useful for allowing access to specific"
+	echo -e "\t\tdirs/files when SANDBOX is enabled."
 	echo -e "HOME_DIR \tSets the HOME directory to a custom location."
 	echo -e "\t\tFor example, HOME_DIR=\"/home/username/custom_home\""
 	echo -e "\t\tIf you set this, HOME inside the container will still appear"
@@ -118,6 +128,15 @@ if [ "$1" = "--help" ] || [ "$1" = "-h" ] || ([ -z "$1" ] && [ ! -L "${script_li
 	echo "If you enable SANDBOX but don't set BIND or HOME_DIR, then no system"
 	echo "directories/files will be available at all inside the container and a fake"
 	echo "temporary HOME directory will be used."
+	echo
+	echo "Which SANDBOX_LEVEL to use? Well, if you just want to isolate your files from"
+	echo "an application, then the level 1 (default) is enough. However, if an"
+	echo "application doesn't strictly require dbus and doesn't need to communicate with"
+	echo "other processes, then i recommend to use at least the level 2, which"
+	echo "is more secure and is better for running untrusted or malicious apps. And"
+	echo "for maximum protection use the level 3 (or Wayland + level 2), which protects"
+	echo "even against X11 keyloggers. Disabling internet access with DISABLE_NET is also"
+	echo "a very good idea if an application does not require constant internet access."
 	echo
 	echo "If the script is a symlink to itself but with a different name,"
 	echo "then the symlinked script will automatically run a program according"
@@ -381,6 +400,7 @@ if [ "$1" = "-u" ] || [ "$1" = "-U" ]; then
 	unset DISABLE_NET
 	unset HOME_DIR
 	unset BIND
+	unset SANDBOX_LEVEL
 
 	# Enable SANDBOX
 	export SANDBOX=1
@@ -517,55 +537,91 @@ EOF
 fi
 
 run_bwrap () {
-	if [ "$DISABLE_NET" = 1 ]; then
-		show_msg "Network is disabled"
+	unset sandbox_params
+	unset unshare_net
+	unset custom_home
+	unset bind_items
 
-		net="--unshare-net"
+	if [ "${SANDBOX}" = 1 ]; then
+		sandbox_params="--tmpfs /home \
+                        --dir ${HOME} \
+                        --tmpfs /opt \
+                        --tmpfs /mnt \
+                        --tmpfs /media \
+                        --tmpfs /var \
+                        --tmpfs /run \
+                        --symlink /run /var/run \
+                        --tmpfs /tmp \
+                        --new-session"
+
+		if [ -n "${SANDBOX_LEVEL}" ] && [ "${SANDBOX_LEVEL}" -ge 2 ]; then
+			sandbox_level_msg="(level 2)"
+			sandbox_params="${sandbox_params} \
+                            --dir /run/user/${EUID} \
+                            --ro-bind-try /run/user/${EUID}/wayland-0 /run/user/${EUID}/wayland-0 \
+                            --unshare-pid \
+                            --unshare-user-try \
+                            --unsetenv DBUS_SESSION_BUS_ADDRESS"
+		else
+			sandbox_level_msg="(level 1)"
+			sandbox_params="${sandbox_params} \
+                            --bind-try /run/user /run/user \
+                            --bind-try /run/dbus /run/dbus"
+		fi
+
+		if [ -n "${SANDBOX_LEVEL}" ] && [ "${SANDBOX_LEVEL}" -ge 3 ]; then
+			sandbox_level_msg="(level 3)"
+			DISABLE_NET=1
+			sandbox_params="${sandbox_params} \
+                            --ro-bind-try /tmp/.X11-unix/X${xephyr_display} /tmp/.X11-unix/X${xephyr_display} \
+                            --setenv DISPLAY :${xephyr_display}"
+		else
+			sandbox_params="${sandbox_params} \
+                            --ro-bind-try /tmp/.X11-unix /tmp/.X11-unix"
+		fi
+
+		show_msg "Sandbox is enabled ${sandbox_level_msg}"
 	fi
 
-	if [ "$SANDBOX" = 1 ]; then
-		show_msg "Filesystem sandbox is enabled"
+	if [ "${DISABLE_NET}" = 1 ]; then
+		show_msg "Network is disabled"
 
-		dirs="--tmpfs /home --dir ${HOME} --tmpfs /opt --tmpfs /mnt \
-			--tmpfs /media --tmpfs /var --tmpfs /run --symlink /run /var/run \
-			--bind-try /run/user /run/user --bind-try /run/dbus /run/dbus \
-			--tmpfs /tmp --ro-bind-try /tmp/.X11-unix /tmp/.X11-unix"
-
-#		unshare="--unshare-user-try --unshare-pid --unshare-uts --unshare-cgroup-try \
-#				--hostname Conty"
-	else
-		dirs="--bind-try /home /home --bind-try /mnt /mnt --bind-try /opt /opt \
-			--bind-try /media /media --bind-try /run /run --bind-try /var /var \
-			--bind-try ${HOME} ${HOME}"
+		unshare_net="--unshare-net"
 	fi
 
 	if [ -n "${HOME_DIR}" ]; then
 		show_msg "Set home directory to ${HOME_DIR}"
-		dirs="${dirs} --bind ${HOME_DIR} ${HOME}"
+
+		custom_home="--bind ${HOME_DIR} ${HOME}"
 	fi
 
-	if [ -n "$BIND" ]; then
+	if [ -n "${BIND}" ]; then
 		show_msg "Bound items: ${BIND}"
 
 		for i in ${BIND}; do
-			bind="${bind} --bind ${i} ${i}"
+			bind_items="${bind_items} --bind ${i} ${i}"
 		done
-
-		dirs="${dirs} ${bind}"
 	fi
 
-	# Set XAUTHORITY variable if it's missing (which is unlikely)
+	# Set the XAUTHORITY variable if it's missing (which is unlikely)
 	if [ -z "${XAUTHORITY}" ]; then
 		XAUTHORITY="${HOME}"/.Xauthority
 	fi
 
 	show_msg
 
-	launch_wrapper "${bwrap}" --ro-bind "${mount_point}" / \
+	launch_wrapper "${bwrap}" \
+			--ro-bind "${mount_point}" / \
 			--dev-bind /dev /dev \
 			--ro-bind /sys /sys \
 			--bind-try /tmp /tmp \
 			--proc /proc \
+			--bind-try /home /home \
+			--bind-try /mnt /mnt \
+			--bind-try /opt /opt \
+			--bind-try /media /media \
+			--bind-try /run /run \
+			--bind-try /var /var \
 			--ro-bind-try /etc/resolv.conf /etc/resolv.conf \
 			--ro-bind-try /etc/hosts /etc/hosts \
 			--ro-bind-try /etc/nsswitch.conf /etc/nsswitch.conf \
@@ -574,8 +630,10 @@ run_bwrap () {
 			--ro-bind-try /etc/machine-id /etc/machine-id \
 			--ro-bind-try /etc/asound.conf /etc/asound.conf \
 			--ro-bind-try /etc/localtime /etc/localtime \
-			${dirs} \
-			${net} \
+			${sandbox_params} \
+			${custom_home} \
+			${bind_items} \
+			${unshare_net} \
 			${nvidia_driver_bind} \
 			--ro-bind-try "${XAUTHORITY}" "${XAUTHORITY}" \
 			--setenv PATH "${CUSTOM_PATH}" \
@@ -755,15 +813,42 @@ if [ "$(ls "${mount_point}" 2>/dev/null)" ] || \
 		bind_nvidia_driver
 	fi
 
+	export CUSTOM_PATH="/bin:/sbin:/usr/bin:/usr/sbin:/usr/lib/jvm/default/bin:/usr/local/bin:/usr/local/sbin:${PATH}"
+
+	# If SANDBOX_LEVEL is 3, run Xephyr and openbox before running applications
+	if [ "${SANDBOX}" = 1 ] && [ -n "${SANDBOX_LEVEL}" ] && [ "${SANDBOX_LEVEL}" -ge 3 ]; then
+		if [ -f "${mount_point}"/usr/bin/Xephyr ]; then
+			if [ -z "${XEPHYR_SIZE}" ]; then
+				XEPHYR_SIZE="800x600"
+			fi
+
+			xephyr_display="$((${script_id}+2))"
+
+			QUIET_MODE=1 DISABLE_NET=1 SANDBOX_LEVEL=2 run_bwrap \
+			--bind /tmp/.X11-unix /tmp/.X11-unix \
+			Xephyr -noreset -ac -br -screen ${XEPHYR_SIZE} :${xephyr_display} &>/dev/null & sleep 1
+			xephyr_pid=$!
+
+			QUIET_MODE=1 run_bwrap openbox & sleep 1
+		else
+			echo "SANDBOX_LEVEL is set to 3, but Xephyr is not present inside the container."
+			echo "Xephyr is required for this SANDBOX_LEVEL."
+
+			exit 1
+		fi
+	fi
+
 	if [ -L "${script_literal}" ] && [ -f "${mount_point}"/usr/bin/"${script_name}" ]; then
 		export CUSTOM_PATH="/bin:/sbin:/usr/bin:/usr/sbin:/usr/lib/jvm/default/bin"
 
 		show_msg "Autostarting ${script_name}"
 		run_bwrap "${script_name}" "$@"
 	else
-		export CUSTOM_PATH="/bin:/sbin:/usr/bin:/usr/sbin:/usr/lib/jvm/default/bin:/usr/local/bin:/usr/local/sbin:${PATH}"
-
 		run_bwrap "$@"
+	fi
+
+	if [ -n "${xephyr_pid}" ]; then
+		wait ${xephyr_pid}
 	fi
 else
 	echo "Mounting the image failed!"
