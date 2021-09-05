@@ -43,7 +43,7 @@ mount_point="${working_dir}"/mnt
 # a problem with mounting the image due to an incorrectly calculated offset.
 
 # The size of this script
-scriptsize=28712
+scriptsize=28814
 
 # The size of the utils.tar.gz archive
 # utils.tar.gz contains bwrap, squashfuse and dwarfs binaries
@@ -823,6 +823,10 @@ if [ "$(ls "${mount_point}" 2>/dev/null)" ] || \
 			fi
 
 			xephyr_display="$((${script_id}+2))"
+
+			if [ -S /tmp/.X11-unix/X${xephyr_display} ]; then
+				xephyr_display="$((${script_id}+10))"
+			fi
 
 			QUIET_MODE=1 DISABLE_NET=1 SANDBOX_LEVEL=2 run_bwrap \
 			--bind /tmp/.X11-unix /tmp/.X11-unix \
