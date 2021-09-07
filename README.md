@@ -2,7 +2,7 @@
 
 This is an easy to use compressed unprivileged Linux container packed into a single executable that works on most Linux distros. It's designed to be as simple and user-friendly as possible. You can use it to run any applications, including games (Vulkan and OpenGL).
 
-Besides, Conty supports true filesystem sandboxing, so you can even use it to isolate applications.
+Besides, Conty supports true filesystem and X11 sandboxing, so you can even use it to isolate applications.
 
 ## Features
 
@@ -14,7 +14,7 @@ Besides, Conty supports true filesystem sandboxing, so you can even use it to is
 * Almost completely seamless experience. All applications that you run with Conty read and store their configs in your HOME directory as if you weren't using the container at all.
 * No performance overhead. Since it's just a container, there is almost no overhead, thus all applications will run at full speed.
 * Supports Xorg, Wayland and XWayland.
-* Supports filesystem sandboxing (thanks to bubblewrap).
+* Supports filesystem and X11 sandboxing (thanks to bubblewrap and xephyr).
 
 ## Requirements
 
@@ -102,15 +102,18 @@ Conty uses bubblewrap and thus supports filesystem sandboxing. By default
 it's disabled and almost all directories on your system are available for the container. 
 
 Here are the environment variables that you can use to control the sandbox:
-* **SANDBOX** - enables the sandboxing feature itself. Isolates all directories, creates a fake temporary home directory (in RAM), which is destroyed after closing the container.
+* **SANDBOX** - enables the sandbox feature itself. Isolates all files and directories, creates a fake temporary home directory (in RAM), which is destroyed after closing the container.
+* **SANDBOX_LEVEL** - controls the strictness of the sandbox. There are 3 available levels, the default is 1. Level 1 isolates all user files; Level 2 isolates all user files, disables dbus and hides all running processes; Level 3 does the same as the level 2, but additionally disables network access and isolates X11 server with Xephyr.
 * **DISABLE_NET** - completely disables internet access.
 * **HOME_DIR** - sets a custom home directory. If you set this, HOME inside the container will still appear as /home/username, but actually a custom directory will be used for it.
-* **BIND** - list of files/directories (separated by space) to bind to the container. You can use this variable to allow access to any files or directories.
+* **BIND** - list of files/directories (separated by space) to mount to the container. You can use this variable to allow access to any files or directories.
+* **BIND_RO** - the same as **BIND** but mount files/dirs as read-only.
 
 Example:
 
 ```
 export SANDBOX=1
+export SANDBOX_LEVEL=2
 export BIND="/home/username/.steam /home/username/.local/share/Steam"
 ./conty.sh steam
 ```
@@ -127,7 +130,7 @@ If you just want a sandboxing functionality but don't need a container with a fu
 
 ## Known issues
 
-Nvidia users will experience graphics acceleration problems if their Nvidia kernel module version mismatches the version of the Nvidia libraries inside Conty. 
+Nvidia users with the proprietary driver will experience graphics acceleration problems if their Nvidia kernel module version mismatches the version of the Nvidia libraries inside Conty. This applies only to the proprietary driver, Nouveau should work fine without any additional actions (of course, if your GPU is supported by it).
 
 For example, if the version of your Nvidia kernel module is 460.56 and the libraries inside the container are from 460.67 version, then graphics acceleration will not work.
 
@@ -170,3 +173,4 @@ For the sake of convenience, there are compiled binaries (**utils.tar.gz**) of b
 * [bubblewrap](https://github.com/containers/bubblewrap)
 * [squashfuse](https://github.com/vasi/squashfuse)
 * [dwarfs](https://github.com/mhx/dwarfs)
+* [archlinux](https://archlinux.org/)
