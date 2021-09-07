@@ -107,7 +107,7 @@ Here are the environment variables that you can use to control the sandbox:
 * **DISABLE_NET** - completely disables internet access.
 * **HOME_DIR** - sets a custom home directory. If you set this, HOME inside the container will still appear as /home/username, but actually a custom directory will be used for it.
 * **BIND** - list of files/directories (separated by space) to mount to the container. You can use this variable to allow access to any files or directories.
-* **BIND_RO** - the same as **BIND** but mount files/dirs as read-only.
+* **BIND_RO** - the same as **BIND** but mounts files and directories as read-only.
 
 Example:
 
