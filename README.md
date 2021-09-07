@@ -98,8 +98,8 @@ There are some other features, see the internal help for more information.
 
 ## Sandbox
 
-Conty uses bubblewrap and thus supports filesystem sandboxing. By default
-it's disabled and almost all directories on your system are available for the container. 
+Conty uses bubblewrap and thus supports filesystem sandboxing, X1 isolation is also supported (via Xephyr). By default
+sandbox is disabled and almost all directories and files on your system are available for the container. 
 
 Here are the environment variables that you can use to control the sandbox:
 * **SANDBOX** - enables the sandbox feature itself. Isolates all files and directories, creates a fake temporary home directory (in RAM), which is destroyed after closing the container.
