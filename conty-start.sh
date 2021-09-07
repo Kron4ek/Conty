@@ -43,7 +43,7 @@ mount_point="${working_dir}"/mnt
 # a problem with mounting the image due to an incorrectly calculated offset.
 
 # The size of this script
-scriptsize=28814
+scriptsize=29094
 
 # The size of the utils.tar.gz archive
 # utils.tar.gz contains bwrap, squashfuse and dwarfs binaries
@@ -85,6 +85,9 @@ if [ "$1" = "--help" ] || [ "$1" = "-h" ] || ([ -z "$1" ] && [ ! -L "${script_li
 	echo -e "\tand the integrated utils. This option may break Conty in some cases,"
 	echo -e "\tuse with caution."
 	echo
+	echo "Arguments that don't match any of the above will be passed directly to"
+	echo "bubblewrap. So all bubblewrap arguments are supported as well."
+	echo
 	echo "Environment variables:"
 	echo
 	echo -e "DISABLE_NET \tDisables network access"
@@ -102,6 +105,7 @@ if [ "$1" = "--help" ] || [ "$1" = "-h" ] || ([ -z "$1" ] && [ ! -L "${script_li
 	echo -e "\t\tFor example, BIND=\"/home/username/.config /etc/pacman.conf\""
 	echo -e "\t\tThis is mainly useful for allowing access to specific"
 	echo -e "\t\tdirs/files when SANDBOX is enabled."
+	echo -e "BIND_RO \tThe same as BIND but mounts as read-only."
 	echo -e "HOME_DIR \tSets the HOME directory to a custom location."
 	echo -e "\t\tFor example, HOME_DIR=\"/home/username/custom_home\""
 	echo -e "\t\tIf you set this, HOME inside the container will still appear"
@@ -109,10 +113,10 @@ if [ "$1" = "--help" ] || [ "$1" = "-h" ] || ([ -z "$1" ] && [ ! -L "${script_li
 	echo -e "\t\tused for it."
 	echo -e "USE_SYS_UTILS \tMakes the script to use squashfuse/dwarfs and bwrap"
 	echo -e "\t\tinstalled on the system instead of the builtin ones."
-	echo -e "NVIDIA_FIX \tAutomatically download and bind the required Nvidia"
-	echo -e "\t\tlibraries if the kernel module version in the system differs"
-	echo -e "\t\tfrom the Nvidia libraries version inside the container."
-	echo -e "\t\tThis should fix the graphics acceleration problems on Nvidia."
+	echo -e "NVIDIA_FIX \tFixes graphics acceleration problems on Nvidia GPUs with the"
+	echo -e "\t\tproprietary driver. This is not needed for the free/oss Nouveau"
+	echo -e "\t\tdriver. Enable this only if you have graphics acceleration"
+	echo -e "\t\tproblems on Nvidia."
 	echo -e "SUDO_MOUNT \tMakes the script to mount the squashfs image by using"
 	echo -e "\t\tthe regular mount command instead of squashfuse. In this"
 	echo -e "\t\tcase root rights will be requested (via sudo) when mounting"
@@ -400,6 +404,7 @@ if [ "$1" = "-u" ] || [ "$1" = "-U" ]; then
 	unset DISABLE_NET
 	unset HOME_DIR
 	unset BIND
+	unset BIND_RO
 	unset SANDBOX_LEVEL
 
 	# Enable SANDBOX
@@ -596,10 +601,18 @@ run_bwrap () {
 	fi
 
 	if [ -n "${BIND}" ]; then
-		show_msg "Bound items: ${BIND}"
+		show_msg "Mounted items: ${BIND}"
 
 		for i in ${BIND}; do
 			bind_items="${bind_items} --bind ${i} ${i}"
+		done
+	fi
+
+	if [ -n "${BIND_RO}" ]; then
+		show_msg "Read-only mounted items: ${BIND_RO}"
+
+		for i in ${BIND_RO}; do
+			bind_items="${bind_items} --ro-bind ${i} ${i}"
 		done
 	fi
 
@@ -640,13 +653,10 @@ run_bwrap () {
 			"$@"
 }
 
-# Function that checks if the Nvidia kernel module loaded in the
+# A function that checks if the Nvidia kernel module loaded in the
 # system matches the version of the Nvidia libraries inside the container
 # and downloads corresponding Nvidia libs from the official site if they
 # are not the same. Also binds the downloaded libraries to the container.
-#
-# This is absolutely necessary for Nvidia GPUs, otherwise graphics
-# acceleration will not work.
 
 bind_nvidia_driver () {
 	# Path to store downloaded Nvidia drivers
