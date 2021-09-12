@@ -12,7 +12,7 @@ if [ $EUID = 0 ] && [ -z "$ALLOW_ROOT" ]; then
 	exit 1
 fi
 
-script_version="1.16"
+script_version="1.16.1"
 
 # Full path to the script
 script_literal="${BASH_SOURCE[0]}"
@@ -43,7 +43,7 @@ mount_point="${working_dir}"/mnt
 # a problem with mounting the image due to an incorrectly calculated offset.
 
 # The size of this script
-scriptsize=29094
+scriptsize=29191
 
 # The size of the utils.tar.gz archive
 # utils.tar.gz contains bwrap, squashfuse and dwarfs binaries
@@ -635,6 +635,7 @@ run_bwrap () {
 			--bind-try /media /media \
 			--bind-try /run /run \
 			--bind-try /var /var \
+			--ro-bind-try /usr/share/steam/compatibilitytools.d /usr/share/steam/compatibilitytools.d \
 			--ro-bind-try /etc/resolv.conf /etc/resolv.conf \
 			--ro-bind-try /etc/hosts /etc/hosts \
 			--ro-bind-try /etc/nsswitch.conf /etc/nsswitch.conf \
