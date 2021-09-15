@@ -471,7 +471,7 @@ if [ "$1" = "-u" ] || [ "$1" = "-U" ]; then
 	# Updates SSL CA certificates
 	# Generates locales
 	cat <<EOF > container-update.sh
-reflector --protocol https --score 3 --sort rate --save /etc/pacman.d/mirrorlist
+reflector --protocol https --score 5 --sort rate --save /etc/pacman.d/mirrorlist
 fakeroot -- pacman -Syy 2>/dev/null
 fakeroot -- pacman --noconfirm -S archlinux-keyring 2>/dev/null
 fakeroot -- pacman --noconfirm -S chaotic-keyring 2>/dev/null
