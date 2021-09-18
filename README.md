@@ -130,7 +130,7 @@ If you just want a sandboxing functionality but don't need a container with a fu
 
 ## Known issues
 
-Nvidia users with the proprietary driver will experience graphics acceleration problems if their Nvidia kernel module version mismatches the version of the Nvidia libraries inside Conty. This applies only to the proprietary driver, Nouveau should work fine without any additional actions (of course, if your GPU is supported by it).
+Nvidia users with the proprietary driver will experience graphics acceleration problems (probably graphical applications won't work at all) if their Nvidia kernel module version mismatches the version of the Nvidia libraries inside Conty. This applies only to the proprietary driver, Nouveau should work fine without any additional actions (of course, if your GPU is supported by it).
 
 For example, if the version of your Nvidia kernel module is 460.56 and the libraries inside the container are from 460.67 version, then graphics acceleration will not work.
 
@@ -140,6 +140,8 @@ There is an experimental solution for this problem that can be enabled with the 
 export NVIDIA_FIX=1
 ./conty.sh glxgears
 ```
+
+Another and more reliable solution is to install the same driver version as included inside Conty, which is usually the latest non-beta version. You can see the exact driver version in pkg_list.txt attached to each Conty release.
 
 ## How to update
 
