@@ -43,7 +43,7 @@ mount_point="${working_dir}"/mnt
 # a problem with mounting the image due to an incorrectly calculated offset.
 
 # The size of this script
-scriptsize=29191
+scriptsize=29176
 
 # The size of the utils.tar.gz archive
 # utils.tar.gz contains bwrap, squashfuse and dwarfs binaries
@@ -743,25 +743,25 @@ bind_nvidia_driver () {
 						--ro-bind-try ${nvidia_drivers_dir}/nvidia-driver/32/${lib}.${nvidia_version} \
 						/usr/lib32/${lib}.${nvidia_version_inside}"
 					fi
-
-					if [ -f "${mount_point}"/usr/lib/nvidia/xorg/libglxserver_nvidia.so.${nvidia_version_inside} ]; then
-						nvidia_driver_bind="${nvidia_driver_bind} \
-						--ro-bind-try ${nvidia_drivers_dir}/nvidia-driver/libglxserver_nvidia.so.${nvidia_version} \
-						/usr/lib/nvidia/xorg/libglxserver_nvidia.so.${nvidia_version_inside}"
-					fi
-
-					if [ -f "${mount_point}"/usr/lib/vdpau/libvdpau_nvidia.so.${nvidia_version_inside} ]; then
-						nvidia_driver_bind="${nvidia_driver_bind} \
-						--ro-bind-try ${nvidia_drivers_dir}/nvidia-driver/libvdpau_nvidia.so.${nvidia_version} \
-						/usr/lib/vdpau/libvdpau_nvidia.so.${nvidia_version_inside}"
-					fi
-
-					if [ -f "${mount_point}"/usr/lib32/vdpau/libvdpau_nvidia.so.${nvidia_version_inside} ]; then
-						nvidia_driver_bind="${nvidia_driver_bind} \
-						--ro-bind-try ${nvidia_drivers_dir}/nvidia-driver/32/libvdpau_nvidia.so.${nvidia_version} \
-						/usr/lib32/vdpau/libvdpau_nvidia.so.${nvidia_version_inside}"
-					fi
 				done
+
+				if [ -f "${mount_point}"/usr/lib/nvidia/xorg/libglxserver_nvidia.so.${nvidia_version_inside} ]; then
+					nvidia_driver_bind="${nvidia_driver_bind} \
+					--ro-bind-try ${nvidia_drivers_dir}/nvidia-driver/libglxserver_nvidia.so.${nvidia_version} \
+					/usr/lib/nvidia/xorg/libglxserver_nvidia.so.${nvidia_version_inside}"
+				fi
+
+				if [ -f "${mount_point}"/usr/lib/vdpau/libvdpau_nvidia.so.${nvidia_version_inside} ]; then
+					nvidia_driver_bind="${nvidia_driver_bind} \
+					--ro-bind-try ${nvidia_drivers_dir}/nvidia-driver/libvdpau_nvidia.so.${nvidia_version} \
+					/usr/lib/vdpau/libvdpau_nvidia.so.${nvidia_version_inside}"
+				fi
+
+				if [ -f "${mount_point}"/usr/lib32/vdpau/libvdpau_nvidia.so.${nvidia_version_inside} ]; then
+					nvidia_driver_bind="${nvidia_driver_bind} \
+					--ro-bind-try ${nvidia_drivers_dir}/nvidia-driver/32/libvdpau_nvidia.so.${nvidia_version} \
+					/usr/lib32/vdpau/libvdpau_nvidia.so.${nvidia_version_inside}"
+				fi
 			fi
 		fi
 	fi
