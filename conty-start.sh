@@ -12,7 +12,7 @@ if [ $EUID = 0 ] && [ -z "$ALLOW_ROOT" ]; then
 	exit 1
 fi
 
-script_version="1.16.1"
+script_version="1.17"
 
 # Full path to the script
 script_literal="${BASH_SOURCE[0]}"
@@ -43,7 +43,7 @@ mount_point="${working_dir}"/mnt
 # a problem with mounting the image due to an incorrectly calculated offset.
 
 # The size of this script
-scriptsize=29176
+scriptsize=29367
 
 # The size of the utils.tar.gz archive
 # utils.tar.gz contains bwrap, squashfuse and dwarfs binaries
@@ -71,6 +71,7 @@ if [ "$1" = "--help" ] || [ "$1" = "-h" ] || ([ -z "$1" ] && [ ! -L "${script_li
 	echo -e "-v \tShow version of this script"
 	echo -e "-e \tExtract the image"
 	echo -e "-o \tShow the image offset"
+	echo -e "-l \tShow a list of all installed packages"
 	echo -e "-m \tMount/unmount the image"
 	echo -e "\tThe image will be mounted if it's not mounted, and unmounted otherwise."
 	echo -e "\tMount point can be changed with the BASE_DIR env variable"
@@ -825,6 +826,12 @@ if [ "$(ls "${mount_point}" 2>/dev/null)" ] || \
 	fi
 
 	export CUSTOM_PATH="/bin:/sbin:/usr/bin:/usr/sbin:/usr/lib/jvm/default/bin:/usr/local/bin:/usr/local/sbin:${PATH}"
+
+	if [ "$1" = "-l" ]; then
+		run_bwrap --ro-bind "${mount_point}"/var /var \
+                  bash -c "pacman -Qn; pacman -Qm"
+		exit
+	fi
 
 	# If SANDBOX_LEVEL is 3, run Xephyr and openbox before running applications
 	if [ "${SANDBOX}" = 1 ] && [ -n "${SANDBOX_LEVEL}" ] && [ "${SANDBOX_LEVEL}" -ge 3 ]; then

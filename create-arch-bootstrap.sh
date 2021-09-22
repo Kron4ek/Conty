@@ -186,6 +186,9 @@ run_in_chroot pacman --noconfirm --needed -S ${packagelist}
 
 run_in_chroot locale-gen
 
+# Generate a list of installed packages
+run_in_chroot pacman -Qn > "${bootstrap}"/pkglist.x86_64.txt
+
 unmount_chroot
 
 # Clear pacman package cache
