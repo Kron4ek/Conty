@@ -2,11 +2,14 @@
 
 This is an easy to use compressed unprivileged Linux container packed into a single executable that works on most Linux distros. It's designed to be as simple and user-friendly as possible. You can use it to run any applications, including games (Vulkan and OpenGL).
 
+In its default configuration it includes, among others, these apps: Wine-Staging-TkG, Steam, Lutris, PlayOnLinux, RetroArch, PPSSPP, OpenJDK, Firefox. You can install any other applications or run locally installed apps.
+
 Besides, Conty supports true filesystem and X11 sandboxing, so you can even use it to isolate applications.
 
 ## Features
 
-* A single executable - download (or create) and run, nothing else is required.
+* A single executable - download (or create) and run, nothing else is required. And it's portable, you can put it anywhere (even on a usb stick).
+* Works on most Linux distros, even very old ones and even without glibc (such as Alpine or Void with musl).
 * Root rights are **not required**.
 * Compressed (with squashfs or dwarfs), so it takes much less disk space than uncompressed containers and provides faster file system access.
 * Contains many libraries and packages so it can run almost everything. And you don't need to install anything on your main (host) system. **You can even run 32-bit applications on pure 64-bit systems**.
