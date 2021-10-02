@@ -12,7 +12,7 @@ if [ $EUID = 0 ] && [ -z "$ALLOW_ROOT" ]; then
 	exit 1
 fi
 
-script_version="1.17"
+script_version="1.17.1"
 
 # Full path to the script
 script_literal="${BASH_SOURCE[0]}"
@@ -43,7 +43,7 @@ mount_point="${working_dir}"/mnt
 # a problem with mounting the image due to an incorrectly calculated offset.
 
 # The size of this script
-scriptsize=29367
+scriptsize=29501
 
 # The size of the utils.tar.gz archive
 # utils.tar.gz contains bwrap, squashfuse and dwarfs binaries
@@ -548,6 +548,12 @@ run_bwrap () {
 	unset custom_home
 	unset bind_items
 
+	if [ -n "${WAYLAND_DISPLAY}" ]; then
+		wayland_socket="${WAYLAND_DISPLAY}"
+	else
+		wayland_socket="wayland-0"
+	fi
+
 	if [ "${SANDBOX}" = 1 ]; then
 		sandbox_params="--tmpfs /home \
                         --dir ${HOME} \
@@ -564,7 +570,7 @@ run_bwrap () {
 			sandbox_level_msg="(level 2)"
 			sandbox_params="${sandbox_params} \
                             --dir /run/user/${EUID} \
-                            --ro-bind-try /run/user/${EUID}/wayland-0 /run/user/${EUID}/wayland-0 \
+                            --ro-bind-try /run/user/${EUID}/${wayland_socket} /run/user/${EUID}/${wayland_socket} \
                             --unshare-pid \
                             --unshare-user-try \
                             --unsetenv DBUS_SESSION_BUS_ADDRESS"
