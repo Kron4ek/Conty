@@ -12,14 +12,14 @@ if [ $EUID = 0 ] && [ -z "$ALLOW_ROOT" ]; then
 	exit 1
 fi
 
-script_version="1.17.1"
+script_version="1.18"
 
 # Full path to the script
 script_literal="${BASH_SOURCE[0]}"
 script_name="$(basename "${script_literal}")"
 script="$(readlink -f "${script_literal}")"
 
-# MD5 of the last 1 MB of the script
+# MD5 of the last 1 MB of the file
 script_md5="$(tail -c 1000000 "${script}" | md5sum | head -c 7)"
 
 script_id="${RANDOM}"
@@ -43,16 +43,18 @@ mount_point="${working_dir}"/mnt
 # a problem with mounting the image due to an incorrectly calculated offset.
 
 # The size of this script
-scriptsize=29501
+scriptsize=29829
 
-# The size of the utils.tar.gz archive
-# utils.tar.gz contains bwrap, squashfuse and dwarfs binaries
+# The size of the utils archive
 utilssize=2928770
 
 # Offset where the image is stored
 offset=$((scriptsize+utilssize))
 
 # Set to 1 if you are using an image compressed with dwarfs instead of squashfs
+#
+# Also, don't forget to change the utilssize variable to the size of
+# utils_dwarfs.tar.gz
 dwarfs_image=0
 
 dwarfs_cache_size="128M"
@@ -69,6 +71,7 @@ if [ "$1" = "--help" ] || [ "$1" = "-h" ] || ([ -z "$1" ] && [ ! -L "${script_li
 	echo "Arguments:"
 	echo
 	echo -e "-v \tShow version of this script"
+	echo -e "-V \tShow version of the image"
 	echo -e "-e \tExtract the image"
 	echo -e "-o \tShow the image offset"
 	echo -e "-l \tShow a list of all installed packages"
@@ -474,6 +477,7 @@ if [ "$1" = "-u" ] || [ "$1" = "-U" ]; then
 	cat <<EOF > container-update.sh
 reflector --protocol https --score 5 --sort rate --save /etc/pacman.d/mirrorlist
 fakeroot -- pacman -Syy 2>/dev/null
+date -u +"%d-%m-%Y %H:%M (DMY UTC)" > /version
 fakeroot -- pacman --noconfirm -S archlinux-keyring 2>/dev/null
 fakeroot -- pacman --noconfirm -S chaotic-keyring 2>/dev/null
 rm -rf /etc/pacman.d/gnupg
@@ -485,6 +489,8 @@ fakeroot -- pacman --noconfirm --overwrite "*" -Su 2>/dev/null
 fakeroot -- pacman --noconfirm -Runs ${pkgsremove} 2>/dev/null
 fakeroot -- pacman --noconfirm -S ${pkgsinstall} 2>/dev/null
 rm -f /var/cache/pacman/pkg/*
+pacman -Qn > /pkglist.x86_64.txt
+pacman -Qm >> /pkglist.x86_64.txt
 update-ca-trust
 locale-gen
 EOF
@@ -814,6 +820,16 @@ if [ "$(ls "${mount_point}" 2>/dev/null)" ] || \
 		else
 			rm -f "${working_dir}"/running_mount
 			echo "The image has been unmounted"
+		fi
+
+		exit
+	fi
+
+	if [ "$1" = "-V" ]; then
+		if [ -f "${mount_point}"/version ]; then
+			cat "${mount_point}"/version
+		else
+			echo "Unknown version"
 		fi
 
 		exit

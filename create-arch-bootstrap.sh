@@ -179,6 +179,8 @@ sed -i 's/#ParallelDownloads = 5/ParallelDownloads = 3/g' "${bootstrap}"/etc/pac
 
 run_in_chroot pacman -Syu --noconfirm
 
+date -u +"%d-%m-%Y %H:%M (DMY UTC)" > "${bootstrap}"/version
+
 # These packages are required for the self-update feature to work properly
 run_in_chroot pacman --noconfirm --needed -S base reflector squashfs-tools fakeroot
 
