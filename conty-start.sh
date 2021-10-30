@@ -43,7 +43,7 @@ mount_point="${working_dir}"/mnt
 # a problem with mounting the image due to an incorrectly calculated offset.
 
 # The size of this script
-scriptsize=29829
+scriptsize=24812
 
 # The size of the utils archive
 utilssize=2928770
@@ -117,10 +117,6 @@ if [ "$1" = "--help" ] || [ "$1" = "-h" ] || ([ -z "$1" ] && [ ! -L "${script_li
 	echo -e "\t\tused for it."
 	echo -e "USE_SYS_UTILS \tMakes the script to use squashfuse/dwarfs and bwrap"
 	echo -e "\t\tinstalled on the system instead of the builtin ones."
-	echo -e "NVIDIA_FIX \tFixes graphics acceleration problems on Nvidia GPUs with the"
-	echo -e "\t\tproprietary driver. This is not needed for the free/oss Nouveau"
-	echo -e "\t\tdriver. Enable this only if you have graphics acceleration"
-	echo -e "\t\tproblems on Nvidia."
 	echo -e "SUDO_MOUNT \tMakes the script to mount the squashfs image by using"
 	echo -e "\t\tthe regular mount command instead of squashfuse. In this"
 	echo -e "\t\tcase root rights will be requested (via sudo) when mounting"
@@ -158,6 +154,9 @@ if [ "$1" = "--help" ] || [ "$1" = "-h" ] || ([ -z "$1" ] && [ ! -L "${script_li
 	echo "To remove: ./conty.sh -u -pkgname1 -pkgname2 -pkgname3"
 	echo "In this case Conty will update all packages and will additionally"
 	echo "install and/or remove specified packages."
+	echo
+	echo "If you are using an Nvidia GPU, please read the information"
+	echo "here: https://github.com/Kron4ek/Conty#known-issues"
 	exit
 elif [ "$1" = "-v" ]; then
 	echo "${script_version}"
@@ -404,7 +403,6 @@ if [ "$1" = "-u" ] || [ "$1" = "-U" ]; then
 
 	# Since Conty is used here to update itself, it's necessary to disable
 	# some environment variables for this to work properly
-	unset NVIDIA_FIX
 	unset DISABLE_NET
 	unset HOME_DIR
 	unset BIND
@@ -661,123 +659,9 @@ run_bwrap () {
 			${custom_home} \
 			${bind_items} \
 			${unshare_net} \
-			${nvidia_driver_bind} \
 			--ro-bind-try "${XAUTHORITY}" "${XAUTHORITY}" \
 			--setenv PATH "${CUSTOM_PATH}" \
 			"$@"
-}
-
-# A function that checks if the Nvidia kernel module loaded in the
-# system matches the version of the Nvidia libraries inside the container
-# and downloads corresponding Nvidia libs from the official site if they
-# are not the same. Also binds the downloaded libraries to the container.
-
-bind_nvidia_driver () {
-	# Path to store downloaded Nvidia drivers
-	nvidia_drivers_dir="${HOME}"/.local/share/Conty/nvidia-drivers
-
-	# Check if the Nvidia module is loaded
-	# If it's loaded, then likely Nvidia GPU is being used
-	if lsmod | grep nvidia 1>/dev/null || nvidia-smi 1>/dev/null; then
-		if nvidia-smi 1>/dev/null; then
-			nvidia_version="$(nvidia-smi --query-gpu=driver_version --format=csv,noheader)"
-		elif modinfo nvidia &>/dev/null; then
-			nvidia_version="$(modinfo -F version nvidia 2>/dev/null)"
-		else
-			if [ -d /usr/lib/x86_64-linux-gnu ]; then
-				nvidia_version="$(basename /usr/lib/x86_64-linux-gnu/libGLX_nvidia.so.*.* | tail -c +18)"
-			else
-				nvidia_version="$(basename /usr/lib/libGLX_nvidia.so.*.* | tail -c +18)"
-			fi
-		fi
-
-		# Check if the kernel module version is different from the
-		# libraries version inside the container
-		if [ -n "${nvidia_version}" ]; then
-			nvidia_version_inside="$(basename "${mount_point}"/usr/lib/libGLX_nvidia.so.*.* | tail -c +18)"
-
-			if [ "$(cat "${nvidia_drivers_dir}"/current_version.txt 2>/dev/null)" != "${nvidia_version}" ] \
-			   && [ "${nvidia_version}" != "${nvidia_version_inside}" ]; then
-				echo "Nvidia driver version mismatch detected, trying to fix"
-
-				OLD_PWD="${PWD}"
-
-				mkdir -p "${nvidia_drivers_dir}"
-				cd "${nvidia_drivers_dir}"
-
-				rm -rf nvidia-driver
-				rm -f nvidia.run
-
-				echo "Downloading Nvidia ${nvidia_version}, please wait"
-
-				# Try to download from the default Nvidia url
-				driver_url="https://us.download.nvidia.com/XFree86/Linux-x86_64/${nvidia_version}/NVIDIA-Linux-x86_64-${nvidia_version}.run"
-				wget -q --show-progress "${driver_url}" -O nvidia.run
-
-				# If the previous download failed, get url from flathub
-				if [ ! -s nvidia.run ]; then
-					rm -f nvidia.run
-					driver_url="https:$(wget -q "https://raw.githubusercontent.com/flathub/org.freedesktop.Platform.GL.nvidia/master/data/nvidia-${nvidia_version}-i386.data" \
-							-O - | cut -d ':' -f 6)"
-
-					wget -q --show-progress "${driver_url}" -O nvidia.run
-				fi
-
-				if [ -s nvidia.run ]; then
-					chmod +x nvidia.run
-					echo "Unpacking nvidia.run..."
-					./nvidia.run -x &>/dev/null
-					rm nvidia.run
-					mv NVIDIA-Linux-x86_64-${nvidia_version} nvidia-driver
-					echo ${nvidia_version} > current_version.txt
-				fi
-
-				cd "${OLD_PWD}"
-			fi
-
-			# Bind the downloaded Nvidia libs to the container
-			if [ -d "${nvidia_drivers_dir}"/nvidia-driver ]; then
-				nvidia_libs_list="libcuda.so libEGL_nvidia.so libGLESv1_CM_nvidia.so \
-				libGLESv2_nvidia.so libGLX_nvidia.so libnvcuvid.so libnvidia-cbl.so \
-				libnvidia-cfg.so libnvidia-eglcore.so libnvidia-encode.so libnvidia-fbc.so \
-				libnvidia-glcore.so libnvidia-glsi.so libnvidia-glvkspirv.so libnvidia-ifr.so \
-				libnvidia-ml.so libnvidia-ngx.so libnvidia-opticalflow.so libnvidia-ptxjitcompiler.so \
-				libnvidia-rtcore.so libnvidia-tls.so libnvoptix.so"
-
-				for lib in ${nvidia_libs_list}; do
-					if [ -f "${mount_point}"/usr/lib/${lib}.${nvidia_version_inside} ]; then
-						nvidia_driver_bind="${nvidia_driver_bind} \
-						--ro-bind-try ${nvidia_drivers_dir}/nvidia-driver/${lib}.${nvidia_version} \
-						/usr/lib/${lib}.${nvidia_version_inside}"
-					fi
-
-					if [ -f "${mount_point}"/usr/lib32/${lib}.${nvidia_version_inside} ]; then
-						nvidia_driver_bind="${nvidia_driver_bind} \
-						--ro-bind-try ${nvidia_drivers_dir}/nvidia-driver/32/${lib}.${nvidia_version} \
-						/usr/lib32/${lib}.${nvidia_version_inside}"
-					fi
-				done
-
-				if [ -f "${mount_point}"/usr/lib/nvidia/xorg/libglxserver_nvidia.so.${nvidia_version_inside} ]; then
-					nvidia_driver_bind="${nvidia_driver_bind} \
-					--ro-bind-try ${nvidia_drivers_dir}/nvidia-driver/libglxserver_nvidia.so.${nvidia_version} \
-					/usr/lib/nvidia/xorg/libglxserver_nvidia.so.${nvidia_version_inside}"
-				fi
-
-				if [ -f "${mount_point}"/usr/lib/vdpau/libvdpau_nvidia.so.${nvidia_version_inside} ]; then
-					nvidia_driver_bind="${nvidia_driver_bind} \
-					--ro-bind-try ${nvidia_drivers_dir}/nvidia-driver/libvdpau_nvidia.so.${nvidia_version} \
-					/usr/lib/vdpau/libvdpau_nvidia.so.${nvidia_version_inside}"
-				fi
-
-				if [ -f "${mount_point}"/usr/lib32/vdpau/libvdpau_nvidia.so.${nvidia_version_inside} ]; then
-					nvidia_driver_bind="${nvidia_driver_bind} \
-					--ro-bind-try ${nvidia_drivers_dir}/nvidia-driver/32/libvdpau_nvidia.so.${nvidia_version} \
-					/usr/lib32/vdpau/libvdpau_nvidia.so.${nvidia_version_inside}"
-				fi
-			fi
-		fi
-	fi
 }
 
 trap_exit () {
@@ -842,10 +726,6 @@ if [ "$(ls "${mount_point}" 2>/dev/null)" ] || \
 	fi
 
 	show_msg "Running Conty"
-
-	if [ "${NVIDIA_FIX}" = 1 ]; then
-		bind_nvidia_driver
-	fi
 
 	export CUSTOM_PATH="/bin:/sbin:/usr/bin:/usr/sbin:/usr/lib/jvm/default/bin:/usr/local/bin:/usr/local/sbin:${PATH}"
 

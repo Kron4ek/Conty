@@ -24,7 +24,7 @@ Besides, Conty supports true filesystem and X11 sandboxing, so you can even use 
 The only requirements are **bash**, **fuse2** (or **fuse3**), **tar**, **gzip** and **coreutils**. And your /tmp directory
 should allow files execution (which it does by default on most distros).
 
-Your Linux kernel must be at least version 4.4 and should support unprivileged user namespaces. On some 
+Your Linux kernel must be at least version 4.4 and should support unprivileged user namespaces. On some
 Linux distros this feature is disabled by default and can be enabled with sysfs:
 
 ```
@@ -102,7 +102,7 @@ There are some other features, see the internal help for more information.
 ## Sandbox
 
 Conty uses bubblewrap and thus supports filesystem sandboxing, X11 isolation is also supported (via Xephyr). By default
-sandbox is disabled and almost all directories and files on your system are available for the container. 
+sandbox is disabled and almost all directories and files on your system are available for the container.
 
 Here are the environment variables that you can use to control the sandbox:
 * **SANDBOX** - enables the sandbox feature itself. Isolates all files and directories, creates a fake temporary home directory (in RAM), which is destroyed after closing the container.
@@ -137,14 +137,9 @@ Nvidia users with the proprietary driver will experience graphics acceleration p
 
 For example, if the version of your Nvidia kernel module is 460.56 and the libraries inside the container are from 460.67 version, then graphics acceleration will not work.
 
-There is an experimental solution for this problem that can be enabled with the **NVIDIA_FIX** variable. I don't have a Nvidia GPU to test this function properly, so it might or might not work.
-
-```
-export NVIDIA_FIX=1
-./conty.sh glxgears
-```
-
-Another and more reliable solution is to install the same driver version as included inside Conty, which is usually the latest non-beta version. You can see the exact driver version in pkg_list.txt attached to each Conty release.
+There are two solutions for this problem:
+* The first and probably the easiest solution is to install the same driver version as included inside Conty, which is usually the latest non-beta version. You can see the exact driver version in pkg_list.txt attached to each Conty release.
+* The second solution is to (re)build Conty and include the same driver version as installed on your system.
 
 ## How to update
 
@@ -179,3 +174,4 @@ For the sake of convenience, there are compiled binaries (**utils.tar.gz**) of b
 * [squashfuse](https://github.com/vasi/squashfuse)
 * [dwarfs](https://github.com/mhx/dwarfs)
 * [archlinux](https://archlinux.org/)
+* [chaotic-aur](https://aur.chaotic.cx/)
