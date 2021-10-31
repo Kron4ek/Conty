@@ -128,7 +128,8 @@ packagelist="${audio_pkgs} ${video_pkgs} ${wine_pkgs} \
 	meson mingw-w64-gcc gamemode lib32-gamemode cmake jre-openjdk \
 	playonlinux lxterminal steamtinkerlaunch mangohud lib32-mangohud \
 	zsync2-git wayland lib32-wayland qt5-wayland retroarch python-magic-ahupp \
-	xorg-server-xephyr openbox"
+	xorg-server-xephyr openbox obs-studio gamehub minigalaxy legendary \
+	gamescope-git pcsx2 multimc5 youtube-dl"
 
 current_release="$(wget -q "https://archlinux.org/download/" -O - | grep "Current Release" | tail -c -16 | head -c +10)"
 
