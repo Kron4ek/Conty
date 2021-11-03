@@ -43,7 +43,7 @@ mount_point="${working_dir}"/mnt
 # a problem with mounting the image due to an incorrectly calculated offset.
 
 # The size of this script
-scriptsize=24812
+scriptsize=24914
 
 # The size of the utils archive
 utilssize=2928770
@@ -558,6 +558,10 @@ run_bwrap () {
 		wayland_socket="wayland-0"
 	fi
 
+	if [ -z "${XDG_RUNTIME_DIR}" ]; then
+		XDG_RUNTIME_DIR="/run/user/${EUID}"
+	fi
+
 	if [ "${SANDBOX}" = 1 ]; then
 		sandbox_params="--tmpfs /home \
                         --dir ${HOME} \
@@ -573,15 +577,15 @@ run_bwrap () {
 		if [ -n "${SANDBOX_LEVEL}" ] && [ "${SANDBOX_LEVEL}" -ge 2 ]; then
 			sandbox_level_msg="(level 2)"
 			sandbox_params="${sandbox_params} \
-                            --dir /run/user/${EUID} \
-                            --ro-bind-try /run/user/${EUID}/${wayland_socket} /run/user/${EUID}/${wayland_socket} \
+                            --dir ${XDG_RUNTIME_DIR} \
+                            --ro-bind-try ${XDG_RUNTIME_DIR}/${wayland_socket} ${XDG_RUNTIME_DIR}/${wayland_socket} \
                             --unshare-pid \
                             --unshare-user-try \
                             --unsetenv DBUS_SESSION_BUS_ADDRESS"
 		else
 			sandbox_level_msg="(level 1)"
 			sandbox_params="${sandbox_params} \
-                            --bind-try /run/user /run/user \
+                            --bind-try ${XDG_RUNTIME_DIR} ${XDG_RUNTIME_DIR} \
                             --bind-try /run/dbus /run/dbus"
 		fi
 
