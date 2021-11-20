@@ -12,7 +12,7 @@ if [ $EUID = 0 ] && [ -z "$ALLOW_ROOT" ]; then
 	exit 1
 fi
 
-script_version="1.18"
+script_version="1.18.1"
 
 # Full path to the script
 script_literal="${BASH_SOURCE[0]}"
@@ -43,7 +43,7 @@ mount_point="${working_dir}"/mnt
 # a problem with mounting the image due to an incorrectly calculated offset.
 
 # The size of this script
-scriptsize=25024
+scriptsize=25224
 
 # The size of the utils archive
 utilssize=2928770
@@ -580,6 +580,8 @@ run_bwrap () {
 			sandbox_params="${sandbox_params} \
                             --dir ${XDG_RUNTIME_DIR} \
                             --ro-bind-try ${XDG_RUNTIME_DIR}/${wayland_socket} ${XDG_RUNTIME_DIR}/${wayland_socket} \
+                            --ro-bind-try ${XDG_RUNTIME_DIR}/pulse ${XDG_RUNTIME_DIR}/pulse \
+                            --ro-bind-try ${XDG_RUNTIME_DIR}/pipewire-0 ${XDG_RUNTIME_DIR}/pipewire-0 \
                             --unshare-pid \
                             --unshare-user-try \
                             --unsetenv DBUS_SESSION_BUS_ADDRESS"
