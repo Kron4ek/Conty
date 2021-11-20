@@ -167,8 +167,8 @@ run_in_chroot pacman-key --populate archlinux
 # Add Chaotic-AUR repo
 run_in_chroot pacman-key --recv-key 3056513887B78AEB
 run_in_chroot pacman-key --lsign-key 3056513887B78AEB
-run_in_chroot pacman --noconfirm -U 'https://ftp.belnet.be/mirrors/chaotic-aur/x86_64/chaotic-keyring-20210617-1-any.pkg.tar.zst'
-run_in_chroot pacman --noconfirm -U 'https://ftp.belnet.be/mirrors/chaotic-aur/x86_64/chaotic-mirrorlist-20210716-1-any.pkg.tar.zst'
+run_in_chroot pacman --noconfirm -U 'https://mirrors.fossho.st/garuda/repos/chaotic-aur/x86_64/chaotic-keyring-20210617-2-any.pkg.tar.zst'
+run_in_chroot pacman --noconfirm -U 'https://mirrors.fossho.st/garuda/repos/chaotic-aur/x86_64/chaotic-mirrorlist-20211118-2-any.pkg.tar.zst'
 
 echo >> "${bootstrap}"/etc/pacman.conf
 echo "[chaotic-aur]" >> "${bootstrap}"/etc/pacman.conf
