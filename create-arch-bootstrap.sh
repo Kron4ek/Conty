@@ -129,7 +129,7 @@ packagelist="${audio_pkgs} ${video_pkgs} ${wine_pkgs} \
 	playonlinux lxterminal steamtinkerlaunch mangohud lib32-mangohud \
 	zsync2-git wayland lib32-wayland qt5-wayland retroarch python-magic-ahupp \
 	xorg-server-xephyr openbox obs-studio gamehub minigalaxy legendary \
-	gamescope-git pcsx2 multimc5 youtube-dl"
+	gamescope-git pcsx2 multimc5 youtube-dl bottles"
 
 current_release="$(wget -q "https://archlinux.org/download/" -O - | grep "Current Release" | tail -c -16 | head -c +10)"
 
