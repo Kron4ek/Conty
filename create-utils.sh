@@ -16,7 +16,7 @@ build_dwarfs="false"
 squashfuse_version="0.1.104"
 bwrap_version="0.5.0"
 lz4_version="1.9.3"
-zstd_version="1.5.0"
+zstd_version="1.5.1"
 squashfs_tools_version="4.5"
 dwarfs_version="0.5.6"
 
