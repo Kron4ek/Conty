@@ -5,12 +5,13 @@
 #
 # Dwarfs dependencies: fuse2 (or fuse3) openssl jemalloc xxhash boost lz4
 # 	xz zstd libarchive libunwind google-glod gtest fmt gflags double-conversion
-#	cmake ruby-ronn libevent libdwarf
+#	cmake ruby-ronn libevent libdwarf git
 #
 # Dwarfs compilation is optional and disabled by default.
 
 script_dir="$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")"
 
+# Set to true to compile dwarfs instead of squashfuse
 build_dwarfs="false"
 
 squashfuse_version="0.1.104"
@@ -18,28 +19,32 @@ bwrap_version="0.5.0"
 lz4_version="1.9.3"
 zstd_version="1.5.1"
 squashfs_tools_version="4.5"
-dwarfs_version="0.5.6"
 
 export CC=gcc
 export CXX=g++
 
-export CFLAGS="-O2"
+export CFLAGS="-msse3 -O2"
 export CXXFLAGS="${CFLAGS}"
+export LDFLAGS="-Wl,-O1,--sort-common,--as-needed"
 
 mkdir -p "${script_dir}"/build-utils
 cd "${script_dir}"/build-utils || exit 1
 
 wget -q --show-progress -O lz4.tar.gz https://github.com/lz4/lz4/archive/refs/tags/v${lz4_version}.tar.gz
 wget -q --show-progress -O zstd.tar.gz https://github.com/facebook/zstd/archive/refs/tags/v${zstd_version}.tar.gz
-wget -q --show-progress -O squashfuse.tar.gz https://github.com/vasi/squashfuse/archive/refs/tags/${squashfuse_version}.tar.gz
 wget -q --show-progress -O bwrap.tar.gz https://github.com/containers/bubblewrap/archive/refs/tags/v${bwrap_version}.tar.gz
-wget -q --show-progress -O sqfstools.tar.gz https://github.com/plougher/squashfs-tools/archive/refs/tags/${squashfs_tools_version}.tar.gz
 
 tar xf lz4.tar.gz
 tar xf zstd.tar.gz
-tar xf squashfuse.tar.gz
 tar xf bwrap.tar.gz
-tar xf sqfstools.tar.gz
+
+if [ "${build_dwarfs}" != "true" ]; then
+	wget -q --show-progress -O squashfuse.tar.gz https://github.com/vasi/squashfuse/archive/refs/tags/${squashfuse_version}.tar.gz
+	wget -q --show-progress -O sqfstools.tar.gz https://github.com/plougher/squashfs-tools/archive/refs/tags/${squashfs_tools_version}.tar.gz
+
+	tar xf squashfuse.tar.gz
+	tar xf sqfstools.tar.gz
+fi
 
 cd bubblewrap-${bwrap_version}
 ./autogen.sh
@@ -52,15 +57,17 @@ make -j$(nproc) DESTDIR="${script_dir}"/build-utils/bin install
 cd ../zstd-${zstd_version}
 make -j$(nproc) DESTDIR="${script_dir}"/build-utils/bin install
 
-cd ../squashfuse-${squashfuse_version}
-./autogen.sh
-./configure
-make -j$(nproc) DESTDIR="${script_dir}"/build-utils/bin install
+if [ "${build_dwarfs}" != "true" ]; then
+	cd ../squashfuse-${squashfuse_version}
+	./autogen.sh
+	./configure
+	make -j$(nproc) DESTDIR="${script_dir}"/build-utils/bin install
 
-cd ../squashfs-tools-${squashfs_tools_version}/squashfs-tools
-make -j$(nproc) GZIP_SUPPORT=1 XZ_SUPPORT=1 LZO_SUPPORT=1 LZMA_XZ_SUPPORT=1 \
-		LZ4_SUPPORT=1 ZSTD_SUPPORT=1 XATTR_SUPPORT=1
-make INSTALL_DIR="${script_dir}"/build-utils/bin/usr/local/bin install
+	cd ../squashfs-tools-${squashfs_tools_version}/squashfs-tools
+	make -j$(nproc) GZIP_SUPPORT=1 XZ_SUPPORT=1 LZO_SUPPORT=1 LZMA_XZ_SUPPORT=1 \
+			LZ4_SUPPORT=1 ZSTD_SUPPORT=1 XATTR_SUPPORT=1
+	make INSTALL_DIR="${script_dir}"/build-utils/bin/usr/local/bin install
+fi
 
 cd "${script_dir}"/build-utils
 mkdir utils
@@ -80,17 +87,18 @@ if [ ! "$(ldd utils/squashfuse | grep libfuse.so.2)" ]; then
 fi
 
 if [ "${build_dwarfs}" = "true" ]; then
-	wget -q --show-progress -O dwarfs.tar.xz https://github.com/mhx/dwarfs/releases/download/v${dwarfs_version}/dwarfs-${dwarfs_version}.tar.xz
-	tar xf dwarfs.tar.xz
+	git clone https://github.com/mhx/dwarfs.git --recursive
 
-	mkdir build
-	cmake -B build -S dwarfs-${dwarfs_version} -DCMAKE_BUILD_TYPE=Release \
+	mkdir dwarfs/build
+	cd dwarfs/build
+	cmake .. -DCMAKE_BUILD_TYPE=Release \
 			-DPREFER_SYSTEM_ZSTD=ON -DPREFER_SYSTEM_XXHASH=ON \
 			-DPREFER_SYSTEM_GTEST=ON
 
-	make -C build -j$(nproc)
-	make -C build DESTDIR="${script_dir}"/build-utils/bin install
+	make -j$(nproc)
+	make DESTDIR="${script_dir}"/build-utils/bin install
 
+	cd "${script_dir}"/build-utils
 	mv bin/usr/local/sbin/dwarfs2 utils/dwarfs
 	mv bin/usr/local/sbin/dwarfs utils/dwarfs3
 	mv bin/usr/local/bin/mkdwarfs utils
@@ -108,17 +116,17 @@ done
 find utils -type f -exec strip --strip-unneeded {} \; 2>/dev/null
 
 cat <<EOF > utils/info
-squashfuse ${squashfuse_version}
-squashfs-tools ${squashfs_tools_version}
 bubblewrap ${bwrap_version}
 lz4 ${lz4_version}
 zstd ${zstd_version}
 EOF
 
 if [ "${build_dwarfs}" = "true" ]; then
-	echo "dwarfs ${dwarfs_version}" >> utils/info
+	echo "dwarfs $(git -C dwarfs rev-parse --short HEAD)-git" >> utils/info
 	utils="utils_dwarfs.tar.gz"
 else
+	echo "squashfuse ${squashfuse_version}" >> utils/info
+	echo "squashfs-tools ${squashfs_tools_version}" >> utils/info
 	utils="utils.tar.gz"
 fi
 
