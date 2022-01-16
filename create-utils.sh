@@ -55,7 +55,7 @@ cd ../lz4-${lz4_version}
 make -j$(nproc) DESTDIR="${script_dir}"/build-utils/bin install
 
 cd ../zstd-${zstd_version}
-make -j$(nproc) DESTDIR="${script_dir}"/build-utils/bin install
+ZSTD_LEGACY_SUPPORT=0 HAVE_ZLIB=0 HAVE_LZMA=0 HAVE_LZ4=0 BACKTRACE=0 make -j$(nproc) DESTDIR="${script_dir}"/build-utils/bin install
 
 if [ "${build_dwarfs}" != "true" ]; then
 	cd ../squashfuse-${squashfuse_version}
