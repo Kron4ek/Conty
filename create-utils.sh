@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 
-# Dependencies: gawk grep lz4 zstd wget gcc make autoconf libtool pkgconf
-# 	libcap fuse2 (or fuse3) lzo xz zlib findutils
+# General build dependencies: gawk grep lz4 zstd wget gcc make autoconf
+# 	libtool pkgconf libcap fuse2 (or fuse3) lzo xz zlib findutils
 #
-# Dwarfs dependencies: fuse2 (or fuse3) openssl jemalloc xxhash boost lz4
-# 	xz zstd libarchive libunwind google-glod gtest fmt gflags double-conversion
-#	cmake ruby-ronn libevent libdwarf git
+# Build dependencies for dwarfs: fuse2 (or fuse3) openssl jemalloc
+# 	xxhash boost lz4 xz zstd libarchive libunwind google-glod gtest fmt
+#	gflags double-conversion cmake ruby-ronn libevent libdwarf git
 #
 # Dwarfs compilation is optional and disabled by default.
 
