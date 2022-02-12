@@ -151,14 +151,19 @@ There are three main ways to update Conty and get the latest packages, use which
 
 ## How to create your own Conty executables
 
-If you want to create Arch-based container, use the **create-arch-bootstrap.sh** script, it will download latest Arch Linux bootstrap and will install latest packages into it. If you want to use any other distro, then you need to manually obtain it from somewhere. Root rights are required for this step, because chroot is used here.
+If you want to create an Arch-based container, use the **create-arch-bootstrap.sh** script, it will download latest Arch Linux bootstrap and will install latest packages into it. If you want to use any other distro, then you need to manually obtain it from somewhere. Root rights are required for this step, because chroot is used here.
 ```
 ./create-arch-bootstrap.sh
 ```
 You can edit the script if you want to include different set of packages inside
 the container.
 
-When distro is obtained, use the **create-conty.sh** script to create a squashfs (or dwarfs) image and pack everything needed into a single executable.
+When distro is obtained, you can use the **enter-chroot.sh** script to chroot
+into the bootstrap and do some manual modifications (for instance, modify some
+files, install/remove packages, etc.). This step is optional and you can
+skip it if you don't need it.
+
+After that use the **create-conty.sh** script to create a squashfs (or dwarfs) image and pack everything needed into a single executable.
 ```
 ./create-conty.sh
 ```
