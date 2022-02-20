@@ -137,9 +137,9 @@ Nvidia users with the proprietary driver will experience graphics acceleration p
 
 For example, if the version of your Nvidia kernel module is 460.56 and the libraries inside the container are from 460.67 version, then graphics acceleration will not work.
 
-There are two solutions for this problem:
-* The first and probably the easiest solution is to install the same driver version as included inside Conty, which is usually the latest non-beta version. You can see the exact driver version in pkg_list.txt attached to each Conty release.
-* The second solution is to (re)build Conty and include the same driver version as installed on your system.
+There are two solutions to this problem:
+* The first and probably the easiest solution is to install the same driver version as included inside Conty, which is usually the latest non-beta version. You can see the exact driver version in pkg_list.txt attached to each Conty release. Of course if your GPU is not supported by new drivers, this is not an option for you.
+* The second solution is to (re)build Conty and include the same driver version as installed on your system. Read the "**How to create your own Conty executables**" section below, you will need to edit the **create-arch-bootstrap.sh** script or use the **enter-chroot.sh** script to include a different driver version. For instance, if you want to include legacy 470xx or 390xx drivers, edit the **create-arch-bootstrap.sh** script and replace `nvidia-utils` and `lib32-nvidia-utils` with `nvidia-470xx-utils` and `lib32-nvidia-470xx-utils` (replace 470xx with 390xx if you need 390xx drivers) in the `video_pkgs` variable, and then build Conty following the instructions.
 
 ## How to update
 
