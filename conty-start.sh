@@ -12,7 +12,7 @@ if [ $EUID = 0 ] && [ -z "$ALLOW_ROOT" ]; then
 	exit 1
 fi
 
-script_version="1.18.1"
+script_version="1.18.2"
 
 # Full path to the script
 script_literal="${BASH_SOURCE[0]}"
@@ -43,7 +43,7 @@ mount_point="${working_dir}"/mnt
 # a problem with mounting the image due to an incorrectly calculated offset.
 
 # The size of this script
-scriptsize=25224
+scriptsize=25284
 
 # The size of the utils archive
 utilssize=2498479
@@ -678,7 +678,9 @@ trap_exit () {
 		fusermount${fuse_version} -uz "${mount_point}" 2>/dev/null || \
 		${use_sudo} umount --lazy "${mount_point}" 2>/dev/null
 
-		rm -rf "${working_dir}"
+		if [ ! "$(ls "${mount_point}" 2>/dev/null)" ]; then
+			rm -rf "${working_dir}"
+		fi
 	fi
 
 	exit
