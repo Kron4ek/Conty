@@ -113,6 +113,10 @@ for i in ${libs_list}; do
 	fi
 done
 
+if [ ! -f utils/ld-linux-x86-64.so.2 ]; then
+    cp -L /lib64/ld-linux-x86-64.so.2 utils
+fi
+
 find utils -type f -exec strip --strip-unneeded {} \; 2>/dev/null
 
 cat <<EOF > utils/info
