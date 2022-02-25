@@ -12,7 +12,7 @@ if [ $EUID = 0 ] && [ -z "$ALLOW_ROOT" ]; then
 	exit 1
 fi
 
-script_version="1.18.2"
+script_version="1.19"
 
 # Full path to the script
 script_literal="${BASH_SOURCE[0]}"
@@ -43,7 +43,7 @@ mount_point="${working_dir}"/mnt
 # a problem with mounting the image due to an incorrectly calculated offset.
 
 # The size of this script
-scriptsize=25284
+scriptsize=24870
 
 # The size of the utils archive
 utilssize=2498479
@@ -89,6 +89,7 @@ if [ "$1" = "--help" ] || [ "$1" = "-h" ] || ([ -z "$1" ] && [ ! -L "${script_li
 	echo -e "-U \tThe same as -u but will also update the init script (conty-start.sh)"
 	echo -e "\tand the integrated utils. This option may break Conty in some cases,"
 	echo -e "\tuse with caution."
+	echo -e "-H \tShow the bubblewrap help"
 	echo
 	echo "Arguments that don't match any of the above will be passed directly to"
 	echo "bubblewrap. So all bubblewrap arguments are supported as well."
@@ -97,6 +98,10 @@ if [ "$1" = "--help" ] || [ "$1" = "-h" ] || ([ -z "$1" ] && [ ! -L "${script_li
 	echo
 	echo -e "DISABLE_NET \tDisables network access"
 	echo -e "SANDBOX \tEnables sandbox"
+	echo -e "\t\tTo control which files and directories are available inside"
+	echo -e "\t\tthe container when SANDBOX is enabled, you can use the --bind"
+	echo -e "\t\tand --ro-bind launch arguments (see the bubblewrap help for"
+	echo -e "\t\tmore info)."
 	echo -e "SANDBOX_LEVEL \tControls the strictness of the sandbox"
 	echo -e "\t\tAvailable levels are 1-3. The default is 1."
 	echo -e "\t\tLevel 1 isolates all user files."
@@ -105,12 +110,6 @@ if [ "$1" = "--help" ] || [ "$1" = "-h" ] || ([ -z "$1" ] && [ ! -L "${script_li
 	echo -e "\t\tLevel 3 does the same as the level 2, but additionally"
 	echo -e "\t\tdisables network access and isolates X11 server with Xephyr."
 	echo -e "XEPHYR_SIZE \tSets the size of the Xephyr window. The default is 800x600."
-	echo -e "BIND \t\tMounts directories and files (separated by space) from the"
-	echo -e "\t\thost system to the container. All specified items must exist."
-	echo -e "\t\tFor example, BIND=\"/home/username/.config /etc/pacman.conf\""
-	echo -e "\t\tThis is mainly useful for allowing access to specific"
-	echo -e "\t\tdirs/files when SANDBOX is enabled."
-	echo -e "BIND_RO \tThe same as BIND but mounts as read-only."
 	echo -e "HOME_DIR \tSets the HOME directory to a custom location."
 	echo -e "\t\tFor example, HOME_DIR=\"/home/username/custom_home\""
 	echo -e "\t\tIf you set this, HOME inside the container will still appear"
@@ -130,9 +129,9 @@ if [ "$1" = "--help" ] || [ "$1" = "-h" ] || ([ -z "$1" ] && [ ! -L "${script_li
 	echo
 	echo "Additional notes:"
 	echo
-	echo "If you enable SANDBOX but don't set BIND or HOME_DIR, then no system"
-	echo "directories/files will be available at all inside the container and a fake"
-	echo "temporary HOME directory will be used."
+	echo "If you enable SANDBOX but don't bind (mount) any items or set HOME_DIR, then"
+	echo "no system directories/files will be available at all inside the container"
+	echo "and a fake temporary HOME directory will be used."
 	echo
 	echo "Which SANDBOX_LEVEL to use? Well, if you just want to isolate your files from"
 	echo "an application, then the level 1 (default) is enough. However, if an"
@@ -348,6 +347,11 @@ else
 	show_msg "Using system-wide ${mount_tool} and bwrap"
 fi
 
+if [ "$1" = "-H" ]; then
+	launch_wrapper "${bwrap}" --help
+	exit
+fi
+
 if [ "${SUDO_MOUNT}" = 1 ]; then
 	show_msg "Using regular mount command (sudo mount) instead of squashfuse"
 
@@ -406,8 +410,6 @@ if [ "$1" = "-u" ] || [ "$1" = "-U" ]; then
 	# some environment variables for this to work properly
 	unset DISABLE_NET
 	unset HOME_DIR
-	unset BIND
-	unset BIND_RO
 	unset SANDBOX_LEVEL
 
 	# Enable SANDBOX
@@ -551,7 +553,6 @@ run_bwrap () {
 	unset sandbox_params
 	unset unshare_net
 	unset custom_home
-	unset bind_items
 
 	if [ -n "${WAYLAND_DISPLAY}" ]; then
 		wayland_socket="${WAYLAND_DISPLAY}"
@@ -618,22 +619,6 @@ run_bwrap () {
 		custom_home="--bind ${HOME_DIR} ${HOME}"
 	fi
 
-	if [ -n "${BIND}" ]; then
-		show_msg "Mounted items: ${BIND}"
-
-		for i in ${BIND}; do
-			bind_items="${bind_items} --bind ${i} ${i}"
-		done
-	fi
-
-	if [ -n "${BIND_RO}" ]; then
-		show_msg "Read-only mounted items: ${BIND_RO}"
-
-		for i in ${BIND_RO}; do
-			bind_items="${bind_items} --ro-bind ${i} ${i}"
-		done
-	fi
-
 	# Set the XAUTHORITY variable if it's missing (which is unlikely)
 	if [ -z "${XAUTHORITY}" ]; then
 		XAUTHORITY="${HOME}"/.Xauthority
@@ -664,7 +649,6 @@ run_bwrap () {
 			--ro-bind-try /etc/localtime /etc/localtime \
 			${sandbox_params} \
 			${custom_home} \
-			${bind_items} \
 			${unshare_net} \
 			--ro-bind-try "${XAUTHORITY}" "${XAUTHORITY}" \
 			--setenv PATH "${CUSTOM_PATH}" \

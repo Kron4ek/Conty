@@ -102,23 +102,29 @@ There are some other features, see the internal help for more information.
 ## Sandbox
 
 Conty uses bubblewrap and thus supports filesystem sandboxing, X11 isolation is also supported (via Xephyr). By default
-sandbox is disabled and almost all directories and files on your system are available for the container.
+sandbox is disabled and almost all directories and files on your system are available (visible and accessible) for the container.
 
 Here are the environment variables that you can use to control the sandbox:
-* **SANDBOX** - enables the sandbox feature itself. Isolates all files and directories, creates a fake temporary home directory (in RAM), which is destroyed after closing the container.
+* **SANDBOX** - enables the sandbox feature itself. Isolates all user files and directories, creates a fake temporary home directory (in RAM), which is destroyed after closing the container.
 * **SANDBOX_LEVEL** - controls the strictness of the sandbox. There are 3 available levels, the default is 1. Level 1 isolates all user files; Level 2 isolates all user files, disables dbus and hides all running processes; Level 3 does the same as the level 2, but additionally disables network access and isolates X11 server with Xephyr.
 * **DISABLE_NET** - completely disables internet access.
 * **HOME_DIR** - sets a custom home directory. If you set this, HOME inside the container will still appear as /home/username, but actually a custom directory will be used for it.
-* **BIND** - list of files/directories (separated by space) to mount to the container. You can use this variable to allow access to any files or directories.
-* **BIND_RO** - the same as **BIND** but mounts files and directories as read-only.
+
+And launch arguments:
+* `--bind SRC DEST` - binds (mounts) a file or directory to a destination, so it becomes visible inside the container. SRC is what you want to mount, DEST is where you want it to be mounted. This argument can be specified multiple times to mount multiple files/dirs.
+* `--ro-bind SRC DEST` - same as above but mounts files/dirs as read-only.
+
+Other bubblewrap arguments are supported too, read the bubblewrap help or manual for more information.
+
+Note that when **SANDBOX** is enabled, none of user files are accessible or visible, for any application that you run in this mode your home directory will be seen as completely empty. If you want to allow access to some files or directories, use the aforementioned `--bind` or `--ro-bind` arguments.
+
+Also note that `--bind`, `--ro-bind`, **HOME_DIR** and **DISABLE_NET** can be used even if **SANDBOX** is disabled.
 
 Example:
-
 ```
 export SANDBOX=1
 export SANDBOX_LEVEL=2
-export BIND="/home/username/.steam /home/username/.local/share/Steam"
-./conty.sh steam
+./conty.sh --bind ~/.steam ~/.steam --bind ~/.local/share/Steam ~/.local/share/Steam steam
 ```
 Another example:
 ```
