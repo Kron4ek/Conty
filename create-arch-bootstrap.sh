@@ -127,7 +127,7 @@ packagelist="${audio_pkgs} ${video_pkgs} ${wine_pkgs} \
 	speedcrunch gpicview qpdfview file-roller xorg-xwayland steam-native-runtime \
 	meson mingw-w64-gcc gamemode lib32-gamemode cmake jre-openjdk \
 	playonlinux lxterminal steamtinkerlaunch mangohud lib32-mangohud \
-	zsync2-git wayland lib32-wayland qt5-wayland retroarch python-magic-ahupp \
+	wayland lib32-wayland qt5-wayland retroarch python-magic-ahupp \
 	xorg-server-xephyr openbox obs-studio gamehub minigalaxy legendary \
 	gamescope-git pcsx2 multimc5 youtube-dl bottles"
 
