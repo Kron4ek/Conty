@@ -84,8 +84,8 @@ generate_mirrorlist () {
 	cat <<EOF > mirrorlist
 Server = https://mirror.osbeck.com/archlinux/\$repo/os/\$arch
 Server = https://mirror.f4st.host/archlinux/\$repo/os/\$arch
-Server = https://arch.jensgutermuth.de/\$repo/os/\$arch
-Server = https://archlinux.thaller.ws/\$repo/os/\$arch
+Server = https://mirror.hackingand.coffee/arch/\$repo/os/\$arch
+Server = https://archmirror.it/repos/\$repo/os/\$arch
 Server = https://mirror.luzea.de/archlinux/\$repo/os/\$arch
 EOF
 }
