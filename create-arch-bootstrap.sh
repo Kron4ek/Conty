@@ -134,7 +134,7 @@ packagelist="${audio_pkgs} ${video_pkgs} ${wine_pkgs} \
 current_release="$(wget -q "https://archlinux.org/download/" -O - | grep "Current Release" | tail -c -16 | head -c +10)"
 
 echo "Downloading ${current_release} release"
-wget -q --show-progress -O arch.tar.gz "https://mirror.rackspace.com/archlinux/iso/${current_release}/archlinux-bootstrap-${current_release}-x86_64.tar.gz"
+wget -q --show-progress -O arch.tar.gz "https://mirror.f4st.host/archlinux/iso/${current_release}/archlinux-bootstrap-${current_release}-x86_64.tar.gz"
 tar xf arch.tar.gz
 rm arch.tar.gz
 
