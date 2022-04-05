@@ -124,7 +124,7 @@ wine_pkgs="wine-staging winetricks-git wine-nine wineasio \
 packagelist="${audio_pkgs} ${video_pkgs} ${wine_pkgs} \
 	base-devel nano ttf-dejavu ttf-liberation lutris steam firefox \
 	mpv geany pcmanfm ppsspp dolphin-emu git wget htop qbittorrent \
-	speedcrunch gpicview qpdfview file-roller xorg-xwayland steam-native-runtime \
+	speedcrunch gpicview file-roller xorg-xwayland steam-native-runtime \
 	meson mingw-w64-gcc gamemode lib32-gamemode cmake jre-openjdk \
 	playonlinux lxterminal steamtinkerlaunch mangohud lib32-mangohud \
 	wayland lib32-wayland qt5-wayland retroarch python-magic-ahupp \
