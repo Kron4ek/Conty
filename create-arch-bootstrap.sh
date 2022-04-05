@@ -212,7 +212,7 @@ pacman --noconfirm --needed -S \${good_pkglist}
 EOF
 
 chmod +x "${bootstrap}"/opt/install_packages.sh
-run_in_chroot /opt/install_packages.sh
+run_in_chroot bash /opt/install_packages.sh
 rm "${bootstrap}"/opt/install_packages.sh
 
 run_in_chroot locale-gen
