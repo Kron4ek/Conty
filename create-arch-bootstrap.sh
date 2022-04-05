@@ -121,7 +121,7 @@ wine_pkgs="wine-staging winetricks-git wine-nine wineasio \
 # You can remove packages that you don't need
 # Besides packages from the official Arch repos, you can list
 # packages from the Chaotic-AUR repo here
-packagelist="${audio_pkgs} ${video_pkgs} ${wine_pkgs} \
+export packagelist="${audio_pkgs} ${video_pkgs} ${wine_pkgs} \
 	base-devel nano ttf-dejavu ttf-liberation lutris steam firefox \
 	mpv geany pcmanfm ppsspp dolphin-emu git wget htop qbittorrent \
 	speedcrunch gpicview file-roller xorg-xwayland steam-native-runtime \
@@ -130,6 +130,15 @@ packagelist="${audio_pkgs} ${video_pkgs} ${wine_pkgs} \
 	wayland lib32-wayland qt5-wayland retroarch python-magic-ahupp \
 	xorg-server-xephyr openbox obs-studio gamehub minigalaxy legendary \
 	gamescope-git pcsx2 multimc5 youtube-dl bottles qt6-wayland"
+
+wget -q --show-progress -O chaotic-keyring.pkg.tar.zst 'https://mirrors.fossho.st/garuda/repos/chaotic-aur/x86_64/chaotic-keyring-20220220-1-any.pkg.tar.zst'
+wget -q --show-progress -O chaotic-mirrorlist.pkg.tar.zst 'https://mirrors.fossho.st/garuda/repos/chaotic-aur/x86_64/chaotic-mirrorlist-20220301-1-any.pkg.tar.zst'
+
+if [ ! -s chaotic-keyring.pkg.tar.zst ] || [ ! -s chaotic-mirrorlist.pkg.tar.zst ]; then
+	echo "The links for Chaotic-AUR keyring and/or mirrorlist are outdated"
+	echo "Update them manually or wait until the script in the repo is updated"
+	exit 1
+fi
 
 current_release="$(wget -q "https://archlinux.org/download/" -O - | grep "Current Release" | tail -c -16 | head -c +10)"
 
@@ -149,12 +158,10 @@ else
 fi
 
 rm "${bootstrap}"/etc/locale.gen
-cp locale.gen "${bootstrap}"/etc/locale.gen
-rm locale.gen
+mv locale.gen "${bootstrap}"/etc/locale.gen
 
 rm "${bootstrap}"/etc/pacman.d/mirrorlist
-cp mirrorlist "${bootstrap}"/etc/pacman.d/mirrorlist
-rm mirrorlist
+mv mirrorlist "${bootstrap}"/etc/pacman.d/mirrorlist
 
 echo >> "${bootstrap}"/etc/pacman.conf
 echo "[multilib]" >> "${bootstrap}"/etc/pacman.conf
@@ -167,8 +174,10 @@ run_in_chroot pacman-key --populate archlinux
 # Add Chaotic-AUR repo
 run_in_chroot pacman-key --recv-key FBA220DFC880C036
 run_in_chroot pacman-key --lsign-key FBA220DFC880C036
-run_in_chroot pacman --noconfirm -U 'https://mirrors.fossho.st/garuda/repos/chaotic-aur/x86_64/chaotic-keyring-20220220-1-any.pkg.tar.zst'
-run_in_chroot pacman --noconfirm -U 'https://mirrors.fossho.st/garuda/repos/chaotic-aur/x86_64/chaotic-mirrorlist-20220301-1-any.pkg.tar.zst'
+
+mv chaotic-keyring.pkg.tar.zst chaotic-mirrorlist.pkg.tar.zst "${bootstrap}"/opt
+run_in_chroot pacman --noconfirm -U /opt/chaotic-keyring.pkg.tar.zst /opt/chaotic-mirrorlist.pkg.tar.zst
+rm "${bootstrap}"/opt/chaotic-keyring.pkg.tar.zst "${bootstrap}"/opt/chaotic-mirrorlist.pkg.tar.zst
 
 echo >> "${bootstrap}"/etc/pacman.conf
 echo "[chaotic-aur]" >> "${bootstrap}"/etc/pacman.conf
@@ -185,7 +194,26 @@ date -u +"%d-%m-%Y %H:%M (DMY UTC)" > "${bootstrap}"/version
 # These packages are required for the self-update feature to work properly
 run_in_chroot pacman --noconfirm --needed -S base reflector squashfs-tools fakeroot
 
-run_in_chroot pacman --noconfirm --needed -S ${packagelist}
+cat <<EOF > "${bootstrap}"/opt/install_packages.sh
+echo "Checking if packages are present in the repos, please wait..."
+for p in \${packagelist}; do
+	if pacman -Sp "\${p}" &>/dev/null; then
+		good_pkglist="\${good_pkglist} \${p}"
+	else
+		bad_pkglist="\${bad_pkglist} \${p}"
+	fi
+done
+
+if [ -n "\${bad_pkglist}" ]; then
+	echo \${bad_pkglist} > /opt/bad_pkglist.txt
+fi
+
+pacman --noconfirm --needed -S \${good_pkglist}
+EOF
+
+chmod +x "${bootstrap}"/opt/install_packages.sh
+run_in_chroot /opt/install_packages.sh
+rm "${bootstrap}"/opt/install_packages.sh
 
 run_in_chroot locale-gen
 
@@ -212,3 +240,10 @@ ln -s /usr/share/fontconfig/conf.avail/10-hinting-full.conf "${bootstrap}"/etc/f
 
 clear
 echo "Done"
+
+if [ -f "${bootstrap}"/opt/bad_pkglist.txt ]; then
+	echo
+	echo "These packages are not in the repos and have not been installed:"
+	cat "${bootstrap}"/opt/bad_pkglist.txt
+	rm "${bootstrap}"/opt/bad_pkglist.txt
+fi
