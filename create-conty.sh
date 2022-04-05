@@ -10,6 +10,10 @@ script_dir="$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")"
 squashfs_compressor="lz4"
 squashfs_compressor_arguments="-b 256K -comp ${squashfs_compressor} -Xhc"
 
+# Uncomment these two lines if you want better compression and your mksquashfs supports zstd
+#squashfs_compressor="zstd"
+#squashfs_compressor_arguments="-b 1M -comp ${squashfs_compressor} -Xcompression-level 19"
+
 # Use dwarfs instead of squashfs
 dwarfs="false"
 dwarfs_compressor_arguments="-l7 -C zstd:level=19 --metadata-compression null \
