@@ -142,10 +142,39 @@ fi
 
 current_release="$(wget -q "https://archlinux.org/download/" -O - | grep "Current Release" | tail -c -16 | head -c +10)"
 
-echo "Downloading ${current_release} release"
-wget -q --show-progress -O arch.tar.gz "https://mirror.f4st.host/archlinux/iso/${current_release}/archlinux-bootstrap-${current_release}-x86_64.tar.gz"
-tar xf arch.tar.gz
-rm arch.tar.gz
+bootstrap_urls="mirror.osbeck.com \
+                mirror.f4st.host \
+                mirror.luzea.de"
+
+echo "Downloading Arch Linux bootstrap version ${current_release}"
+
+for link in ${bootstrap_urls}; do
+	wget -q --show-progress -O archlinux-bootstrap-${current_release}-x86_64.tar.gz \
+	 "https://${link}/archlinux/iso/${current_release}/archlinux-bootstrap-${current_release}-x86_64.tar.gz"
+	wget -q --show-progress -O sha256sums.txt \
+	 "https://${link}/archlinux/iso/${current_release}/sha256sums.txt"
+
+	if [ -s sha256sums.txt ]; then
+		cat sha256sums.txt | grep bootstrap > sha256.txt
+
+		echo "Verifying the integrity of the bootstrap"
+		if sha256sum -c sha256.txt &>/dev/null; then
+			bootstrap_is_good=1
+			break
+		fi
+	fi
+
+	echo "Download failed, trying again with different mirror"
+done
+
+if [ -z "${bootstrap_is_good}" ]; then
+	echo "Bootstrap download failed or its checksum is incorrect"
+	exit 1
+fi
+
+tar xf archlinux-bootstrap-${current_release}-x86_64.tar.gz
+rm archlinux-bootstrap-${current_release}-x86_64.tar.gz
+rm sha256sums.txt sha256.txt
 
 mount_chroot
 
