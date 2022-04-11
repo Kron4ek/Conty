@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# Dependencies: wget tar gzip
+# Dependencies: wget tar gzip grep sha256sum
 # Root rights are required
 
 if [ $EUID != 0 ]; then
@@ -16,6 +16,16 @@ fi
 
 if ! command -v gzip 1>/dev/null; then
 	echo "gzip is required!"
+	exit 1
+fi
+
+if ! command -v grep 1>/dev/null; then
+	echo "grep is required!"
+	exit 1
+fi
+
+if ! command -v sha256sum 1>/dev/null; then
+	echo "sha256sum is required!"
 	exit 1
 fi
 
