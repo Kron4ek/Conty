@@ -142,7 +142,7 @@ export packagelist="${audio_pkgs} ${video_pkgs} ${wine_pkgs} \
 	gamescope-git pcsx2 multimc5 youtube-dl bottles qt6-wayland"
 
 wget -q --show-progress -O chaotic-keyring.pkg.tar.zst 'https://mirrors.fossho.st/garuda/repos/chaotic-aur/x86_64/chaotic-keyring-20220220-1-any.pkg.tar.zst'
-wget -q --show-progress -O chaotic-mirrorlist.pkg.tar.zst 'https://mirrors.fossho.st/garuda/repos/chaotic-aur/x86_64/chaotic-mirrorlist-20220301-1-any.pkg.tar.zst'
+wget -q --show-progress -O chaotic-mirrorlist.pkg.tar.zst 'https://mirrors.fossho.st/garuda/repos/chaotic-aur/x86_64/chaotic-mirrorlist-20220418-1-any.pkg.tar.zst'
 
 if [ ! -s chaotic-keyring.pkg.tar.zst ] || [ ! -s chaotic-mirrorlist.pkg.tar.zst ]; then
 	echo "The links for Chaotic-AUR keyring and/or mirrorlist are outdated"
