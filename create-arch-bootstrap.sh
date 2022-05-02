@@ -92,11 +92,11 @@ EOF
 
 generate_mirrorlist () {
 	cat <<EOF > mirrorlist
+Server = https://geo.mirror.pkgbuild.com/\$repo/os/\$arch
 Server = https://mirror.osbeck.com/archlinux/\$repo/os/\$arch
-Server = https://mirror.f4st.host/archlinux/\$repo/os/\$arch
-Server = https://mirror.hackingand.coffee/arch/\$repo/os/\$arch
+Server = https://europe.mirror.pkgbuild.com/\$repo/os/\$arch
+Server = https://archlinux.mailtunnel.eu/\$repo/os/\$arch
 Server = https://archmirror.it/repos/\$repo/os/\$arch
-Server = https://mirror.luzea.de/archlinux/\$repo/os/\$arch
 EOF
 }
 
