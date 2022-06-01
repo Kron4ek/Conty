@@ -46,7 +46,7 @@ mount_point="${working_dir}"/mnt
 scriptsize=24870
 
 # The size of the utils archive
-utilssize=2505629
+utilssize=2537833
 
 # Offset where the image is stored
 offset=$((scriptsize+utilssize))

@@ -15,15 +15,15 @@ script_dir="$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")"
 build_dwarfs="false"
 
 squashfuse_version="0.1.104"
-bwrap_version="0.6.1"
+bwrap_version="0.6.2"
 lz4_version="1.9.3"
 zstd_version="1.5.2"
-squashfs_tools_version="4.5"
+squashfs_tools_version="4.5.1"
 
 export CC=gcc
 export CXX=g++
 
-export CFLAGS="-msse3 -O2"
+export CFLAGS="-O2"
 export CXXFLAGS="${CFLAGS}"
 export LDFLAGS="-Wl,-O1,--sort-common,--as-needed"
 
@@ -87,7 +87,11 @@ if [ ! "$(ldd utils/squashfuse | grep libfuse.so.2)" ]; then
 fi
 
 if [ "${build_dwarfs}" = "true" ]; then
-	git clone https://github.com/mhx/dwarfs.git --recursive
+	git clone https://github.com/mhx/dwarfs.git -b wip --recursive
+
+	# Fix compilation with Boost 1.79
+	wget -q --show-progress -O boost.patch "https://github.com/facebook/fbthrift/commit/5bd55f11e1b6cc2cb08a0001f9c77f56fb8ac649.patch"
+	patch -d dwarfs/fbthrift -Np1 < boost.patch
 
 	mkdir dwarfs/build
 	cd dwarfs/build
