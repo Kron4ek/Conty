@@ -87,11 +87,7 @@ if [ ! "$(ldd utils/squashfuse | grep libfuse.so.2)" ]; then
 fi
 
 if [ "${build_dwarfs}" = "true" ]; then
-	git clone https://github.com/mhx/dwarfs.git -b wip --recursive
-
-	# Fix compilation with Boost 1.79
-	wget -q --show-progress -O boost.patch "https://github.com/facebook/fbthrift/commit/5bd55f11e1b6cc2cb08a0001f9c77f56fb8ac649.patch"
-	patch -d dwarfs/fbthrift -Np1 < boost.patch
+	git clone https://github.com/mhx/dwarfs.git --recursive
 
 	mkdir dwarfs/build
 	cd dwarfs/build
