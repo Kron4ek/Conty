@@ -7,12 +7,12 @@ if [ $EUID = 0 ] && [ -z "$ALLOW_ROOT" ]; then
 	echo "Do not run this script as root!"
 	echo
 	echo "If you really need to run it as root and you know what you are doing,"
-	echo "set ALLOW_ROOT environment variable."
+	echo "set the ALLOW_ROOT environment variable."
 
 	exit 1
 fi
 
-script_version="1.19"
+script_version="1.20"
 
 # Full path to the script
 script_literal="${BASH_SOURCE[0]}"
@@ -43,7 +43,7 @@ mount_point="${working_dir}"/mnt
 # a problem with mounting the image due to an incorrectly calculated offset.
 
 # The size of this script
-scriptsize=24870
+scriptsize=25300
 
 # The size of the utils archive
 utilssize=2537833
@@ -377,6 +377,18 @@ if [ "$1" = "-u" ] || [ "$1" = "-U" ]; then
 
 	mkdir -p "${update_temp_dir}"
 	cd "${update_temp_dir}" || exit 1
+
+	if command -v awk 1>/dev/null; then
+		current_file_size="$(stat -c "%s" "${script}")"
+		available_disk_space="$(df -P -B1 "${update_temp_dir}" | awk 'END {print $4}')"
+		required_disk_space="$((current_file_size*7))"
+
+		if [ "${available_disk_space}" -lt "${required_disk_space}" ]; then
+			echo "Not enough free disk space"
+			echo "You need at least $((required_disk_space/1024/1024)) MB of free space"
+			exit 1
+		fi
+	fi
 
 	tail -c +$((scriptsize+1)) "${script}" | head -c ${utilssize} | tar -C "${update_temp_dir}" -zxf -
 
