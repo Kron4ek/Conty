@@ -39,11 +39,11 @@ fi
 
 mount_point="${working_dir}"/mnt
 
-# It's important to set correct sizes below, otherwise there will be
+# It is important to set correct sizes below, otherwise there will be
 # a problem with mounting the image due to an incorrectly calculated offset.
 
 # The size of this script
-scriptsize=25298
+scriptsize=25266
 
 # The size of the utils archive
 utilssize=2537833
@@ -51,11 +51,10 @@ utilssize=2537833
 # Offset where the image is stored
 offset=$((scriptsize+utilssize))
 
-# Set to 1 if you are using an image compressed with dwarfs instead of squashfs
-#
-# Also, don't forget to change the utilssize variable to the size of
-# utils_dwarfs.tar.gz
-dwarfs_image=0
+# Detect if the image is compressed with DwarFS or SquashFS
+if [ "$(tail -c +$((offset+1)) "${script}" | head -c 6)" = "DWARFS" ]; then
+	dwarfs_image=1
+fi
 
 dwarfs_cache_size="128M"
 dwarfs_num_workers="2"
