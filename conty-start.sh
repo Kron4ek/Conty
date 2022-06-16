@@ -43,7 +43,7 @@ mount_point="${working_dir}"/mnt
 # a problem with mounting the image due to an incorrectly calculated offset.
 
 # The size of this script
-scriptsize=25266
+scriptsize=24934
 
 # The size of the utils archive
 utilssize=2537833
@@ -690,12 +690,6 @@ fi
 # Mount the image
 mkdir -p "${mount_point}"
 
-# Since mounting dwarfs images is relatively slow on HDDs, it's better
-# to show a message when the mounting is in process
-if [ "${dwarfs_image}" = 1 ] && [ ! "$(ls "${mount_point}" 2>/dev/null)" ]; then
-	show_msg "Mounting the image, please wait..."
-fi
-
 if [ "$(ls "${mount_point}" 2>/dev/null)" ] || \
 	( [ "${dwarfs_image}" != 1 ] && launch_wrapper "${mount_tool}" -o offset="${offset}",ro "${script}" "${mount_point}" ) || \
 	launch_wrapper "${mount_tool}" "${script}" "${mount_point}" -o offset="${offset}" -o debuglevel=error -o workers="${dwarfs_num_workers}" \
@@ -724,10 +718,6 @@ if [ "$(ls "${mount_point}" 2>/dev/null)" ] || \
 	fi
 
 	echo 1 > "${working_dir}"/running_"${script_id}"
-
-	if [ "${dwarfs_image}" = 1 ] && [ "${QUIET_MODE}" != 1 ]; then
-		clear
-	fi
 
 	show_msg "Running Conty"
 
