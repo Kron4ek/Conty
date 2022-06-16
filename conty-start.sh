@@ -43,7 +43,7 @@ mount_point="${working_dir}"/mnt
 # a problem with mounting the image due to an incorrectly calculated offset.
 
 # The size of this script
-scriptsize=25300
+scriptsize=25298
 
 # The size of the utils archive
 utilssize=2537833
@@ -61,7 +61,7 @@ dwarfs_cache_size="128M"
 dwarfs_num_workers="2"
 
 # These arguments are used to rebuild the image when using the self-update function
-squashfs_comp_arguments="-b 256K -comp zstd -Xcompression-level 14"
+squashfs_comp_arguments="-b 1M -comp zstd -Xcompression-level 19"
 dwarfs_comp_arguments="-l7 -C zstd:level=19 --metadata-compression null \
                        -S 22 -B 2 --order nilsimsa:255:40000:40000 \
                        --bloom-filter-size 11 -W 15 -w 3"
