@@ -43,7 +43,7 @@ mount_point="${working_dir}"/mnt
 # a problem with mounting the image due to an incorrectly calculated offset.
 
 # The size of this script
-scriptsize=24934
+scriptsize=24004
 
 # The size of the utils archive
 utilssize=2537833
@@ -116,10 +116,6 @@ if [ "$1" = "--help" ] || [ "$1" = "-h" ] || ([ -z "$1" ] && [ ! -L "${script_li
 	echo -e "\t\tused for it."
 	echo -e "USE_SYS_UTILS \tMakes the script to use squashfuse/dwarfs and bwrap"
 	echo -e "\t\tinstalled on the system instead of the builtin ones."
-	echo -e "SUDO_MOUNT \tMakes the script to mount the squashfs image by using"
-	echo -e "\t\tthe regular mount command instead of squashfuse. In this"
-	echo -e "\t\tcase root rights will be requested (via sudo) when mounting"
-	echo -e "\t\tand unmounting. This doesn't work for dwarfs-compressed images."
 	echo -e "BASE_DIR \tSets a custom directory where Conty will extract"
 	echo -e "\t\tits builtin utilities and mount the image."
 	echo -e "\t\tThe default location is /tmp."
@@ -204,31 +200,21 @@ exec_test () {
 }
 
 launch_wrapper () {
-	if [ "$1" = "mount" ]; then
-		${use_sudo} "$@"
-	elif [ "${USE_SYS_UTILS}" = 1 ]; then
+	if [ "${USE_SYS_UTILS}" = 1 ]; then
 		"$@"
 	else
 		"${working_dir}"/utils/ld-linux-x86-64.so.2 --library-path "${working_dir}"/utils "$@"
 	fi
 }
 
-# Disable the regular mount command when using a dwarfs-compressed image
-# because Linux kernel doesn't support dwarfs directly, only via FUSE
-if [ "${dwarfs_image}" = 1 ]; then
-	unset SUDO_MOUNT
+# Check if FUSE is installed
+if ! command -v fusermount3 1>/dev/null && ! command -v fusermount 1>/dev/null; then
+	echo "Please install fuse2 or fuse3 and run the script again."
+	exit 1
 fi
 
-# Check if FUSE is installed when SUDO_MOUNT is not enabled
-if [ "${SUDO_MOUNT}" != 1 ]; then
-	if ! command -v fusermount3 1>/dev/null && ! command -v fusermount 1>/dev/null; then
-		echo "Please install fuse2 or fuse3 and run the script again."
-		exit 1
-	fi
-
-	if command -v fusermount3 1>/dev/null; then
-		fuse_version=3
-	fi
+if command -v fusermount3 1>/dev/null; then
+	fuse_version=3
 fi
 
 # Set the dwarfs block cache size depending on how much RAM is available
@@ -331,11 +317,9 @@ else
 			mount_tool=dwarfs
 		fi
 	else
-		if ! command -v squashfuse 1>/dev/null && [ "${SUDO_MOUNT}" != 1 ]; then
+		if ! command -v squashfuse 1>/dev/null; then
 			echo "USE_SYS_UTILS is enabled, but squshfuse is not installed!"
 			echo "Please install it and run the script again."
-			echo "Or enable SUDO_MOUNT to mount the image using the regular"
-			echo "mount command instead of squashfuse."
 
 			exit 1
 		fi
@@ -349,13 +333,6 @@ fi
 if [ "$1" = "-H" ]; then
 	launch_wrapper "${bwrap}" --help
 	exit
-fi
-
-if [ "${SUDO_MOUNT}" = 1 ]; then
-	show_msg "Using regular mount command (sudo mount) instead of squashfuse"
-
-	mount_tool=mount
-	use_sudo=sudo
 fi
 
 if [ "$1" = "-u" ] || [ "$1" = "-U" ]; then
@@ -671,7 +648,7 @@ trap_exit () {
 
 	if [ ! "$(ls "${working_dir}"/running_* 2>/dev/null)" ]; then
 		fusermount${fuse_version} -uz "${mount_point}" 2>/dev/null || \
-		${use_sudo} umount --lazy "${mount_point}" 2>/dev/null
+		umount --lazy "${mount_point}" 2>/dev/null
 
 		if [ ! "$(ls "${mount_point}" 2>/dev/null)" ]; then
 			rm -rf "${working_dir}"
