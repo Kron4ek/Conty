@@ -43,7 +43,7 @@ mount_point="${working_dir}"/mnt
 # a problem with mounting the image due to an incorrectly calculated offset.
 
 # The size of this script
-scriptsize=24004
+scriptsize=24207
 
 # The size of the utils archive
 utilssize=2537833
@@ -157,24 +157,6 @@ elif [ "$1" = "-v" ]; then
 	echo "${script_version}"
 
 	exit
-elif [ "$1" = "-e" ]; then
-	if [ "${dwarfs_image}" = 1 ]; then
-		if command -v dwarfsextract 1>/dev/null; then
-			mkdir "$(basename "${script}")"_files
-
-			dwarfsextract -i "${script}" -o "$(basename "${script}")"_files -O ${offset}
-		else
-			echo "To extract the image install dwarfs."
-		fi
-	else
-		if command -v unsquashfs 1>/dev/null; then
-			unsquashfs -o ${offset} -user-xattrs -d "$(basename "${script}")"_files "${script}"
-		else
-			echo "To extract the image install squashfs-tools."
-		fi
-	fi
-
-	exit
 elif [ "$1" = "-o" ]; then
 	echo ${offset}
 
@@ -273,8 +255,10 @@ if [ "${USE_SYS_UTILS}" != 1 ]; then
 
 	if [ "${dwarfs_image}" = 1 ]; then
 		mount_tool="${working_dir}"/utils/dwarfs${fuse_version}
+		extraction_tool="${working_dir}"/utils/dwarfsextract
 	else
 		mount_tool="${working_dir}"/utils/squashfuse${fuse_version}
+		extraction_tool="${working_dir}"/utils/unsquashfs
 	fi
 
 	bwrap="${working_dir}"/utils/bwrap
@@ -292,6 +276,7 @@ if [ "${USE_SYS_UTILS}" != 1 ]; then
 
 		chmod +x "${mount_tool}"
 		chmod +x "${bwrap}"
+		chmod +x "${extraction_tool}" 2>/dev/null
 	fi
 else
 	if ! command -v bwrap 1>/dev/null; then
@@ -316,18 +301,39 @@ else
 		else
 			mount_tool=dwarfs
 		fi
+
+		extraction_tool=dwarfsextract
 	else
 		if ! command -v squashfuse 1>/dev/null; then
-			echo "USE_SYS_UTILS is enabled, but squshfuse is not installed!"
+			echo "USE_SYS_UTILS is enabled, but squashfuse is not installed!"
 			echo "Please install it and run the script again."
 
 			exit 1
 		fi
 
 		mount_tool=squashfuse
+		extraction_tool=unsquashfs
 	fi
 
 	show_msg "Using system-wide ${mount_tool} and bwrap"
+fi
+
+if [ "$1" = "-e" ]; then
+	if command -v "${extraction_tool}" 1>/dev/null; then
+		if [ "${dwarfs_image}" = 1 ]; then
+			echo "Extracting the image..."
+			mkdir "$(basename "${script}")"_files
+			launch_wrapper "${extraction_tool}" -i "${script}" -o "$(basename "${script}")"_files -O ${offset}
+			echo "Done"
+		else
+			launch_wrapper "${extraction_tool}" -o ${offset} -user-xattrs -d "$(basename "${script}")"_files "${script}"
+		fi
+	else
+		echo "Extraction tool not found"
+		exit 1
+	fi
+
+	exit
 fi
 
 if [ "$1" = "-H" ]; then
