@@ -139,7 +139,7 @@ export packagelist="${audio_pkgs} ${video_pkgs} ${wine_pkgs} \
 	lxterminal steamtinkerlaunch mangohud lib32-mangohud qt6-wayland \
 	wayland lib32-wayland qt5-wayland retroarch python-magic-ahupp \
 	xorg-server-xephyr openbox obs-studio gamehub minigalaxy legendary \
-	gamescope-git pcsx2 multimc5 youtube-dl bottles"
+	gamescope-git pcsx2 multimc5 youtube-dl bottles playonlinux"
 
 wget -q --show-progress -O chaotic-keyring.pkg.tar.zst 'https://mirrors.fossho.st/garuda/repos/chaotic-aur/x86_64/chaotic-keyring-20220514-1-any.pkg.tar.zst'
 wget -q --show-progress -O chaotic-mirrorlist.pkg.tar.zst 'https://mirrors.fossho.st/garuda/repos/chaotic-aur/x86_64/chaotic-mirrorlist-20220504-2-any.pkg.tar.zst'
