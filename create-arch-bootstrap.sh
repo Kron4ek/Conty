@@ -165,7 +165,7 @@ for link in ${bootstrap_urls}; do
 	 "https://${link}/archlinux/iso/${current_release}/sha256sums.txt"
 
 	if [ -s sha256sums.txt ]; then
-		cat sha256sums.txt | grep bootstrap > sha256.txt
+		cat sha256sums.txt | grep bootstrap-${current_release} > sha256.txt
 
 		echo "Verifying the integrity of the bootstrap"
 		if sha256sum -c sha256.txt &>/dev/null; then
