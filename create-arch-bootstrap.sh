@@ -141,12 +141,12 @@ export packagelist="${audio_pkgs} ${video_pkgs} ${wine_pkgs} \
 	xorg-server-xephyr openbox obs-studio gamehub minigalaxy legendary \
 	gamescope-git pcsx2 multimc5 youtube-dl bottles playonlinux"
 
-wget -q --show-progress -O chaotic-keyring.pkg.tar.zst 'https://mirrors.fossho.st/garuda/repos/chaotic-aur/x86_64/chaotic-keyring-20220514-1-any.pkg.tar.zst'
-wget -q --show-progress -O chaotic-mirrorlist.pkg.tar.zst 'https://mirrors.fossho.st/garuda/repos/chaotic-aur/x86_64/chaotic-mirrorlist-20220715-1-any.pkg.tar.zst'
+wget -q --show-progress -O chaotic-keyring.pkg.tar.zst 'https://cdn-mirror.chaotic.cx/chaotic-aur/chaotic-keyring.pkg.tar.zst'
+wget -q --show-progress -O chaotic-mirrorlist.pkg.tar.zst 'https://cdn-mirror.chaotic.cx/chaotic-aur/chaotic-mirrorlist.pkg.tar.zst'
 
 if [ ! -s chaotic-keyring.pkg.tar.zst ] || [ ! -s chaotic-mirrorlist.pkg.tar.zst ]; then
-	echo "The links for Chaotic-AUR keyring and/or mirrorlist are outdated"
-	echo "Update them manually or wait until the script in the repo is updated"
+	echo "Seems like Chaotic-AUR keyring or mirrorlist is currently unavailable"
+	echo "Please try again later"
 	exit 1
 fi
 
