@@ -2,7 +2,7 @@
 
 This is an easy to use compressed unprivileged Linux container packed into a single executable that works on most Linux distros. It's designed to be as simple and user-friendly as possible. You can use it to run any applications, including games (Vulkan and OpenGL).
 
-In its default configuration it includes, among others, these apps: `Wine-Staging-TkG, Steam, Lutris, PlayOnLinux, GameHub, Minigalaxy, Legendary, Bottles, MultiMC, RetroArch, PPSSPP, PCSX2, OBS Studio, OpenJDK, Firefox`. You can install any other applications or run locally installed apps.
+In its default configuration it includes, among others, these apps: `Wine-GE, Steam, Lutris, PlayOnLinux, GameHub, Minigalaxy, Legendary, Bottles, MultiMC, MangoHud, RetroArch, PPSSPP, PCSX2, OBS Studio, OpenJDK, Firefox`. You can install any other applications or run locally installed apps.
 
 Besides, Conty supports true filesystem and X11 sandboxing, so you can even use it to isolate applications.
 
@@ -11,7 +11,7 @@ Besides, Conty supports true filesystem and X11 sandboxing, so you can even use 
 * A single executable - download (or create) and run, nothing else is required. And it's portable, you can put it anywhere (even on a usb stick).
 * Works on most Linux distros, even very old ones and even without glibc (such as Alpine or Void with musl).
 * Root rights are **not required**.
-* Compressed (with squashfs or dwarfs), so it takes much less disk space than uncompressed containers and provides faster file system access.
+* Compressed (with squashfs or dwarfs), so it takes much less disk space than uncompressed containers and provides faster filesystem access.
 * Contains many libraries and packages so it can run almost everything. And you don't need to install anything on your main (host) system. **You can even run 32-bit applications on pure 64-bit systems**.
 * Based on Arch Linux, contains latest software (including latest videodrivers).
 * Almost completely seamless experience. All applications that you run with Conty read and store their configs in your HOME directory as if you weren't using the container at all.
@@ -31,7 +31,7 @@ Linux distros this feature is disabled by default and can be enabled with sysfs:
 sysctl kernel.unprivileged_userns_clone=1
 ```
 
-Even if unprivileged user namespaces are not supported by your kernel, you can still use Conty if you have bwrap with SUID bit installed on your system, in this case just tell Conty to use system-wide utils instead of the builtin ones.
+Even if unprivileged user namespaces are not supported by your kernel, you can still use Conty if you have bubblewrap with the SUID bit installed on your system, in this case just tell Conty to use system-wide utils instead of the builtin ones.
 
 ```
 export USE_SYS_UTILS=1
@@ -48,13 +48,14 @@ chmod +x conty.sh
 ./conty.sh command command_arguments
 ```
 
-Conty contains Steam, Lutris, PlayOnLinux, Wine-Staging-TkG and many more.
+Conty contains Steam, Lutris, PlayOnLinux, Bottles, Wine-GE and many more.
 
 ```
 ./conty.sh steam
 ./conty.sh lutris
 ./conty.sh playonlinux4
-./conty.sh wine app.exe
+./conty.sh bottles
+./conty.sh wine someapplication.exe
 ```
 
 It has a builtin file manager (pcmanfm):
@@ -63,7 +64,7 @@ It has a builtin file manager (pcmanfm):
 ./conty.sh pcmanfm
 ```
 
-Want to check if graphics acceleration works (OpenGL and Vulkan)? Run glxinfo, glxgears, vulkaninfo and vkcube:
+To check if hardware acceleration (OpenGL and Vulkan) works, you can use these tools:
 
 ```
 ./conty.sh glxinfo -B
