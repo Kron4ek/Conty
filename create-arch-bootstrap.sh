@@ -226,7 +226,8 @@ echo "Include = /etc/pacman.d/chaotic-mirrorlist" >> "${bootstrap}"/etc/pacman.c
 # Speeds up packages installation, especially when there are many small packages to install
 sed -i 's/#ParallelDownloads = 5/ParallelDownloads = 3/g' "${bootstrap}"/etc/pacman.conf
 
-run_in_chroot pacman -Syu --noconfirm
+run_in_chroot pacman -Sy archlinux-keyring --noconfirm
+run_in_chroot pacman -Su --noconfirm
 
 date -u +"%d-%m-%Y %H:%M (DMY UTC)" > "${bootstrap}"/version
 
