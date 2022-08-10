@@ -150,22 +150,20 @@ if [ ! -s chaotic-keyring.pkg.tar.zst ] || [ ! -s chaotic-mirrorlist.pkg.tar.zst
 	exit 1
 fi
 
-current_release="$(wget -q "https://archlinux.org/download/" -O - | grep "Current Release" | tail -c -16 | head -c +10)"
-
 bootstrap_urls="mirror.osbeck.com \
                 mirror.f4st.host \
                 mirror.luzea.de"
 
-echo "Downloading Arch Linux bootstrap version ${current_release}"
+echo "Downloading Arch Linux bootstrap"
 
 for link in ${bootstrap_urls}; do
-	wget -q --show-progress -O archlinux-bootstrap-${current_release}-x86_64.tar.gz \
-	 "https://${link}/archlinux/iso/${current_release}/archlinux-bootstrap-${current_release}-x86_64.tar.gz"
+	wget -q --show-progress -O archlinux-bootstrap-x86_64.tar.gz \
+	 "https://${link}/archlinux/iso/latest/archlinux-bootstrap-x86_64.tar.gz"
 	wget -q --show-progress -O sha256sums.txt \
-	 "https://${link}/archlinux/iso/${current_release}/sha256sums.txt"
+	 "https://${link}/archlinux/iso/latest/sha256sums.txt"
 
 	if [ -s sha256sums.txt ]; then
-		cat sha256sums.txt | grep bootstrap-${current_release} > sha256.txt
+		cat sha256sums.txt | grep bootstrap-x86_64 > sha256.txt
 
 		echo "Verifying the integrity of the bootstrap"
 		if sha256sum -c sha256.txt &>/dev/null; then
@@ -182,9 +180,8 @@ if [ -z "${bootstrap_is_good}" ]; then
 	exit 1
 fi
 
-tar xf archlinux-bootstrap-${current_release}-x86_64.tar.gz
-rm archlinux-bootstrap-${current_release}-x86_64.tar.gz
-rm sha256sums.txt sha256.txt
+tar xf archlinux-bootstrap-x86_64.tar.gz
+rm archlinux-bootstrap-x86_64.tar.gz sha256sums.txt sha256.txt
 
 mount_chroot
 
