@@ -14,9 +14,9 @@ script_dir="$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")"
 # Set to true to compile dwarfs instead of squashfuse
 build_dwarfs="false"
 
-squashfuse_version="0.1.104"
+squashfuse_version="0.1.105"
 bwrap_version="0.6.2"
-lz4_version="1.9.3"
+lz4_version="1.9.4"
 zstd_version="1.5.2"
 squashfs_tools_version="4.5.1"
 
