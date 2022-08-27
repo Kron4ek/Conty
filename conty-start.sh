@@ -43,7 +43,7 @@ mount_point="${working_dir}"/mnt
 # a problem with mounting the image due to an incorrectly calculated offset.
 
 # The size of this script
-scriptsize=23981
+scriptsize=24287
 
 # The size of the utils archive
 utilssize=2542302
@@ -547,6 +547,7 @@ run_bwrap () {
 	unset sandbox_params
 	unset unshare_net
 	unset custom_home
+	unset non_standard_home
 
 	if [ -n "${WAYLAND_DISPLAY}" ]; then
 		wayland_socket="${WAYLAND_DISPLAY}"
@@ -556,6 +557,14 @@ run_bwrap () {
 
 	if [ -z "${XDG_RUNTIME_DIR}" ]; then
 		XDG_RUNTIME_DIR="/run/user/${EUID}"
+	fi
+
+	# Handle non-standard HOME locations
+
+	if [ -n "${HOME}" ] && [ "$(echo "${HOME}" | head -c 6)" != "/home/" ]; then
+		non_standard_home+=("--tmpfs" "/home" \
+							"--bind" "${HOME}" "/home/${USER}" \
+							"--setenv" "HOME" "/home/${USER}")
 	fi
 
 	if [ "${SANDBOX}" = 1 ]; then
@@ -639,6 +648,7 @@ run_bwrap () {
 			--ro-bind-try /etc/machine-id /etc/machine-id \
 			--ro-bind-try /etc/asound.conf /etc/asound.conf \
 			--ro-bind-try /etc/localtime /etc/localtime \
+			"${non_standard_home[@]}" \
 			"${sandbox_params[@]}" \
 			"${custom_home[@]}" \
 			${unshare_net} \
