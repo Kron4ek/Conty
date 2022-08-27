@@ -43,7 +43,7 @@ mount_point="${working_dir}"/mnt
 # a problem with mounting the image due to an incorrectly calculated offset.
 
 # The size of this script
-scriptsize=23929
+scriptsize=23981
 
 # The size of the utils archive
 utilssize=2542302
@@ -607,6 +607,8 @@ run_bwrap () {
 		show_msg "Set home directory to ${HOME_DIR}"
 
 		custom_home+=("--bind" "${HOME_DIR}" "${HOME}")
+
+		[ ! -d "${HOME_DIR}" ] && mkdir -p "${HOME_DIR}"
 	fi
 
 	# Set the XAUTHORITY variable if it's missing (which is unlikely)
