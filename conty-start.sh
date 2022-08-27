@@ -43,7 +43,7 @@ mount_point="${working_dir}"/mnt
 # a problem with mounting the image due to an incorrectly calculated offset.
 
 # The size of this script
-scriptsize=24535
+scriptsize=25233
 
 # The size of the utils archive
 utilssize=2542302
@@ -96,6 +96,12 @@ if [ "$1" = "--help" ] || [ "$1" = "-h" ] || ([ -z "$1" ] && [ ! -L "${script_li
 	echo "Environment variables:"
 	echo
 	echo -e "DISABLE_NET \tDisables network access"
+    echo -e "DISABLE_X11 \tDisables access to X server"
+    echo -e "\t\tNote that even with this variable enabled applications can"
+    echo -e "\t\tstill access your X server if it does not use XAUTHORITY and"
+    echo -e "\t\tlistens to abstract socket. This can be solved by enabling"
+    echo -e "\t\tXAUTHORITY, disabling the abstract socket or disabling network"
+    echo -e "\t\taccess."
 	echo -e "SANDBOX \tEnables sandbox"
 	echo -e "\t\tTo control which files and directories are available inside"
 	echo -e "\t\tthe container when SANDBOX is enabled, you can use the --bind"
@@ -124,18 +130,9 @@ if [ "$1" = "--help" ] || [ "$1" = "-h" ] || ([ -z "$1" ] && [ ! -L "${script_li
 	echo
 	echo "Additional notes:"
 	echo
-	echo "If you enable SANDBOX but don't bind (mount) any items or set HOME_DIR, then"
-	echo "no system directories/files will be available at all inside the container"
+	echo "If you enable SANDBOX but don't bind (mount) any items or don't set HOME_DIR,"
+	echo "then no system directories/files will be available at all inside the container"
 	echo "and a fake temporary HOME directory will be used."
-	echo
-	echo "Which SANDBOX_LEVEL to use? Well, if you just want to isolate your files from"
-	echo "an application, then the level 1 (default) is enough. However, if an"
-	echo "application doesn't strictly require dbus and doesn't need to communicate with"
-	echo "other processes, then i recommend to use at least the level 2, which"
-	echo "is more secure and is better for running untrusted or malicious apps. And"
-	echo "for maximum protection use the level 3 (or Wayland + level 2), which protects"
-	echo "even against X11 keyloggers. Disabling internet access with DISABLE_NET is also"
-	echo "a very good idea if an application does not require constant internet access."
 	echo
 	echo "If the script is a symlink to itself but with a different name,"
 	echo "then the symlinked script will automatically run a program according"
@@ -560,11 +557,21 @@ run_bwrap () {
 		XDG_RUNTIME_DIR="/run/user/${EUID}"
 	fi
 
-	# Handle non-standard HOME locations
+	# Handle non-standard HOME locations that are outside of our default
+	# visibility scope
 	if [ -n "${HOME}" ] && [ "$(echo "${HOME}" | head -c 6)" != "/home/" ]; then
-		non_standard_home+=("--tmpfs" "/home" \
-							"--bind" "${HOME}" "/home/${USER}" \
-							"--setenv" "HOME" "/home/${USER}")
+		HOME_BASE_DIR="$(echo "${HOME}" | cut -d '/' -f2)"
+
+		case "${HOME_BASE_DIR}" in
+			tmp|mnt|opt|media|run|var)
+				;;
+			*)
+				NEW_HOME="/home/${USER}"
+				non_standard_home+=("--tmpfs" "/home" \
+									"--bind" "${HOME}" "${NEW_HOME}" \
+									"--setenv" "HOME" "${NEW_HOME}")
+				;;
+		esac
 	fi
 
 	if [ "${SANDBOX}" = 1 ]; then
@@ -576,13 +583,18 @@ run_bwrap () {
 						 "--tmpfs" "/run" \
 						 "--symlink" "/run" "/var/run" \
 						 "--tmpfs" "/tmp" \
-						 "--dir" "${HOME}" \
 						 "--new-session")
+
+		if [ -n "${non_standard_home}" ]; then
+			sandbox_params+=("--dir" "${NEW_HOME}")
+		else
+			sandbox_params+=("--dir" "${HOME}")
+		fi
 
 		if [ -n "${SANDBOX_LEVEL}" ] && [ "${SANDBOX_LEVEL}" -ge 2 ]; then
 			sandbox_level_msg="(level 2)"
 			sandbox_params+=("--dir" "${XDG_RUNTIME_DIR}" \
-							 "--ro-bind-try" "${XDG_RUNTIME_DIR}"/${wayland_socket} "${XDG_RUNTIME_DIR}"/${wayland_socket} \
+                             "--ro-bind-try" "${XDG_RUNTIME_DIR}"/${wayland_socket} "${XDG_RUNTIME_DIR}"/${wayland_socket} \
                              "--ro-bind-try" "${XDG_RUNTIME_DIR}"/pulse "${XDG_RUNTIME_DIR}"/pulse \
                              "--ro-bind-try" "${XDG_RUNTIME_DIR}"/pipewire-0 "${XDG_RUNTIME_DIR}"/pipewire-0 \
                              "--unshare-pid" \
@@ -609,9 +621,13 @@ run_bwrap () {
 	fi
 
 	if [ -n "${HOME_DIR}" ]; then
-		show_msg "Set home directory to ${HOME_DIR}"
+		show_msg "Home directory is set to ${HOME_DIR}"
 
-		custom_home+=("--bind" "${HOME_DIR}" "${HOME}")
+		if [ -n "${non_standard_home}" ]; then
+			custom_home+=("--bind" "${HOME_DIR}" "${NEW_HOME}")
+		else
+			custom_home+=("--bind" "${HOME_DIR}" "${HOME}")
+		fi
 
 		[ ! -d "${HOME_DIR}" ] && mkdir -p "${HOME_DIR}"
 	fi
@@ -623,17 +639,32 @@ run_bwrap () {
 
 	# Mount X server sockets and XAUTHORITY
 	xsockets+=("--tmpfs" "/tmp/.X11-unix")
-	xsockets+=("--ro-bind-try" "${XAUTHORITY}" "${XAUTHORITY}")
 
-	if [ "$(ls /tmp/.X11-unix 2>/dev/null)" ]; then
-		if [ -n "${SANDBOX_LEVEL}" ] && [ "${SANDBOX_LEVEL}" -ge 3 ]; then
-			xsockets+=("--ro-bind-try" "/tmp/.X11-unix/X${xephyr_display}" "/tmp/.X11-unix/X${xephyr_display}" \
-					   "--setenv" "DISPLAY" ":${xephyr_display}")
-		else
-			for s in /tmp/.X11-unix/*; do
-				xsockets+=("--bind-try" "${s}" "${s}")
-			done
+	if [ -n "${non_standard_home}" ] && [ "${XAUTHORITY}" = "${HOME}"/.Xauthority ]; then
+		xsockets+=("--ro-bind-try" "${XAUTHORITY}" "${NEW_HOME}"/.Xauthority \
+		           "--setenv" "XAUTHORITY" "${NEW_HOME}"/.Xauthority)
+	else
+		xsockets+=("--ro-bind-try" "${XAUTHORITY}" "${XAUTHORITY}")
+	fi
+
+	if [ "${DISABLE_X11}" != 1 ]; then
+		if [ "$(ls /tmp/.X11-unix 2>/dev/null)" ]; then
+			if [ -n "${SANDBOX_LEVEL}" ] && [ "${SANDBOX_LEVEL}" -ge 3 ]; then
+				xsockets+=("--ro-bind-try" "/tmp/.X11-unix/X${xephyr_display}" "/tmp/.X11-unix/X${xephyr_display}" \
+						   "--setenv" "DISPLAY" ":${xephyr_display}")
+			else
+				for s in /tmp/.X11-unix/*; do
+					xsockets+=("--bind-try" "${s}" "${s}")
+				done
+			fi
 		fi
+	else
+		show_msg "Access to X server is disabled"
+
+		# Unset the DISPLAY env variable and mount an empty file to
+		# XAUTHORITY to invalidate it
+		xsockets+=("--ro-bind-try" "${working_dir}"/running_"${script_id}" "${XAUTHORITY}" \
+				   "--unsetenv" "DISPLAY")
 	fi
 
 	show_msg
@@ -726,8 +757,7 @@ if [ "$(ls "${mount_point}" 2>/dev/null)" ] || \
 	export CUSTOM_PATH="/bin:/sbin:/usr/bin:/usr/sbin:/usr/lib/jvm/default/bin:/usr/local/bin:/usr/local/sbin:${PATH}"
 
 	if [ "$1" = "-l" ]; then
-		run_bwrap --ro-bind "${mount_point}"/var /var \
-                  bash -c "pacman -Qn; pacman -Qm"
+		run_bwrap --ro-bind "${mount_point}"/var /var pacman -Q
 		exit
 	fi
 
