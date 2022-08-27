@@ -12,7 +12,7 @@ if [ $EUID = 0 ] && [ -z "$ALLOW_ROOT" ]; then
 	exit 1
 fi
 
-script_version="1.20"
+script_version="1.21"
 
 # Full path to the script
 script_literal="${BASH_SOURCE[0]}"
@@ -43,7 +43,7 @@ mount_point="${working_dir}"/mnt
 # a problem with mounting the image due to an incorrectly calculated offset.
 
 # The size of this script
-scriptsize=24207
+scriptsize=23929
 
 # The size of the utils archive
 utilssize=2542302
@@ -559,43 +559,39 @@ run_bwrap () {
 	fi
 
 	if [ "${SANDBOX}" = 1 ]; then
-		sandbox_params="--tmpfs /home \
-                        --dir ${HOME} \
-                        --tmpfs /opt \
-                        --tmpfs /mnt \
-                        --tmpfs /media \
-                        --tmpfs /var \
-                        --tmpfs /run \
-                        --symlink /run /var/run \
-                        --tmpfs /tmp \
-                        --new-session"
+		sandbox_params+=("--tmpfs" "/home" \
+						 "--tmpfs" "/opt" \
+						 "--tmpfs" "/mnt" \
+						 "--tmpfs" "/media" \
+						 "--tmpfs" "/var" \
+						 "--tmpfs" "/run" \
+						 "--symlink" "/run" "/var/run" \
+						 "--tmpfs" "/tmp" \
+						 "--dir" "${HOME}" \
+						 "--new-session")
 
 		if [ -n "${SANDBOX_LEVEL}" ] && [ "${SANDBOX_LEVEL}" -ge 2 ]; then
 			sandbox_level_msg="(level 2)"
-			sandbox_params="${sandbox_params} \
-                            --dir ${XDG_RUNTIME_DIR} \
-                            --ro-bind-try ${XDG_RUNTIME_DIR}/${wayland_socket} ${XDG_RUNTIME_DIR}/${wayland_socket} \
-                            --ro-bind-try ${XDG_RUNTIME_DIR}/pulse ${XDG_RUNTIME_DIR}/pulse \
-                            --ro-bind-try ${XDG_RUNTIME_DIR}/pipewire-0 ${XDG_RUNTIME_DIR}/pipewire-0 \
-                            --unshare-pid \
-                            --unshare-user-try \
-                            --unsetenv DBUS_SESSION_BUS_ADDRESS"
+			sandbox_params+=("--dir" "${XDG_RUNTIME_DIR}" \
+							 "--ro-bind-try" "${XDG_RUNTIME_DIR}"/${wayland_socket} "${XDG_RUNTIME_DIR}"/${wayland_socket} \
+                             "--ro-bind-try" "${XDG_RUNTIME_DIR}"/pulse "${XDG_RUNTIME_DIR}"/pulse \
+                             "--ro-bind-try" "${XDG_RUNTIME_DIR}"/pipewire-0 "${XDG_RUNTIME_DIR}"/pipewire-0 \
+                             "--unshare-pid" \
+                             "--unshare-user-try" \
+                             "--unsetenv" "DBUS_SESSION_BUS_ADDRESS")
 		else
 			sandbox_level_msg="(level 1)"
-			sandbox_params="${sandbox_params} \
-                            --bind-try ${XDG_RUNTIME_DIR} ${XDG_RUNTIME_DIR} \
-                            --bind-try /run/dbus /run/dbus"
+			sandbox_params+=("--bind-try" "${XDG_RUNTIME_DIR}" "${XDG_RUNTIME_DIR}" \
+							 "--bind-try" "/run/dbus" "/run/dbus")
 		fi
 
 		if [ -n "${SANDBOX_LEVEL}" ] && [ "${SANDBOX_LEVEL}" -ge 3 ]; then
 			sandbox_level_msg="(level 3)"
 			DISABLE_NET=1
-			sandbox_params="${sandbox_params} \
-                            --ro-bind-try /tmp/.X11-unix/X${xephyr_display} /tmp/.X11-unix/X${xephyr_display} \
-                            --setenv DISPLAY :${xephyr_display}"
+			sandbox_params+=("--ro-bind-try" "/tmp/.X11-unix/X${xephyr_display}" "/tmp/.X11-unix/X${xephyr_display}" \
+							 "--setenv" "DISPLAY" ":${xephyr_display}")
 		else
-			sandbox_params="${sandbox_params} \
-                            --ro-bind-try /tmp/.X11-unix /tmp/.X11-unix"
+			sandbox_params+=("--ro-bind-try" "/tmp/.X11-unix" "/tmp/.X11-unix")
 		fi
 
 		show_msg "Sandbox is enabled ${sandbox_level_msg}"
@@ -610,7 +606,7 @@ run_bwrap () {
 	if [ -n "${HOME_DIR}" ]; then
 		show_msg "Set home directory to ${HOME_DIR}"
 
-		custom_home="--bind ${HOME_DIR} ${HOME}"
+		custom_home+=("--bind" "${HOME_DIR}" "${HOME}")
 	fi
 
 	# Set the XAUTHORITY variable if it's missing (which is unlikely)
@@ -641,8 +637,8 @@ run_bwrap () {
 			--ro-bind-try /etc/machine-id /etc/machine-id \
 			--ro-bind-try /etc/asound.conf /etc/asound.conf \
 			--ro-bind-try /etc/localtime /etc/localtime \
-			${sandbox_params} \
-			${custom_home} \
+			"${sandbox_params[@]}" \
+			"${custom_home[@]}" \
 			${unshare_net} \
 			--ro-bind-try "${XAUTHORITY}" "${XAUTHORITY}" \
 			--setenv PATH "${CUSTOM_PATH}" \
