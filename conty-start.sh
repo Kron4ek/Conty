@@ -43,7 +43,7 @@ mount_point="${working_dir}"/mnt
 # a problem with mounting the image due to an incorrectly calculated offset.
 
 # The size of this script
-scriptsize=24287
+scriptsize=24535
 
 # The size of the utils archive
 utilssize=2542302
@@ -548,6 +548,7 @@ run_bwrap () {
 	unset unshare_net
 	unset custom_home
 	unset non_standard_home
+	unset xsockets
 
 	if [ -n "${WAYLAND_DISPLAY}" ]; then
 		wayland_socket="${WAYLAND_DISPLAY}"
@@ -560,7 +561,6 @@ run_bwrap () {
 	fi
 
 	# Handle non-standard HOME locations
-
 	if [ -n "${HOME}" ] && [ "$(echo "${HOME}" | head -c 6)" != "/home/" ]; then
 		non_standard_home+=("--tmpfs" "/home" \
 							"--bind" "${HOME}" "/home/${USER}" \
@@ -597,10 +597,6 @@ run_bwrap () {
 		if [ -n "${SANDBOX_LEVEL}" ] && [ "${SANDBOX_LEVEL}" -ge 3 ]; then
 			sandbox_level_msg="(level 3)"
 			DISABLE_NET=1
-			sandbox_params+=("--ro-bind-try" "/tmp/.X11-unix/X${xephyr_display}" "/tmp/.X11-unix/X${xephyr_display}" \
-							 "--setenv" "DISPLAY" ":${xephyr_display}")
-		else
-			sandbox_params+=("--ro-bind-try" "/tmp/.X11-unix" "/tmp/.X11-unix")
 		fi
 
 		show_msg "Sandbox is enabled ${sandbox_level_msg}"
@@ -620,9 +616,24 @@ run_bwrap () {
 		[ ! -d "${HOME_DIR}" ] && mkdir -p "${HOME_DIR}"
 	fi
 
-	# Set the XAUTHORITY variable if it's missing (which is unlikely)
+	# Set the XAUTHORITY variable if it's missing
 	if [ -z "${XAUTHORITY}" ]; then
 		XAUTHORITY="${HOME}"/.Xauthority
+	fi
+
+	# Mount X server sockets and XAUTHORITY
+	xsockets+=("--tmpfs" "/tmp/.X11-unix")
+	xsockets+=("--ro-bind-try" "${XAUTHORITY}" "${XAUTHORITY}")
+
+	if [ "$(ls /tmp/.X11-unix 2>/dev/null)" ]; then
+		if [ -n "${SANDBOX_LEVEL}" ] && [ "${SANDBOX_LEVEL}" -ge 3 ]; then
+			xsockets+=("--ro-bind-try" "/tmp/.X11-unix/X${xephyr_display}" "/tmp/.X11-unix/X${xephyr_display}" \
+					   "--setenv" "DISPLAY" ":${xephyr_display}")
+		else
+			for s in /tmp/.X11-unix/*; do
+				xsockets+=("--bind-try" "${s}" "${s}")
+			done
+		fi
 	fi
 
 	show_msg
@@ -651,8 +662,8 @@ run_bwrap () {
 			"${non_standard_home[@]}" \
 			"${sandbox_params[@]}" \
 			"${custom_home[@]}" \
+			"${xsockets[@]}" \
 			${unshare_net} \
-			--ro-bind-try "${XAUTHORITY}" "${XAUTHORITY}" \
 			--setenv PATH "${CUSTOM_PATH}" \
 			"$@"
 }
@@ -734,7 +745,7 @@ if [ "$(ls "${mount_point}" 2>/dev/null)" ] || \
 			fi
 
 			QUIET_MODE=1 DISABLE_NET=1 SANDBOX_LEVEL=2 run_bwrap \
-			--bind /tmp/.X11-unix /tmp/.X11-unix \
+			--bind-try /tmp/.X11-unix /tmp/.X11-unix \
 			Xephyr -noreset -ac -br -screen ${XEPHYR_SIZE} :${xephyr_display} &>/dev/null & sleep 1
 			xephyr_pid=$!
 
