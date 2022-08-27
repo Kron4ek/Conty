@@ -43,7 +43,7 @@ mount_point="${working_dir}"/mnt
 # a problem with mounting the image due to an incorrectly calculated offset.
 
 # The size of this script
-scriptsize=26146
+scriptsize=26211
 
 # The size of the utils archive
 utilssize=2542302
@@ -106,8 +106,8 @@ if [ -z "${script_is_symlink}" ]; then
         echo -e "\t\tNote that even with this variable enabled applications can"
         echo -e "\t\tstill access your X server if it does not use XAUTHORITY and"
         echo -e "\t\tlistens to abstract socket. This can be solved by enabling"
-        echo -e "\t\tXAUTHORITY, disabling the abstract socket or disabling network"
-        echo -e "\t\taccess."
+        echo -e "\t\tXAUTHORITY or disabling the abstract socket or disabling"
+        echo -e "\t\tnetwork access."
         echo -e "SANDBOX \tEnables sandbox"
         echo -e "\t\tTo control which files and directories are available inside"
         echo -e "\t\tthe container when SANDBOX is enabled, you can use the --bind"
@@ -668,10 +668,11 @@ run_bwrap () {
 	else
 		show_msg "Access to X server is disabled"
 
-		# Unset the DISPLAY env variable and mount an empty file to
-		# XAUTHORITY to invalidate it
+		# Unset the DISPLAY and XAUTHORITY env variables and mount an
+		# empty file to XAUTHORITY to invalidate it
 		xsockets+=("--ro-bind-try" "${working_dir}"/running_"${script_id}" "${XAUTHORITY}" \
-				   "--unsetenv" "DISPLAY")
+				   "--unsetenv" "DISPLAY" \
+                   "--unsetenv" "XAUTHORITY")
 	fi
 
 	show_msg
