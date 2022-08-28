@@ -2,7 +2,7 @@
 
 This is an easy to use compressed unprivileged Linux container packed into a single executable that works on most Linux distros. It's designed to be as simple and user-friendly as possible. You can use it to run any applications, including games (Vulkan and OpenGL).
 
-In its default configuration it includes, among others, these apps: `Wine-GE, Steam, Lutris, PlayOnLinux, GameHub, Minigalaxy, Legendary, Bottles, MultiMC, MangoHud, RetroArch, PPSSPP, PCSX2, OBS Studio, OpenJDK, Firefox`. You can install any other applications or run locally installed apps.
+In its default configuration it includes, among others, these apps: `Wine-GE, Steam, Lutris, PlayOnLinux, GameHub, Minigalaxy, Legendary, Bottles, MultiMC, MangoHud, Gamescope, RetroArch, PPSSPP, PCSX2, OBS Studio, OpenJDK, Firefox`. You can install any other applications or run locally installed apps.
 
 Besides, Conty supports true filesystem and X11 sandboxing, so you can even use it to isolate applications.
 
