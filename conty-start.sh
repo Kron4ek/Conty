@@ -12,7 +12,7 @@ if [ $EUID = 0 ] && [ -z "$ALLOW_ROOT" ]; then
 	exit 1
 fi
 
-script_version="1.21"
+script_version="1.21.1"
 
 # Full path to the script
 script_literal="${BASH_SOURCE[0]}"
@@ -43,7 +43,7 @@ mount_point="${working_dir}"/mnt
 # a problem with mounting the image due to an incorrectly calculated offset.
 
 # The size of this script
-scriptsize=26211
+scriptsize=26209
 
 # The size of the utils archive
 utilssize=2542302
@@ -210,25 +210,25 @@ if [ "${dwarfs_image}" = 1 ]; then
 		memory_size="$(($(getconf _PHYS_PAGES) * $(getconf PAGE_SIZE) / (1024 * 1024)))"
 
 		if [ "${memory_size}" -ge 23000 ]; then
-			dwarfs_cache_size="2048M"
-		elif [ "${memory_size}" -ge 15000 ]; then
 			dwarfs_cache_size="1024M"
-		elif [ "${memory_size}" -ge 7000 ]; then
+		elif [ "${memory_size}" -ge 15000 ]; then
 			dwarfs_cache_size="512M"
-		elif [ "${memory_size}" -ge 3000 ]; then
+		elif [ "${memory_size}" -ge 7000 ]; then
 			dwarfs_cache_size="256M"
-		elif [ "${memory_size}" -ge 1500 ]; then
+		elif [ "${memory_size}" -ge 3000 ]; then
 			dwarfs_cache_size="128M"
-		else
+		elif [ "${memory_size}" -ge 1500 ]; then
 			dwarfs_cache_size="64M"
+		else
+			dwarfs_cache_size="32M"
 		fi
 	fi
 
 	if getconf _NPROCESSORS_ONLN &>/dev/null; then
 		dwarfs_num_workers="$(getconf _NPROCESSORS_ONLN)"
 
-		if [ "${dwarfs_num_workers}" -ge 16 ]; then
-			dwarfs_num_workers=16
+		if [ "${dwarfs_num_workers}" -ge 8 ]; then
+			dwarfs_num_workers=8
 		fi
 	fi
 fi
