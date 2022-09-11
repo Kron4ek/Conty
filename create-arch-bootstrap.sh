@@ -114,7 +114,7 @@ video_pkgs="mesa lib32-mesa vulkan-radeon lib32-vulkan-radeon \
 	vulkan-icd-loader lib32-vulkan-icd-loader vulkan-mesa-layers \
 	lib32-vulkan-mesa-layers libva-mesa-driver lib32-libva-mesa-driver \
 	libva-intel-driver lib32-libva-intel-driver intel-media-driver \
-	mesa-demos vulkan-tools nvidia-prime libva-utils"
+	mesa-utils vulkan-tools nvidia-prime libva-utils lib32-mesa-utils"
 
 wine_pkgs="wine-staging winetricks-git wine-nine wineasio \
 	giflib lib32-giflib libpng lib32-libpng libldap lib32-libldap \
