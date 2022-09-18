@@ -12,7 +12,7 @@ if [ $EUID = 0 ] && [ -z "$ALLOW_ROOT" ]; then
 	exit 1
 fi
 
-script_version="1.21.1"
+script_version="1.21.2"
 
 # Full path to the script
 script_literal="${BASH_SOURCE[0]}"
@@ -43,7 +43,7 @@ mount_point="${working_dir}"/mnt
 # a problem with mounting the image due to an incorrectly calculated offset.
 
 # The size of this script
-scriptsize=26209
+scriptsize=26238
 
 # The size of the utils archive
 utilssize=2542302
@@ -487,6 +487,7 @@ fakeroot -- pacman-key --populate chaotic
 fakeroot -- pacman --noconfirm --overwrite "*" -Su 2>/dev/null
 fakeroot -- pacman --noconfirm -Runs ${pkgsremove} 2>/dev/null
 fakeroot -- pacman --noconfirm -S ${pkgsinstall} 2>/dev/null
+ldconfig -C /etc/ld.so.cache
 rm -f /var/cache/pacman/pkg/*
 pacman -Qn > /pkglist.x86_64.txt
 pacman -Qm >> /pkglist.x86_64.txt
