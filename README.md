@@ -11,11 +11,11 @@ Besides, Conty supports true filesystem and X11 sandboxing, so you can even use 
 * A single executable - download (or create) and run, nothing else is required. And it's portable, you can put it anywhere (even on a usb stick).
 * Works on most Linux distros, even very old ones and even without glibc (such as Alpine or Void with musl).
 * Root rights are **not required**.
-* Compressed (with squashfs or dwarfs), so it takes much less disk space than uncompressed containers and provides faster filesystem access.
+* Compressed (with squashfs or dwarfs), so it takes a lot less disk space than uncompressed containers and may provide faster filesystem access in some cases.
 * Contains many libraries and packages so it can run almost everything. And you don't need to install anything on your main (host) system. **You can even run 32-bit applications on pure 64-bit systems**.
 * Based on Arch Linux, contains latest software (including latest videodrivers).
 * Almost completely seamless experience. All applications that you run with Conty read and store their configs in your HOME directory as if you weren't using the container at all.
-* No performance overhead. Since it's just a container, there is almost no overhead, thus all applications will run at full speed.
+* No performance overhead. Since it's just a container, there is virtually no performance overhead, thus all applications will run at full speed. Regarding memory usage, Conty uses a bit more memory due to compression and because applications from the container can't share libraries with your system apps.
 * Supports Xorg, Wayland and XWayland.
 * Supports filesystem and X11 sandboxing (thanks to bubblewrap and xephyr).
 
@@ -100,6 +100,30 @@ There are some other features, see the internal help for more information.
 ./conty.sh --help
 ```
 
+## About Wine
+
+Conty releases from the releases page include `Wine-GE`, and if you build your own Conty you will get `Wine-Staging` by default (but you can change that).
+
+As for prefix management, it's the same as with any other uncontainerized Wine build. The default prefix is `~/.wine`, but you can specify a custom prefix path with the `WINEPREFIX` environment variable.
+
+`DXVK` and `vkd3d-proton` are not installed by default (unless they are already in your prefix), but can be easily installed, for example, via `winetricks` if you need them:
+
+```
+./conty.sh winetricks dxvk vkd3d
+```
+
+As already mentioned in the [Usage](https://github.com/Kron4ek/Conty#usage) section, Windows applications can be launched like this:
+
+```
+/conty.sh wine someapplication.exe
+```
+
+If you have new enough Linux kernel (5.16 or newer), it's a good idea to enable `FSYNC` to improve Wine performance:
+
+```
+WINEFSYNC=1 ./conty.sh wine someapplication.exe
+```
+
 ## Sandbox
 
 Conty uses bubblewrap and thus supports filesystem sandboxing, X11 isolation is also supported (via Xephyr). By default
@@ -152,7 +176,7 @@ There are two solutions to this problem:
 
 There are three main ways to update Conty and get the latest packages, use whichever works best for you.
 
-* First of all, you can simply download latest release from the [releases page](https://github.com/Kron4ek/Conty/releases), i usually upload a new release every two weeks.
+* First of all, you can simply download latest release from the [releases page](https://github.com/Kron4ek/Conty/releases), i usually upload a new release about every three weeks.
 * You can use the self-update feature (`./conty.sh -u`) integrated into Conty, it will update all integrated packages and will rebuild the squashfs/dwarfs image. Read the internal help for more information about it.
 * You can manually create a Conty executable with latest packages inside, read the "**How to create your own Conty executables**" section below.
 
