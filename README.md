@@ -28,14 +28,14 @@ Your Linux kernel must be at least version 4.4 and should support unprivileged u
 Linux distros this feature is disabled by default and can be enabled with sysfs:
 
 ```
-sysctl kernel.unprivileged_userns_clone=1
+# sysctl kernel.unprivileged_userns_clone=1
 ```
 
 Even if unprivileged user namespaces are not supported by your kernel, you can still use Conty if you have bubblewrap with the SUID bit installed on your system, in this case just tell Conty to use system-wide utils instead of the builtin ones.
 
 ```
-export USE_SYS_UTILS=1
-./conty.sh command command_arguments
+$ export USE_SYS_UTILS=1
+$ ./conty.sh command command_arguments
 ```
 
 ## Usage
@@ -44,84 +44,84 @@ Either download a ready-to-use release from the [**releases**](https://github.co
 own (the instructions are below). Make it executable before run.
 
 ```
-chmod +x conty.sh
-./conty.sh command command_arguments
+$ chmod +x conty.sh
+$ ./conty.sh command command_arguments
 ```
 
 Conty contains Steam, Lutris, PlayOnLinux, Bottles, Wine-GE and many more.
 
 ```
-./conty.sh steam
-./conty.sh lutris
-./conty.sh playonlinux4
-./conty.sh bottles
-./conty.sh wine someapplication.exe
+$ ./conty.sh steam
+$ ./conty.sh lutris
+$ ./conty.sh playonlinux4
+$ ./conty.sh bottles
+$ ./conty.sh wine someapplication.exe
 ```
 
 It has a builtin file manager (pcmanfm):
 
 ```
-./conty.sh pcmanfm
+$ ./conty.sh pcmanfm
 ```
 
 To check if hardware acceleration (OpenGL and Vulkan) works, you can use these tools:
 
 ```
-./conty.sh glxinfo -B
-./conty.sh glxgears
-./conty.sh vulkaninfo
-./conty.sh vkcube
+$ ./conty.sh glxinfo -B
+$ ./conty.sh glxgears
+$ ./conty.sh vulkaninfo
+$ ./conty.sh vkcube
 ```
 
 You can even use Conty for compilation:
 
 ```
-./conty.sh gcc src.c
-./conty.sh git clone https://something.git
-cd something && ./conty.sh ./configure
-./conty.sh make
+$ ./conty.sh gcc src.c
+$ ./conty.sh git clone https://something.git
+$ cd something && ./conty.sh ./configure
+$ ./conty.sh make
 ```
 
 There are many more integrated programs. You can list all of them with:
 
 ```
-./conty.sh ls /usr/bin
+$ ./conty.sh ls /usr/bin
 ```
 
 It is also possible to run binaries from your storage. For example, if you want to run an application that resides on your HOME, run something like:
 
 ```
-./conty.sh /home/username/SomeApplication/binaryfile
+$ ./conty.sh /home/username/SomeApplication/binaryfile
 ```
 
 There are some other features, see the internal help for more information.
 
 ```
-./conty.sh --help
+$ ./conty.sh --help
 ```
 
 ## About Wine
 
 Conty releases from the releases page include `Wine-GE`, and if you build your own Conty you will get `Wine-Staging` by default (but you can change that).
 
-As for prefix management, it's the same as with any other uncontainerized Wine build. The default prefix is `~/.wine`, but you can specify a custom prefix path with the `WINEPREFIX` environment variable.
+As for prefix management, it's the same as with any other Wine build, the container does not affect it. The default prefix is `~/.wine`, but you can specify a custom prefix path with the `WINEPREFIX` environment variable.
 
 `DXVK` and `vkd3d-proton` are not installed by default (unless they are already in your prefix), but can be easily installed, for example, via `winetricks` if you need them:
 
 ```
-./conty.sh winetricks dxvk vkd3d
+$ ./conty.sh winetricks dxvk vkd3d
 ```
 
 As already mentioned in the [Usage](https://github.com/Kron4ek/Conty#usage) section, Windows applications can be launched like this:
 
 ```
-/conty.sh wine someapplication.exe
+$ ./conty.sh wine someapplication.exe
 ```
 
 If you have new enough Linux kernel (5.16 or newer), it's a good idea to enable `FSYNC` to improve Wine performance:
 
 ```
-WINEFSYNC=1 ./conty.sh wine someapplication.exe
+$ WINEFSYNC=1 ./conty.sh wine someapplication.exe
 ```
 
 ## Sandbox
@@ -147,17 +147,17 @@ Also note that `--bind`, `--ro-bind`, **HOME_DIR** and **DISABLE_NET** can be us
 
 Example:
 ```
-export SANDBOX=1
-export SANDBOX_LEVEL=2
-./conty.sh --bind ~/.steam ~/.steam --bind ~/.local/share/Steam ~/.local/share/Steam steam
+$ export SANDBOX=1
+$ export SANDBOX_LEVEL=2
+$ ./conty.sh --bind ~/.steam ~/.steam --bind ~/.local/share/Steam ~/.local/share/Steam steam
 ```
 Another example:
 ```
-mkdir "/home/username/custom_home_dir"
-export DISABLE_NET=1
-export SANDBOX=1
-export HOME_DIR="/home/username/custom_home_dir"
-./conty.sh lutris
+$ mkdir "/home/username/custom_home_dir"
+$ export DISABLE_NET=1
+$ export SANDBOX=1
+$ export HOME_DIR="/home/username/custom_home_dir"
+$ ./conty.sh lutris
 ```
 
 If you just want a sandboxing functionality but don't need a container with a full-size Linux distro inside (which is what Conty mainly is), i recommend to take a look directly at these projects: [bubblewrap](https://github.com/containers/bubblewrap) and [firejail](https://github.com/netblue30/firejail). Sandboxing is a good additional feature of Conty, but is not its main purpose.
@@ -184,7 +184,7 @@ There are three main ways to update Conty and get the latest packages, use which
 
 If you want to create an Arch-based container, use the **create-arch-bootstrap.sh** script, it will download latest Arch Linux bootstrap and will install latest packages into it. If you want to use any other distro, then you need to manually obtain it from somewhere. Root rights are required for this step, because chroot is used here.
 ```
-./create-arch-bootstrap.sh
+# ./create-arch-bootstrap.sh
 ```
 You can edit the script if you want to include different set of packages inside
 the container.
@@ -196,7 +196,7 @@ skip it if you don't need it.
 
 After that use the **create-conty.sh** script to create a squashfs (or dwarfs) image and pack everything needed into a single executable.
 ```
-./create-conty.sh
+$ ./create-conty.sh
 ```
 By default it uses the lz4 algorithm for the squashfs compression, but you can edit it and choose zstd to get better compression ratio (keep in mind though that your squashfs-tools should support zstd for that to work).
 
