@@ -137,9 +137,9 @@ export packagelist="${audio_pkgs} ${video_pkgs} ${wine_pkgs} \
 	speedcrunch gpicview file-roller xorg-xwayland steam-native-runtime \
 	meson mingw-w64-gcc gamemode lib32-gamemode cmake jre-openjdk \
 	lxterminal steamtinkerlaunch mangohud lib32-mangohud qt6-wayland \
-	wayland lib32-wayland qt5-wayland retroarch python-magic-ahupp \
-	xorg-server-xephyr openbox obs-studio gamehub minigalaxy legendary \
-	gamescope pcsx2 multimc5 youtube-dl bottles playonlinux libibus"
+	wayland lib32-wayland qt5-wayland retroarch xorg-server-xephyr \
+	openbox obs-studio gamehub minigalaxy legendary gamescope \
+	pcsx2-git multimc5 youtube-dl bottles playonlinux"
 
 wget -q --show-progress -O chaotic-keyring.pkg.tar.zst 'https://cdn-mirror.chaotic.cx/chaotic-aur/chaotic-keyring.pkg.tar.zst'
 wget -q --show-progress -O chaotic-mirrorlist.pkg.tar.zst 'https://cdn-mirror.chaotic.cx/chaotic-aur/chaotic-mirrorlist.pkg.tar.zst'
