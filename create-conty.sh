@@ -8,17 +8,17 @@ script_dir="$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")"
 # These are the algorithms supported by the integrated squashfuse
 # However, your squashfs-tools (mksquashfs) may not support some of them
 squashfs_compressor="lz4"
-squashfs_compressor_arguments="-b 256K -comp ${squashfs_compressor} -Xhc"
+squashfs_compressor_arguments=(-b 256K -comp "${squashfs_compressor}" -Xhc)
 
 # Uncomment these two lines if you want better compression and your mksquashfs supports zstd
 #squashfs_compressor="zstd"
-#squashfs_compressor_arguments="-b 1M -comp ${squashfs_compressor} -Xcompression-level 19"
+#squashfs_compressor_arguments=(-b 1M -comp ${squashfs_compressor} -Xcompression-level 19)
 
 # Use dwarfs instead of squashfs
 dwarfs="false"
-dwarfs_compressor_arguments="-l7 -C zstd:level=19 --metadata-compression null \
+dwarfs_compressor_arguments=(-l7 -C zstd:level=19 --metadata-compression null \
                             -S 22 -B 2 --order nilsimsa:255:60000:60000 \
-                            --bloom-filter-size 11 -W 15 -w 3 --no-create-timestamp"
+                            --bloom-filter-size 11 -W 15 -w 3 --no-create-timestamp)
 
 # Set to true to use an existing image if it exists
 # Otherwise the script will always create a new image
@@ -82,14 +82,14 @@ if [ ! -f "${image_path}" ] || [ "${use_existing_image}" != "true" ]; then
 			exit 1
 		fi
 
-		mkdwarfs -i "${bootstrap}" -o "${image_path}" "${dwarfs_compressor_arguments}"
+		mkdwarfs -i "${bootstrap}" -o "${image_path}" "${dwarfs_compressor_arguments[@]}"
 	else
 		if ! command -v mksquashfs 1>/dev/null; then
 			echo "Please install squashfs-tools and run the script again"
 			exit 1
 		fi
 
-		mksquashfs "${bootstrap}" "${image_path}" "${squashfs_compressor_arguments}"
+		mksquashfs "${bootstrap}" "${image_path}" "${squashfs_compressor_arguments[@]}"
 	fi
 fi
 
