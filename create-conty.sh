@@ -51,7 +51,7 @@ if [ "${dwarfs}" != "true" ] && command -v grep 1>/dev/null; then
 	# mksquashfs writes its output to stderr instead of stdout
 	mksquashfs &>mksquashfs_out.txt
 
-	if [ ! "$(cat mksquashfs_out.txt | grep ${squashfs_compressor})" ]; then
+	if ! grep -q "${squashfs_compressor}" mksquashfs_out.txt; then
 		echo "Seems like your mksquashfs doesn't support the selected"
 		echo "compression algorithm (${squashfs_compressor})."
 		echo
@@ -82,14 +82,14 @@ if [ ! -f "${image_path}" ] || [ "${use_existing_image}" != "true" ]; then
 			exit 1
 		fi
 
-		mkdwarfs -i "${bootstrap}" -o "${image_path}" ${dwarfs_compressor_arguments}
+		mkdwarfs -i "${bootstrap}" -o "${image_path}" "${dwarfs_compressor_arguments}"
 	else
 		if ! command -v mksquashfs 1>/dev/null; then
 			echo "Please install squashfs-tools and run the script again"
 			exit 1
 		fi
 
-		mksquashfs "${bootstrap}" "${image_path}" ${squashfs_compressor_arguments}
+		mksquashfs "${bootstrap}" "${image_path}" "${squashfs_compressor_arguments}"
 	fi
 fi
 
