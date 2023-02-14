@@ -43,7 +43,7 @@ mount_point="${working_dir}"/mnt
 # a problem with mounting the image due to an incorrectly calculated offset.
 
 # The size of this script
-scriptsize=26297
+scriptsize=26208
 
 # The size of the utils archive
 utilssize=2507588
@@ -60,10 +60,10 @@ dwarfs_cache_size="128M"
 dwarfs_num_workers="2"
 
 # These arguments are used to rebuild the image when using the self-update function
-squashfs_comp_arguments="-b 1M -comp zstd -Xcompression-level 19"
-dwarfs_comp_arguments="-l7 -C zstd:level=19 --metadata-compression null \
+squashfs_comp_arguments=(-b 1M -comp zstd -Xcompression-level 19)
+dwarfs_comp_arguments=(-l7 -C zstd:level=19 --metadata-compression null \
                        -S 22 -B 2 --order nilsimsa:255:60000:60000 \
-                       --bloom-filter-size 11 -W 15 -w 3 --no-create-timestamp"
+                       --bloom-filter-size 11 -W 15 -w 3 --no-create-timestamp)
 
 unset script_is_symlink
 if [ -L "${script_literal}" ]; then
@@ -514,10 +514,10 @@ EOF
 	echo "Creating an image"
 	if [ "${dwarfs_image}" = 1 ]; then
 		tools_wrapper "${update_temp_dir}"/utils/mkdwarfs \
-		-i sqfs -o image "${dwarfs_comp_arguments}"
+		-i sqfs -o image "${dwarfs_comp_arguments[@]}"
 	else
 		tools_wrapper "${update_temp_dir}"/utils/mksquashfs \
-		sqfs image "${squashfs_comp_arguments}"
+		sqfs image "${squashfs_comp_arguments[@]}"
 	fi
 
 	# Combine into a single executable
@@ -577,44 +577,44 @@ run_bwrap () {
 			tmp|mnt|opt|media|run|var)
 				;;
 			*)
-				NEW_HOME="/home/${USER}"
-				non_standard_home+=("--tmpfs" "/home" \
-									"--bind" "${HOME}" "${NEW_HOME}" \
-									"--setenv" "HOME" "${NEW_HOME}")
+				NEW_HOME=/home/"${USER}"
+				non_standard_home+=(--tmpfs /home \
+									--bind "${HOME}" "${NEW_HOME}" \
+									--setenv "HOME" "${NEW_HOME}")
 				;;
 		esac
 	fi
 
 	if [ "${SANDBOX}" = 1 ]; then
-		sandbox_params+=("--tmpfs" "/home" \
-						 "--tmpfs" "/opt" \
-						 "--tmpfs" "/mnt" \
-						 "--tmpfs" "/media" \
-						 "--tmpfs" "/var" \
-						 "--tmpfs" "/run" \
-						 "--symlink" "/run" "/var/run" \
-						 "--tmpfs" "/tmp" \
-						 "--new-session")
+		sandbox_params+=(--tmpfs /home \
+						 --tmpfs /opt \
+						 --tmpfs /mnt \
+						 --tmpfs /media \
+						 --tmpfs /var \
+						 --tmpfs /run \
+						 --symlink /run /var/run \
+						 --tmpfs /tmp \
+						 --new-session)
 
 		if [ -n "${non_standard_home[*]}" ]; then
-			sandbox_params+=("--dir" "${NEW_HOME}")
+			sandbox_params+=(--dir "${NEW_HOME}")
 		else
-			sandbox_params+=("--dir" "${HOME}")
+			sandbox_params+=(--dir "${HOME}")
 		fi
 
 		if [ -n "${SANDBOX_LEVEL}" ] && [ "${SANDBOX_LEVEL}" -ge 2 ]; then
 			sandbox_level_msg="(level 2)"
-			sandbox_params+=("--dir" "${XDG_RUNTIME_DIR}" \
-                             "--ro-bind-try" "${XDG_RUNTIME_DIR}"/"${wayland_socket}" "${XDG_RUNTIME_DIR}"/"${wayland_socket}" \
-                             "--ro-bind-try" "${XDG_RUNTIME_DIR}"/pulse "${XDG_RUNTIME_DIR}"/pulse \
-                             "--ro-bind-try" "${XDG_RUNTIME_DIR}"/pipewire-0 "${XDG_RUNTIME_DIR}"/pipewire-0 \
-                             "--unshare-pid" \
-                             "--unshare-user-try" \
-                             "--unsetenv" "DBUS_SESSION_BUS_ADDRESS")
+			sandbox_params+=(--dir "${XDG_RUNTIME_DIR}" \
+                             --ro-bind-try "${XDG_RUNTIME_DIR}"/"${wayland_socket}" "${XDG_RUNTIME_DIR}"/"${wayland_socket}" \
+                             --ro-bind-try "${XDG_RUNTIME_DIR}"/pulse "${XDG_RUNTIME_DIR}"/pulse \
+                             --ro-bind-try "${XDG_RUNTIME_DIR}"/pipewire-0 "${XDG_RUNTIME_DIR}"/pipewire-0 \
+                             --unshare-pid \
+                             --unshare-user-try \
+                             --unsetenv "DBUS_SESSION_BUS_ADDRESS")
 		else
 			sandbox_level_msg="(level 1)"
-			sandbox_params+=("--bind-try" "${XDG_RUNTIME_DIR}" "${XDG_RUNTIME_DIR}" \
-							 "--bind-try" "/run/dbus" "/run/dbus")
+			sandbox_params+=(--bind-try "${XDG_RUNTIME_DIR}" "${XDG_RUNTIME_DIR}" \
+							 --bind-try /run/dbus /run/dbus)
 		fi
 
 		if [ -n "${SANDBOX_LEVEL}" ] && [ "${SANDBOX_LEVEL}" -ge 3 ]; then
@@ -628,16 +628,16 @@ run_bwrap () {
 	if [ "${DISABLE_NET}" = 1 ]; then
 		show_msg "Network is disabled"
 
-		unshare_net="--unshare-net"
+		unshare_net=(--unshare-net)
 	fi
 
 	if [ -n "${HOME_DIR}" ]; then
 		show_msg "Home directory is set to ${HOME_DIR}"
 
 		if [ -n "${non_standard_home[*]}" ]; then
-			custom_home+=("--bind" "${HOME_DIR}" "${NEW_HOME}")
+			custom_home+=(--bind "${HOME_DIR}" "${NEW_HOME}")
 		else
-			custom_home+=("--bind" "${HOME_DIR}" "${HOME}")
+			custom_home+=(--bind "${HOME_DIR}" "${HOME}")
 		fi
 
 		[ ! -d "${HOME_DIR}" ] && mkdir -p "${HOME_DIR}"
@@ -649,23 +649,23 @@ run_bwrap () {
 	fi
 
 	# Mount X server sockets and XAUTHORITY
-	xsockets+=("--tmpfs" "/tmp/.X11-unix")
+	xsockets+=(--tmpfs /tmp/.X11-unix)
 
 	if [ -n "${non_standard_home[*]}" ] && [ "${XAUTHORITY}" = "${HOME}"/.Xauthority ]; then
-		xsockets+=("--ro-bind-try" "${XAUTHORITY}" "${NEW_HOME}"/.Xauthority \
-		           "--setenv" "XAUTHORITY" "${NEW_HOME}"/.Xauthority)
+		xsockets+=(--ro-bind-try "${XAUTHORITY}" "${NEW_HOME}"/.Xauthority \
+		           --setenv "XAUTHORITY" "${NEW_HOME}"/.Xauthority)
 	else
-		xsockets+=("--ro-bind-try" "${XAUTHORITY}" "${XAUTHORITY}")
+		xsockets+=(--ro-bind-try "${XAUTHORITY}" "${XAUTHORITY}")
 	fi
 
 	if [ "${DISABLE_X11}" != 1 ]; then
 		if [ "$(ls /tmp/.X11-unix 2>/dev/null)" ]; then
 			if [ -n "${SANDBOX_LEVEL}" ] && [ "${SANDBOX_LEVEL}" -ge 3 ]; then
-				xsockets+=("--ro-bind-try" "/tmp/.X11-unix/X${xephyr_display}" "/tmp/.X11-unix/X${xephyr_display}" \
-						   "--setenv" "DISPLAY" ":${xephyr_display}")
+				xsockets+=(--ro-bind-try /tmp/.X11-unix/X"${xephyr_display}" /tmp/.X11-unix/X"${xephyr_display}" \
+						   --setenv "DISPLAY :${xephyr_display}")
 			else
 				for s in /tmp/.X11-unix/*; do
-					xsockets+=("--bind-try" "${s}" "${s}")
+					xsockets+=(--bind-try "${s}" "${s}")
 				done
 			fi
 		fi
@@ -674,9 +674,9 @@ run_bwrap () {
 
 		# Unset the DISPLAY and XAUTHORITY env variables and mount an
 		# empty file to XAUTHORITY to invalidate it
-		xsockets+=("--ro-bind-try" "${working_dir}"/running_"${script_id}" "${XAUTHORITY}" \
-				   "--unsetenv" "DISPLAY" \
-                   "--unsetenv" "XAUTHORITY")
+		xsockets+=(--ro-bind-try "${working_dir}"/running_"${script_id}" "${XAUTHORITY}" \
+				   --unsetenv "DISPLAY" \
+                   --unsetenv "XAUTHORITY")
 	fi
 
 	show_msg
@@ -706,7 +706,7 @@ run_bwrap () {
 			"${sandbox_params[@]}" \
 			"${custom_home[@]}" \
 			"${xsockets[@]}" \
-			"${unshare_net}" \
+			"${unshare_net[@]}" \
 			--setenv PATH "${CUSTOM_PATH}" \
 			"$@"
 }
