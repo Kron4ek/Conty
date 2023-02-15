@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# Dependencies: wget tar gzip grep sha256sum
+# Dependencies: curl tar gzip grep sha256sum
 # Root rights are required
 
 if [ $EUID != 0 ]; then
@@ -9,8 +9,8 @@ if [ $EUID != 0 ]; then
 	exit 1
 fi
 
-if ! command -v wget 1>/dev/null; then
-	echo "wget is required!"
+if ! command -v curl 1>/dev/null; then
+	echo "curl is required!"
 	exit 1
 fi
 
@@ -141,8 +141,8 @@ export packagelist="${audio_pkgs} ${video_pkgs} ${wine_pkgs} \
 	openbox obs-studio gamehub minigalaxy legendary gamescope \
 	pcsx2-git multimc5 yt-dlp bottles playonlinux"
 
-wget -q --show-progress -O chaotic-keyring.pkg.tar.zst 'https://cdn-mirror.chaotic.cx/chaotic-aur/chaotic-keyring.pkg.tar.zst'
-wget -q --show-progress -O chaotic-mirrorlist.pkg.tar.zst 'https://cdn-mirror.chaotic.cx/chaotic-aur/chaotic-mirrorlist.pkg.tar.zst'
+curl -#LO 'https://cdn-mirror.chaotic.cx/chaotic-aur/chaotic-keyring.pkg.tar.zst'
+curl -#LO 'https://cdn-mirror.chaotic.cx/chaotic-aur/chaotic-mirrorlist.pkg.tar.zst'
 
 if [ ! -s chaotic-keyring.pkg.tar.zst ] || [ ! -s chaotic-mirrorlist.pkg.tar.zst ]; then
 	echo "Seems like Chaotic-AUR keyring or mirrorlist is currently unavailable"
@@ -157,10 +157,8 @@ bootstrap_urls="mirror.osbeck.com \
 echo "Downloading Arch Linux bootstrap"
 
 for link in ${bootstrap_urls}; do
-	wget -q --show-progress -O archlinux-bootstrap-x86_64.tar.gz \
-	 "https://${link}/archlinux/iso/latest/archlinux-bootstrap-x86_64.tar.gz"
-	wget -q --show-progress -O sha256sums.txt \
-	 "https://${link}/archlinux/iso/latest/sha256sums.txt"
+	curl -#LO "https://${link}/archlinux/iso/latest/archlinux-bootstrap-x86_64.tar.gz"
+	curl -#LO "https://${link}/archlinux/iso/latest/sha256sums.txt"
 
 	if [ -s sha256sums.txt ]; then
 		cat sha256sums.txt | grep bootstrap-x86_64 > sha256.txt
