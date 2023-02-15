@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# General build dependencies: gawk grep lz4 zstd wget gcc make autoconf
+# General build dependencies: gawk grep lz4 zstd curl gcc make autoconf
 # 	libtool pkgconf libcap fuse2 (or fuse3) lzo xz zlib findutils
 #
 # Dwarfs build dependencies: fuse2 (or fuse3) openssl jemalloc
@@ -30,17 +30,17 @@ export LDFLAGS="-Wl,-O1,--sort-common,--as-needed"
 mkdir -p "${script_dir}"/build-utils
 cd "${script_dir}"/build-utils || exit 1
 
-wget -q --show-progress -O lz4.tar.gz https://github.com/lz4/lz4/archive/refs/tags/v${lz4_version}.tar.gz
-wget -q --show-progress -O zstd.tar.gz https://github.com/facebook/zstd/archive/refs/tags/v${zstd_version}.tar.gz
-wget -q --show-progress -O bwrap.tar.gz https://github.com/containers/bubblewrap/archive/refs/tags/v${bwrap_version}.tar.gz
+curl -#Lo lz4.tar.gz https://github.com/lz4/lz4/archive/refs/tags/v${lz4_version}.tar.gz
+curl -#Lo zstd.tar.gz https://github.com/facebook/zstd/archive/refs/tags/v${zstd_version}.tar.gz
+curl -#Lo bwrap.tar.gz https://github.com/containers/bubblewrap/archive/refs/tags/v${bwrap_version}.tar.gz
 
 tar xf lz4.tar.gz
 tar xf zstd.tar.gz
 tar xf bwrap.tar.gz
 
 if [ "${build_dwarfs}" != "true" ]; then
-	wget -q --show-progress -O squashfuse.tar.gz https://github.com/vasi/squashfuse/archive/refs/tags/${squashfuse_version}.tar.gz
-	wget -q --show-progress -O sqfstools.tar.gz https://github.com/plougher/squashfs-tools/archive/refs/tags/${squashfs_tools_version}.tar.gz
+	curl -#Lo squashfuse.tar.gz https://github.com/vasi/squashfuse/archive/refs/tags/${squashfuse_version}.tar.gz
+	curl -#Lo sqfstools.tar.gz https://github.com/plougher/squashfs-tools/archive/refs/tags/${squashfs_tools_version}.tar.gz
 
 	tar xf squashfuse.tar.gz
 	tar xf sqfstools.tar.gz
