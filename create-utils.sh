@@ -114,7 +114,7 @@ if [ "${build_dwarfs}" = "true" ]; then
 	mv bin/usr/local/bin/dwarfsextract utils
 fi
 
-libs_list=("$(ldd utils/* | awk '/=> \// {print $3}')")
+mapfile -t libs_list < <(ldd utils/* | awk '/=> \// {print $3}')
 
 for i in "${libs_list[@]}"; do
 	if [ ! -f utils/"$(basename "${i}")" ]; then
