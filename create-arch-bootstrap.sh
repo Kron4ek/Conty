@@ -150,20 +150,20 @@ if [ ! -s chaotic-keyring.pkg.tar.zst ] || [ ! -s chaotic-mirrorlist.pkg.tar.zst
 	exit 1
 fi
 
-bootstrap_urls="mirror.osbeck.com \
-                mirror.f4st.host \
-                mirror.luzea.de"
+bootstrap_urls=("mirror.osbeck.com" \
+                "mirror.f4st.host" \
+                "mirror.luzea.de")
 
 echo "Downloading Arch Linux bootstrap"
 
-for link in ${bootstrap_urls}; do
+for link in "${bootstrap_urls[@]}"; do
 	wget -q --show-progress -O archlinux-bootstrap-x86_64.tar.gz \
 	 "https://${link}/archlinux/iso/latest/archlinux-bootstrap-x86_64.tar.gz"
 	wget -q --show-progress -O sha256sums.txt \
 	 "https://${link}/archlinux/iso/latest/sha256sums.txt"
 
 	if [ -s sha256sums.txt ]; then
-		cat sha256sums.txt | grep bootstrap-x86_64 > sha256.txt
+		grep bootstrap-x86_64 sha256sums.txt > sha256.txt
 
 		echo "Verifying the integrity of the bootstrap"
 		if sha256sum -c sha256.txt &>/dev/null; then
@@ -199,9 +199,11 @@ mv locale.gen "${bootstrap}"/etc/locale.gen
 rm "${bootstrap}"/etc/pacman.d/mirrorlist
 mv mirrorlist "${bootstrap}"/etc/pacman.d/mirrorlist
 
-echo >> "${bootstrap}"/etc/pacman.conf
-echo "[multilib]" >> "${bootstrap}"/etc/pacman.conf
-echo "Include = /etc/pacman.d/mirrorlist" >> "${bootstrap}"/etc/pacman.conf
+{
+	echo
+	echo "[multilib]"
+	echo "Include = /etc/pacman.d/mirrorlist"
+} >> "${bootstrap}"/etc/pacman.conf
 
 run_in_chroot pacman-key --init
 echo "keyserver hkps://keyserver.ubuntu.com" >> "${bootstrap}"/etc/pacman.d/gnupg/gpg.conf
@@ -215,9 +217,11 @@ mv chaotic-keyring.pkg.tar.zst chaotic-mirrorlist.pkg.tar.zst "${bootstrap}"/opt
 run_in_chroot pacman --noconfirm -U /opt/chaotic-keyring.pkg.tar.zst /opt/chaotic-mirrorlist.pkg.tar.zst
 rm "${bootstrap}"/opt/chaotic-keyring.pkg.tar.zst "${bootstrap}"/opt/chaotic-mirrorlist.pkg.tar.zst
 
-echo >> "${bootstrap}"/etc/pacman.conf
-echo "[chaotic-aur]" >> "${bootstrap}"/etc/pacman.conf
-echo "Include = /etc/pacman.d/chaotic-mirrorlist" >> "${bootstrap}"/etc/pacman.conf
+{
+	echo
+	echo "[chaotic-aur]"
+	echo "Include = /etc/pacman.d/chaotic-mirrorlist"
+} >> "${bootstrap}"/etc/pacman.conf
 
 # The ParallelDownloads feature of pacman
 # Speeds up packages installation, especially when there are many small packages to install

@@ -43,7 +43,7 @@ mount_point="${working_dir}"/mnt
 # a problem with mounting the image due to an incorrectly calculated offset.
 
 # The size of this script
-scriptsize=26260
+scriptsize=26210
 
 # The size of the utils archive
 utilssize=2507588
@@ -60,10 +60,10 @@ dwarfs_cache_size="128M"
 dwarfs_num_workers="2"
 
 # These arguments are used to rebuild the image when using the self-update function
-squashfs_comp_arguments="-b 1M -comp zstd -Xcompression-level 19"
-dwarfs_comp_arguments="-l7 -C zstd:level=19 --metadata-compression null \
+squashfs_comp_arguments=(-b 1M -comp zstd -Xcompression-level 19)
+dwarfs_comp_arguments=(-l7 -C zstd:level=19 --metadata-compression null \
                        -S 22 -B 2 --order nilsimsa:255:60000:60000 \
-                       --bloom-filter-size 11 -W 15 -w 3 --no-create-timestamp"
+                       --bloom-filter-size 11 -W 15 -w 3 --no-create-timestamp)
 
 unset script_is_symlink
 if [ -L "${script_literal}" ]; then
@@ -161,7 +161,7 @@ if [ -z "${script_is_symlink}" ]; then
 
         exit
     elif [ "$1" = "-o" ]; then
-        echo ${offset}
+        echo "${offset}"
 
         exit
     fi
@@ -258,17 +258,17 @@ if [ "${USE_SYS_UTILS}" != 1 ]; then
 	fi
 
 	if [ "${dwarfs_image}" = 1 ]; then
-		mount_tool="${working_dir}"/utils/dwarfs${fuse_version}
+		mount_tool="${working_dir}"/utils/dwarfs"${fuse_version}"
 		extraction_tool="${working_dir}"/utils/dwarfsextract
 	else
-		mount_tool="${working_dir}"/utils/squashfuse${fuse_version}
+		mount_tool="${working_dir}"/utils/squashfuse"${fuse_version}"
 		extraction_tool="${working_dir}"/utils/unsquashfs
 	fi
 
 	bwrap="${working_dir}"/utils/bwrap
 
 	if [ ! -f "${mount_tool}" ] || [ ! -f "${bwrap}" ]; then
-		tail -c +$((scriptsize+1)) "${script}" | head -c ${utilssize} | tar -C "${working_dir}" -zxf -
+		tail -c +$((scriptsize+1)) "${script}" | head -c "${utilssize}" | tar -C "${working_dir}" -zxf -
 
 		if [ ! -f "${mount_tool}" ] || [ ! -f "${bwrap}" ]; then
 			clear
@@ -327,10 +327,10 @@ if [ "$1" = "-e" ] && [ -z "${script_is_symlink}" ]; then
 		if [ "${dwarfs_image}" = 1 ]; then
 			echo "Extracting the image..."
 			mkdir "$(basename "${script}")"_files
-			launch_wrapper "${extraction_tool}" -i "${script}" -o "$(basename "${script}")"_files -O ${offset}
+			launch_wrapper "${extraction_tool}" -i "${script}" -o "$(basename "${script}")"_files -O "${offset}"
 			echo "Done"
 		else
-			launch_wrapper "${extraction_tool}" -o ${offset} -user-xattrs -d "$(basename "${script}")"_files "${script}"
+			launch_wrapper "${extraction_tool}" -o "${offset}" -user-xattrs -d "$(basename "${script}")"_files "${script}"
 		fi
 	else
 		echo "Extraction tool not found"
@@ -345,7 +345,7 @@ if [ "$1" = "-H" ] && [ -z "${script_is_symlink}" ]; then
 	exit
 fi
 
-if ([ "$1" = "-u" ] || [ "$1" = "-U" ]) && [ -z "${script_is_symlink}" ]; then
+if { [ "$1" = "-u" ] || [ "$1" = "-U" ]; } && [ -z "${script_is_symlink}" ]; then
 	OLD_PWD="${PWD}"
 
 	# Check if the current directory is writable
@@ -376,7 +376,7 @@ if ([ "$1" = "-u" ] || [ "$1" = "-U" ]) && [ -z "${script_is_symlink}" ]; then
 		fi
 	fi
 
-	tail -c +$((scriptsize+1)) "${script}" | head -c ${utilssize} | tar -C "${update_temp_dir}" -zxf -
+	tail -c +$((scriptsize+1)) "${script}" | head -c "${utilssize}" | tar -C "${update_temp_dir}" -zxf -
 
 	if [ "${dwarfs_image}" = 1 ]; then
 		chmod +x utils/dwarfsextract 2>/dev/null
@@ -421,11 +421,11 @@ if ([ "$1" = "-u" ] || [ "$1" = "-U" ]) && [ -z "${script_is_symlink}" ]; then
 	if [ "${dwarfs_image}" = 1 ]; then
 		mkdir sqfs
 		tools_wrapper "${update_temp_dir}"/utils/dwarfsextract \
-		-i "${script}" -o sqfs -O ${offset} --cache-size "${dwarfs_cache_size}" \
+		-i "${script}" -o sqfs -O "${offset}" --cache-size "${dwarfs_cache_size}" \
 		--num-workers "${dwarfs_num_workers}"
 	else
 		tools_wrapper "${update_temp_dir}"/utils/unsquashfs \
-		-o ${offset} -user-xattrs -d sqfs "${script}"
+		-o "${offset}" -user-xattrs -d sqfs "${script}"
 	fi
 
 	# Download or extract the utils.tar.gz and the init script depending
@@ -445,23 +445,26 @@ if ([ "$1" = "-u" ] || [ "$1" = "-U" ]) && [ -z "${script_is_symlink}" ]; then
 
 	if [ ! -s conty-start.sh ] || [ ! -s utils.tar.gz ]; then
 		echo "Extracting the init script and the integrated utils"
-		tail -c +$((scriptsize+1)) "${script}" | head -c ${utilssize} > utils.tar.gz
-		head -c ${scriptsize} "${script}" > conty-start.sh
+		tail -c +$((scriptsize+1)) "${script}" | head -c "${utilssize}" > utils.tar.gz
+		head -c "${scriptsize}" "${script}" > conty-start.sh
 	fi
 
 	# Check if there are additional arguments passed
 	shift
 	if [ -n "$1" ]; then
-		packagelist="$@"
+		packagelist=("$@")
 
 		# Check which packages to install and which ones to remove
-		for i in ${packagelist}; do
+		for i in "${packagelist[@]}"; do
 			if [ "$(echo "${i}" | head -c 1)" = "-" ]; then
-				export pkgsremove="${pkgsremove} $(echo "${i}" | tail -c +2)"
+				pkgsremove+=" ${i:1}"
 			else
-				export pkgsinstall="${pkgsinstall} ${i}"
+				pkgsinstall+=" ${i}"
 			fi
 		done
+
+		export pkgsremove
+		export pkgsinstall
 	fi
 
 	# Generate a script to perform inside Conty
@@ -511,10 +514,10 @@ EOF
 	echo "Creating an image"
 	if [ "${dwarfs_image}" = 1 ]; then
 		tools_wrapper "${update_temp_dir}"/utils/mkdwarfs \
-		-i sqfs -o image ${dwarfs_comp_arguments}
+		-i sqfs -o image "${dwarfs_comp_arguments[@]}"
 	else
 		tools_wrapper "${update_temp_dir}"/utils/mksquashfs \
-		sqfs image ${squashfs_comp_arguments}
+		sqfs image "${squashfs_comp_arguments[@]}"
 	fi
 
 	# Combine into a single executable
@@ -574,44 +577,44 @@ run_bwrap () {
 			tmp|mnt|opt|media|run|var)
 				;;
 			*)
-				NEW_HOME="/home/${USER}"
-				non_standard_home+=("--tmpfs" "/home" \
-									"--bind" "${HOME}" "${NEW_HOME}" \
-									"--setenv" "HOME" "${NEW_HOME}")
+				NEW_HOME=/home/"${USER}"
+				non_standard_home+=(--tmpfs /home \
+									--bind "${HOME}" "${NEW_HOME}" \
+									--setenv "HOME" "${NEW_HOME}")
 				;;
 		esac
 	fi
 
 	if [ "${SANDBOX}" = 1 ]; then
-		sandbox_params+=("--tmpfs" "/home" \
-						 "--tmpfs" "/opt" \
-						 "--tmpfs" "/mnt" \
-						 "--tmpfs" "/media" \
-						 "--tmpfs" "/var" \
-						 "--tmpfs" "/run" \
-						 "--symlink" "/run" "/var/run" \
-						 "--tmpfs" "/tmp" \
-						 "--new-session")
+		sandbox_params+=(--tmpfs /home \
+						 --tmpfs /opt \
+						 --tmpfs /mnt \
+						 --tmpfs /media \
+						 --tmpfs /var \
+						 --tmpfs /run \
+						 --symlink /run /var/run \
+						 --tmpfs /tmp \
+						 --new-session)
 
-		if [ -n "${non_standard_home}" ]; then
-			sandbox_params+=("--dir" "${NEW_HOME}")
+		if [ -n "${non_standard_home[*]}" ]; then
+			sandbox_params+=(--dir "${NEW_HOME}")
 		else
-			sandbox_params+=("--dir" "${HOME}")
+			sandbox_params+=(--dir "${HOME}")
 		fi
 
 		if [ -n "${SANDBOX_LEVEL}" ] && [ "${SANDBOX_LEVEL}" -ge 2 ]; then
 			sandbox_level_msg="(level 2)"
-			sandbox_params+=("--dir" "${XDG_RUNTIME_DIR}" \
-                             "--ro-bind-try" "${XDG_RUNTIME_DIR}"/${wayland_socket} "${XDG_RUNTIME_DIR}"/${wayland_socket} \
-                             "--ro-bind-try" "${XDG_RUNTIME_DIR}"/pulse "${XDG_RUNTIME_DIR}"/pulse \
-                             "--ro-bind-try" "${XDG_RUNTIME_DIR}"/pipewire-0 "${XDG_RUNTIME_DIR}"/pipewire-0 \
-                             "--unshare-pid" \
-                             "--unshare-user-try" \
-                             "--unsetenv" "DBUS_SESSION_BUS_ADDRESS")
+			sandbox_params+=(--dir "${XDG_RUNTIME_DIR}" \
+                             --ro-bind-try "${XDG_RUNTIME_DIR}"/"${wayland_socket}" "${XDG_RUNTIME_DIR}"/"${wayland_socket}" \
+                             --ro-bind-try "${XDG_RUNTIME_DIR}"/pulse "${XDG_RUNTIME_DIR}"/pulse \
+                             --ro-bind-try "${XDG_RUNTIME_DIR}"/pipewire-0 "${XDG_RUNTIME_DIR}"/pipewire-0 \
+                             --unshare-pid \
+                             --unshare-user-try \
+                             --unsetenv "DBUS_SESSION_BUS_ADDRESS")
 		else
 			sandbox_level_msg="(level 1)"
-			sandbox_params+=("--bind-try" "${XDG_RUNTIME_DIR}" "${XDG_RUNTIME_DIR}" \
-							 "--bind-try" "/run/dbus" "/run/dbus")
+			sandbox_params+=(--bind-try "${XDG_RUNTIME_DIR}" "${XDG_RUNTIME_DIR}" \
+							 --bind-try /run/dbus /run/dbus)
 		fi
 
 		if [ -n "${SANDBOX_LEVEL}" ] && [ "${SANDBOX_LEVEL}" -ge 3 ]; then
@@ -625,16 +628,16 @@ run_bwrap () {
 	if [ "${DISABLE_NET}" = 1 ]; then
 		show_msg "Network is disabled"
 
-		unshare_net="--unshare-net"
+		unshare_net=(--unshare-net)
 	fi
 
 	if [ -n "${HOME_DIR}" ]; then
 		show_msg "Home directory is set to ${HOME_DIR}"
 
-		if [ -n "${non_standard_home}" ]; then
-			custom_home+=("--bind" "${HOME_DIR}" "${NEW_HOME}")
+		if [ -n "${non_standard_home[*]}" ]; then
+			custom_home+=(--bind "${HOME_DIR}" "${NEW_HOME}")
 		else
-			custom_home+=("--bind" "${HOME_DIR}" "${HOME}")
+			custom_home+=(--bind "${HOME_DIR}" "${HOME}")
 		fi
 
 		[ ! -d "${HOME_DIR}" ] && mkdir -p "${HOME_DIR}"
@@ -646,23 +649,23 @@ run_bwrap () {
 	fi
 
 	# Mount X server sockets and XAUTHORITY
-	xsockets+=("--tmpfs" "/tmp/.X11-unix")
+	xsockets+=(--tmpfs /tmp/.X11-unix)
 
-	if [ -n "${non_standard_home}" ] && [ "${XAUTHORITY}" = "${HOME}"/.Xauthority ]; then
-		xsockets+=("--ro-bind-try" "${XAUTHORITY}" "${NEW_HOME}"/.Xauthority \
-		           "--setenv" "XAUTHORITY" "${NEW_HOME}"/.Xauthority)
+	if [ -n "${non_standard_home[*]}" ] && [ "${XAUTHORITY}" = "${HOME}"/.Xauthority ]; then
+		xsockets+=(--ro-bind-try "${XAUTHORITY}" "${NEW_HOME}"/.Xauthority \
+		           --setenv "XAUTHORITY" "${NEW_HOME}"/.Xauthority)
 	else
-		xsockets+=("--ro-bind-try" "${XAUTHORITY}" "${XAUTHORITY}")
+		xsockets+=(--ro-bind-try "${XAUTHORITY}" "${XAUTHORITY}")
 	fi
 
 	if [ "${DISABLE_X11}" != 1 ]; then
 		if [ "$(ls /tmp/.X11-unix 2>/dev/null)" ]; then
 			if [ -n "${SANDBOX_LEVEL}" ] && [ "${SANDBOX_LEVEL}" -ge 3 ]; then
-				xsockets+=("--ro-bind-try" "/tmp/.X11-unix/X${xephyr_display}" "/tmp/.X11-unix/X${xephyr_display}" \
-						   "--setenv" "DISPLAY" ":${xephyr_display}")
+				xsockets+=(--ro-bind-try /tmp/.X11-unix/X"${xephyr_display}" /tmp/.X11-unix/X"${xephyr_display}" \
+						   --setenv "DISPLAY" :"${xephyr_display}")
 			else
 				for s in /tmp/.X11-unix/*; do
-					xsockets+=("--bind-try" "${s}" "${s}")
+					xsockets+=(--bind-try "${s}" "${s}")
 				done
 			fi
 		fi
@@ -671,9 +674,9 @@ run_bwrap () {
 
 		# Unset the DISPLAY and XAUTHORITY env variables and mount an
 		# empty file to XAUTHORITY to invalidate it
-		xsockets+=("--ro-bind-try" "${working_dir}"/running_"${script_id}" "${XAUTHORITY}" \
-				   "--unsetenv" "DISPLAY" \
-                   "--unsetenv" "XAUTHORITY")
+		xsockets+=(--ro-bind-try "${working_dir}"/running_"${script_id}" "${XAUTHORITY}" \
+				   --unsetenv "DISPLAY" \
+                   --unsetenv "XAUTHORITY")
 	fi
 
 	show_msg
@@ -703,7 +706,7 @@ run_bwrap () {
 			"${sandbox_params[@]}" \
 			"${custom_home[@]}" \
 			"${xsockets[@]}" \
-			${unshare_net} \
+			"${unshare_net[@]}" \
 			--setenv PATH "${CUSTOM_PATH}" \
 			"$@"
 }
@@ -712,7 +715,7 @@ trap_exit () {
 	rm -f "${working_dir}"/running_"${script_id}"
 
 	if [ ! "$(ls "${working_dir}"/running_* 2>/dev/null)" ]; then
-		fusermount${fuse_version} -uz "${mount_point}" 2>/dev/null || \
+		fusermount"${fuse_version}" -uz "${mount_point}" 2>/dev/null || \
 		umount --lazy "${mount_point}" 2>/dev/null
 
 		if [ ! "$(ls "${mount_point}" 2>/dev/null)" ]; then
@@ -777,15 +780,15 @@ if [ "$(ls "${mount_point}" 2>/dev/null)" ] || \
 				XEPHYR_SIZE="800x600"
 			fi
 
-			xephyr_display="$((${script_id}+2))"
+			xephyr_display="$((script_id+2))"
 
-			if [ -S /tmp/.X11-unix/X${xephyr_display} ]; then
-				xephyr_display="$((${script_id}+10))"
+			if [ -S /tmp/.X11-unix/X"${xephyr_display}" ]; then
+				xephyr_display="$((script_id+10))"
 			fi
 
 			QUIET_MODE=1 DISABLE_NET=1 SANDBOX_LEVEL=2 run_bwrap \
 			--bind-try /tmp/.X11-unix /tmp/.X11-unix \
-			Xephyr -noreset -ac -br -screen ${XEPHYR_SIZE} :${xephyr_display} &>/dev/null & sleep 1
+			Xephyr -noreset -ac -br -screen "${XEPHYR_SIZE}" :"${xephyr_display}" &>/dev/null & sleep 1
 			xephyr_pid=$!
 
 			QUIET_MODE=1 run_bwrap openbox & sleep 1
@@ -807,7 +810,7 @@ if [ "$(ls "${mount_point}" 2>/dev/null)" ] || \
 	fi
 
 	if [ -n "${xephyr_pid}" ]; then
-		wait ${xephyr_pid}
+		wait "${xephyr_pid}"
 	fi
 else
 	echo "Mounting the image failed!"

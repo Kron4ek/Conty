@@ -30,58 +30,58 @@ export LDFLAGS="-Wl,-O1,--sort-common,--as-needed"
 mkdir -p "${script_dir}"/build-utils
 cd "${script_dir}"/build-utils || exit 1
 
-wget -q --show-progress -O lz4.tar.gz https://github.com/lz4/lz4/archive/refs/tags/v${lz4_version}.tar.gz
-wget -q --show-progress -O zstd.tar.gz https://github.com/facebook/zstd/archive/refs/tags/v${zstd_version}.tar.gz
-wget -q --show-progress -O bwrap.tar.gz https://github.com/containers/bubblewrap/archive/refs/tags/v${bwrap_version}.tar.gz
+wget -q --show-progress -O lz4.tar.gz https://github.com/lz4/lz4/archive/refs/tags/v"${lz4_version}".tar.gz
+wget -q --show-progress -O zstd.tar.gz https://github.com/facebook/zstd/archive/refs/tags/v"${zstd_version}".tar.gz
+wget -q --show-progress -O bwrap.tar.gz https://github.com/containers/bubblewrap/archive/refs/tags/v"${bwrap_version}".tar.gz
 
 tar xf lz4.tar.gz
 tar xf zstd.tar.gz
 tar xf bwrap.tar.gz
 
 if [ "${build_dwarfs}" != "true" ]; then
-	wget -q --show-progress -O squashfuse.tar.gz https://github.com/vasi/squashfuse/archive/refs/tags/${squashfuse_version}.tar.gz
-	wget -q --show-progress -O sqfstools.tar.gz https://github.com/plougher/squashfs-tools/archive/refs/tags/${squashfs_tools_version}.tar.gz
+	wget -q --show-progress -O squashfuse.tar.gz https://github.com/vasi/squashfuse/archive/refs/tags/"${squashfuse_version}".tar.gz
+	wget -q --show-progress -O sqfstools.tar.gz https://github.com/plougher/squashfs-tools/archive/refs/tags/"${squashfs_tools_version}".tar.gz
 
 	tar xf squashfuse.tar.gz
 	tar xf sqfstools.tar.gz
 fi
 
-cd bubblewrap-${bwrap_version}
+cd bubblewrap-"${bwrap_version}" || exit 1
 ./autogen.sh
 ./configure --disable-selinux --disable-man
-make -j$(nproc) DESTDIR="${script_dir}"/build-utils/bin install
+make -j"$(nproc)" DESTDIR="${script_dir}"/build-utils/bin install
 
-cd ../lz4-${lz4_version}
-make -j$(nproc) DESTDIR="${script_dir}"/build-utils/bin install
+cd ../lz4-"${lz4_version}" || exit 1
+make -j"$(nproc)" DESTDIR="${script_dir}"/build-utils/bin install
 
-cd ../zstd-${zstd_version}
-ZSTD_LEGACY_SUPPORT=0 HAVE_ZLIB=0 HAVE_LZMA=0 HAVE_LZ4=0 BACKTRACE=0 make -j$(nproc) DESTDIR="${script_dir}"/build-utils/bin install
+cd ../zstd-"${zstd_version}" || exit 1
+ZSTD_LEGACY_SUPPORT=0 HAVE_ZLIB=0 HAVE_LZMA=0 HAVE_LZ4=0 BACKTRACE=0 make -j"$(nproc)" DESTDIR="${script_dir}"/build-utils/bin install
 
 if [ "${build_dwarfs}" != "true" ]; then
-	cd ../squashfuse-${squashfuse_version}
+	cd ../squashfuse-"${squashfuse_version}" || exit 1
 	./autogen.sh
 	./configure
-	make -j$(nproc) DESTDIR="${script_dir}"/build-utils/bin install
+	make -j"$(nproc)" DESTDIR="${script_dir}"/build-utils/bin install
 
-	cd ../squashfs-tools-${squashfs_tools_version}/squashfs-tools
-	make -j$(nproc) GZIP_SUPPORT=1 XZ_SUPPORT=1 LZO_SUPPORT=1 LZMA_XZ_SUPPORT=1 \
+	cd ../squashfs-tools-"${squashfs_tools_version}"/squashfs-tools || exit 1
+	make -j"$(nproc)" GZIP_SUPPORT=1 XZ_SUPPORT=1 LZO_SUPPORT=1 LZMA_XZ_SUPPORT=1 \
 			LZ4_SUPPORT=1 ZSTD_SUPPORT=1 XATTR_SUPPORT=1
 	make INSTALL_DIR="${script_dir}"/build-utils/bin/usr/local/bin install
 fi
 
-cd "${script_dir}"/build-utils
+cd "${script_dir}"/build-utils || exit 1
 mkdir utils
 mv bin/usr/local/bin/bwrap utils
 mv bin/usr/local/bin/squashfuse utils
 mv bin/usr/local/bin/squashfuse_ll utils
 mv bin/usr/local/bin/mksquashfs utils
 mv bin/usr/local/bin/unsquashfs utils
-mv bin/usr/local/lib/liblz4.so.${lz4_version} utils/liblz4.so.1
-mv bin/usr/local/lib/libzstd.so.${zstd_version} utils/libzstd.so.1
+mv bin/usr/local/lib/liblz4.so."${lz4_version}" utils/liblz4.so.1
+mv bin/usr/local/lib/libzstd.so."${zstd_version}" utils/libzstd.so.1
 mv bin/usr/local/lib/libfuseprivate.so.0.0.0 utils/libfuseprivate.so.0
 mv bin/usr/local/lib/libsquashfuse.so.0.0.0 utils/libsquashfuse.so.0
 
-if [ ! "$(ldd utils/squashfuse | grep libfuse.so.2)" ]; then
+if ! ldd utils/squashfuse | grep -q libfuse.so.2; then
 	mv utils/squashfuse utils/squashfuse3
 	mv utils/squashfuse_ll utils/squashfuse3_ll
 fi
@@ -95,28 +95,28 @@ if [ "${build_dwarfs}" = "true" ]; then
     #
     # This can also be worked around by setting LC_ALL=C, but for now
     # let's revert the commit
-    cd dwarfs
+    cd dwarfs || exit 1
     git revert --no-commit aeeddaecab5d4648780b0e11dc03fca19e23409a
 
 	mkdir build
-	cd build
+	cd build || exit 1
 	cmake .. -DCMAKE_BUILD_TYPE=Release \
 			-DPREFER_SYSTEM_ZSTD=ON -DPREFER_SYSTEM_XXHASH=ON \
 			-DPREFER_SYSTEM_GTEST=ON -DPREFER_SYSTEM_LIBFMT=ON
 
-	make -j$(nproc)
+	make -j"$(nproc)"
 	make DESTDIR="${script_dir}"/build-utils/bin install
 
-	cd "${script_dir}"/build-utils
+	cd "${script_dir}"/build-utils || exit 1
 	mv bin/usr/local/sbin/dwarfs2 utils/dwarfs
 	mv bin/usr/local/sbin/dwarfs utils/dwarfs3
 	mv bin/usr/local/bin/mkdwarfs utils
 	mv bin/usr/local/bin/dwarfsextract utils
 fi
 
-libs_list="$(ldd utils/* | grep "=> /" | awk '{print $3}' | xargs)"
+mapfile -t libs_list < <(ldd utils/* | awk '/=> \// {print $3}')
 
-for i in ${libs_list}; do
+for i in "${libs_list[@]}"; do
 	if [ ! -f utils/"$(basename "${i}")" ]; then
 		cp -L "${i}" utils
 	fi
