@@ -43,7 +43,7 @@ mount_point="${working_dir}"/mnt
 # a problem with mounting the image due to an incorrectly calculated offset.
 
 # The size of this script
-scriptsize=26208
+scriptsize=26210
 
 # The size of the utils archive
 utilssize=2507588
@@ -662,7 +662,7 @@ run_bwrap () {
 		if [ "$(ls /tmp/.X11-unix 2>/dev/null)" ]; then
 			if [ -n "${SANDBOX_LEVEL}" ] && [ "${SANDBOX_LEVEL}" -ge 3 ]; then
 				xsockets+=(--ro-bind-try /tmp/.X11-unix/X"${xephyr_display}" /tmp/.X11-unix/X"${xephyr_display}" \
-						   --setenv "DISPLAY :${xephyr_display}")
+						   --setenv "DISPLAY" :"${xephyr_display}")
 			else
 				for s in /tmp/.X11-unix/*; do
 					xsockets+=(--bind-try "${s}" "${s}")
