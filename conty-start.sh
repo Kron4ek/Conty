@@ -43,7 +43,7 @@ mount_point="${working_dir}"/mnt
 # a problem with mounting the image due to an incorrectly calculated offset.
 
 # The size of this script
-scriptsize=26210
+scriptsize=26179
 
 # The size of the utils archive
 utilssize=2507588
