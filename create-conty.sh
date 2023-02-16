@@ -38,7 +38,7 @@ fi
 
 if [ ! -f "${utils}" ] || [ "$(wc -c < "${utils}")" -lt 1000 ]; then
 	rm -f "${utils}"
-	wget -q --show-progress "https://github.com/Kron4ek/Conty/raw/master/${utils}"
+	curl -#LO "https://github.com/Kron4ek/Conty/raw/master/${utils}"
 fi
 
 if [ ! -f conty-start.sh ]; then

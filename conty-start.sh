@@ -431,7 +431,7 @@ if { [ "$1" = "-u" ] || [ "$1" = "-U" ]; } && [ -z "${script_is_symlink}" ]; the
 	# Download or extract the utils.tar.gz and the init script depending
 	# on what command line argument is used (-u or -U)
 	clear
-	if [ "$1" = "-U" ] && command -v wget 1>/dev/null; then
+	if [ "$1" = "-U" ] && command -v curl 1>/dev/null; then
 		if [ "${dwarfs_image}" = 1 ]; then
 			utils="utils_dwarfs.tar.gz"
 		else
@@ -439,8 +439,8 @@ if { [ "$1" = "-u" ] || [ "$1" = "-U" ]; } && [ -z "${script_is_symlink}" ]; the
 		fi
 
 		echo "Downloading the init script and the utils"
-		wget -q --show-progress "https://github.com/Kron4ek/Conty/raw/master/conty-start.sh"
-		wget -q --show-progress -O utils.tar.gz "https://github.com/Kron4ek/Conty/raw/master/${utils}"
+		curl -#LO "https://github.com/Kron4ek/Conty/raw/master/conty-start.sh"
+		curl -#Lo utils.tar.gz "https://github.com/Kron4ek/Conty/raw/master/${utils}"
 	fi
 
 	if [ ! -s conty-start.sh ] || [ ! -s utils.tar.gz ]; then
