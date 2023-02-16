@@ -139,7 +139,7 @@ export packagelist="${audio_pkgs} ${video_pkgs} ${wine_pkgs} \
 	lxterminal steamtinkerlaunch mangohud lib32-mangohud qt6-wayland \
 	wayland lib32-wayland qt5-wayland retroarch xorg-server-xephyr \
 	openbox obs-studio gamehub minigalaxy legendary gamescope \
-	pcsx2-git multimc5 yt-dlp bottles playonlinux"
+	pcsx2-git multimc5 yt-dlp bottles playonlinux minizip"
 
 curl -#LO 'https://cdn-mirror.chaotic.cx/chaotic-aur/chaotic-keyring.pkg.tar.zst'
 curl -#LO 'https://cdn-mirror.chaotic.cx/chaotic-aur/chaotic-mirrorlist.pkg.tar.zst'
