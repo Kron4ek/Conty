@@ -1,23 +1,137 @@
 #!/usr/bin/env bash
-
 ## Dependencies: bash gzip fuse2 (or fuse3) tar coreutils
 
-# Prevent launching as root
-if [ $EUID = 0 ] && [ -z "$ALLOW_ROOT" ]; then
-	echo "Do not run this script as root!"
-	echo
-	echo "If you really need to run it as root and you know what you are doing,"
-	echo "set the ALLOW_ROOT environment variable."
+msg_root="
+Do not run this script as root!
 
-	exit 1
+If you really need to run it as root and know what you are doing, set
+the ALLOW_ROOT environment variable.
+"
+
+# Refuse to run as root unless environment variable is set
+if (( EUID == 0 )) && [ -z "$ALLOW_ROOT" ]; then
+    echo "${msg_root}"
+    exit 1
 fi
 
+# Conty version
 script_version="1.21.3"
+
+# Important variables to manually adjust after modification!
+# Needed to avoid problems with mounting due to an incorrect offset.
+script_size=25161
+utils_size=2507588
 
 # Full path to the script
 script_literal="${BASH_SOURCE[0]}"
 script_name="$(basename "${script_literal}")"
 script="$(readlink -f "${script_literal}")"
+
+# Help output
+msg_help="
+Usage: ${script_name} [COMMAND] [ARGUMENTS]
+
+
+Arguments:
+  -e    Extract the image
+
+  -h    Display this text
+
+  -H    Display bubblewrap help
+
+  -l    Show a list of all installed packages
+
+  -m    Mount/unmount the image
+        The image will be mounted if it's not, unmounted otherwise.
+        Mount point can be changed with the BASE_DIR env variable
+        (the default is /tmp).
+
+  -o    Show the image offset
+
+  -u    Update all packages inside the container
+        This requires a rebuild of the image, which may take quite
+        a lot of time, depending on your hardware and internet speed.
+        Additional disk space (about 6x the size of the current file)
+        is needed during the update process.
+
+  -U    Same as -u with the addition of updating the init script and
+        the integrated utils. This option may break Conty in some cases,
+        use with caution!
+
+  -v    Display version of this script
+
+  -V    Display version of the image
+
+Arguments that don't match any of the above will be passed directly to
+bubblewrap, so all bubblewrap arguments are supported as well.
+
+
+Environment variables:
+  BASE_DIR          Sets a custom directory where Conty will extract its
+                    builtin utilities and mount the image.
+                    The default is /tmp.
+
+  DISABLE_NET       Disables network access.
+
+  DISABLE_X11       Disables access to X server.
+
+                    Note: Even with this variable enabled applications
+                    can still access your X server if it doesn't use
+                    XAUTHORITY and listens to the abstract socket. This
+                    can be solved by enabling XAUTHORITY, disabling the
+                    abstract socket or by disabling network access.
+
+  HOME_DIR          Sets the home directory to a custom location.
+                    For example: HOME_DIR=\"$HOME/custom_home\"
+                    Note: If this variable is set the home directory
+                    inside the container will still appear as $HOME,
+                    even though the custom directory is used.
+
+  QUIET_MODE        Disables all non-error Conty messages.
+                    Doesn't affect the output of applications.
+
+  SANDBOX           Enables a sandbox.
+                    To control which files and directories are available
+                    inside the container, you can use the --bind and
+                    --ro-bind launch arguments.
+                    (See bubblewrap help for more info).
+
+  SANDBOX_LEVEL     Controls the strictness of the sandbox.
+                    Available levels:
+                      1: Isolates all user files.
+                      2: Additionally disables dbus and hides all
+                         running processes.
+                      3: Additionally disables network access and
+                         isolates X11 server with Xephyr.
+                    The default is 1.
+
+  USE_SYS_UTILS     Tells the script to use squashfuse/dwarfs and bwrap
+                    installed on the system instead of the builtin ones.
+
+  XEPHYR_SIZE       Sets the size of the Xephyr window. The default is
+                    800x600.
+
+Additional notes:
+System directories/files will not be available inside the container if
+you set the SANDBOX variable but don't bind (mount) any items or set
+HOME_DIR. A fake temporary home directory will be used instead.
+
+If the executed script is a symlink with a different name, said name
+will be used as the command name.
+For instance, if the script is a symlink with the name \"wine\" it will
+automatically run wine during launch.
+
+Besides updating all packages, you can also install and remove packages
+using the same -u (or -U) argument. To install packages add them as
+additional arguments, to remove add a minus sign (-) before their names.
+  To install: ${script_name} -u pkgname1 pkgname2 pkgname3 ...
+  To remove: ${script_name} -u -pkgname1 -pkgname2 -pkgname3 ...
+In this case Conty will update all packages and additionally install
+and/or remove specified packages.
+
+If you are using an Nvidia GPU, please read the following:
+https://github.com/Kron4ek/Conty#known-issues
+"
 
 # MD5 of the last 1 MB of the file
 script_md5="$(tail -c 1000000 "${script}" | md5sum | head -c 7)"
@@ -39,17 +153,8 @@ fi
 
 mount_point="${working_dir}"/mnt
 
-# It is important to set correct sizes below, otherwise there will be
-# a problem with mounting the image due to an incorrectly calculated offset.
-
-# The size of this script
-scriptsize=26179
-
-# The size of the utils archive
-utilssize=2507588
-
 # Offset where the image is stored
-offset=$((scriptsize+utilssize))
+offset=$((script_size+utils_size))
 
 # Detect if the image is compressed with DwarFS or SquashFS
 if [ "$(tail -c +$((offset+1)) "${script}" | head -c 6)" = "DWARFS" ]; then
@@ -71,98 +176,14 @@ if [ -L "${script_literal}" ]; then
 fi
 
 if [ -z "${script_is_symlink}" ]; then
-    if [ "$1" = "--help" ] || [ "$1" = "-h" ] || [ -z "$1" ]; then
-        echo "Usage: ./conty.sh command command_arguments"
-        echo
-        echo "Arguments:"
-        echo
-        echo -e "-v \tShow version of this script"
-        echo -e "-V \tShow version of the image"
-        echo -e "-e \tExtract the image"
-        echo -e "-o \tShow the image offset"
-        echo -e "-l \tShow a list of all installed packages"
-        echo -e "-m \tMount/unmount the image"
-        echo -e "\tThe image will be mounted if it's not mounted, and unmounted otherwise."
-        echo -e "\tMount point can be changed with the BASE_DIR env variable"
-        echo -e "\t(the default is /tmp)."
-        echo -e "-u \tUpdate all packages inside the container"
-        echo -e "\tThis will update all packages inside the container and will rebuild"
-        echo -e "\tthe image. This may take quite a lot of time, depending"
-        echo -e "\ton your hardware and internet speed. Additional disk space"
-        echo -e "\t(about 6x the size of the current file) is needed during"
-        echo -e "\tthe update process."
-        echo -e "-U \tThe same as -u but will also update the init script (conty-start.sh)"
-        echo -e "\tand the integrated utils. This option may break Conty in some cases,"
-        echo -e "\tuse with caution."
-        echo -e "-H \tShow the bubblewrap help"
-        echo
-        echo "Arguments that don't match any of the above will be passed directly to"
-        echo "bubblewrap. So all bubblewrap arguments are supported as well."
-        echo
-        echo "Environment variables:"
-        echo
-        echo -e "DISABLE_NET \tDisables network access"
-        echo -e "DISABLE_X11 \tDisables access to X server"
-        echo -e "\t\tNote that even with this variable enabled applications can"
-        echo -e "\t\tstill access your X server if it does not use XAUTHORITY and"
-        echo -e "\t\tlistens to abstract socket. This can be solved by enabling"
-        echo -e "\t\tXAUTHORITY or disabling the abstract socket or disabling"
-        echo -e "\t\tnetwork access."
-        echo -e "SANDBOX \tEnables sandbox"
-        echo -e "\t\tTo control which files and directories are available inside"
-        echo -e "\t\tthe container when SANDBOX is enabled, you can use the --bind"
-        echo -e "\t\tand --ro-bind launch arguments (see the bubblewrap help for"
-        echo -e "\t\tmore info)."
-        echo -e "SANDBOX_LEVEL \tControls the strictness of the sandbox"
-        echo -e "\t\tAvailable levels are 1-3. The default is 1."
-        echo -e "\t\tLevel 1 isolates all user files."
-        echo -e "\t\tLevel 2 isolates all user files, disables dbus and hides"
-        echo -e "\t\tall running processes."
-        echo -e "\t\tLevel 3 does the same as the level 2, but additionally"
-        echo -e "\t\tdisables network access and isolates X11 server with Xephyr."
-        echo -e "XEPHYR_SIZE \tSets the size of the Xephyr window. The default is 800x600."
-        echo -e "HOME_DIR \tSets the HOME directory to a custom location."
-        echo -e "\t\tFor example, HOME_DIR=\"/home/username/custom_home\""
-        echo -e "\t\tIf you set this, HOME inside the container will still appear"
-        echo -e "\t\tas /home/username, but actually a custom directory will be"
-        echo -e "\t\tused for it."
-        echo -e "USE_SYS_UTILS \tMakes the script to use squashfuse/dwarfs and bwrap"
-        echo -e "\t\tinstalled on the system instead of the builtin ones."
-        echo -e "BASE_DIR \tSets a custom directory where Conty will extract"
-        echo -e "\t\tits builtin utilities and mount the image."
-        echo -e "\t\tThe default location is /tmp."
-        echo -e "QUIET_MODE \tDisables all non-error Conty messages."
-        echo -e "\t\tDoesn't affect the output of applications."
-        echo
-        echo "Additional notes:"
-        echo
-        echo "If you enable SANDBOX but don't bind (mount) any items or don't set HOME_DIR,"
-        echo "then no system directories/files will be available at all inside the container"
-        echo "and a fake temporary HOME directory will be used."
-        echo
-        echo "If the script is a symlink to itself but with a different name,"
-        echo "then the symlinked script will automatically run a program according"
-        echo "to its name. For instance, if the script is a symlink with the name \"wine\","
-        echo "then it will automatically run wine during launch."
-        echo
-        echo "Besides updating all packages, you can also remove and install packages using"
-        echo "the same -u (or -U) argument. To install packages add them as additional"
-        echo "arguments, and to remove packages add a minus sign (-) before their names."
-        echo "To install: ./conty.sh -u pkgname1 pkgname2 pkgname3"
-        echo "To remove: ./conty.sh -u -pkgname1 -pkgname2 -pkgname3"
-        echo "In this case Conty will update all packages and will additionally"
-        echo "install and/or remove specified packages."
-        echo
-        echo "If you are using an Nvidia GPU, please read the information"
-        echo "here: https://github.com/Kron4ek/Conty#known-issues"
+    if [ "$1" = "-h" ] || [ -z "$1" ]; then
+        echo "${msg_help}"
         exit
     elif [ "$1" = "-v" ]; then
         echo "${script_version}"
-
         exit
     elif [ "$1" = "-o" ]; then
         echo "${offset}"
-
         exit
     fi
 fi
@@ -268,7 +289,7 @@ if [ "${USE_SYS_UTILS}" != 1 ]; then
 	bwrap="${working_dir}"/utils/bwrap
 
 	if [ ! -f "${mount_tool}" ] || [ ! -f "${bwrap}" ]; then
-		tail -c +$((scriptsize+1)) "${script}" | head -c "${utilssize}" | tar -C "${working_dir}" -zxf -
+		tail -c +$((script_size+1)) "${script}" | head -c "${utils_size}" | tar -C "${working_dir}" -zxf -
 
 		if [ ! -f "${mount_tool}" ] || [ ! -f "${bwrap}" ]; then
 			clear
@@ -376,7 +397,7 @@ if { [ "$1" = "-u" ] || [ "$1" = "-U" ]; } && [ -z "${script_is_symlink}" ]; the
 		fi
 	fi
 
-	tail -c +$((scriptsize+1)) "${script}" | head -c "${utilssize}" | tar -C "${update_temp_dir}" -zxf -
+	tail -c +$((script_size+1)) "${script}" | head -c "${utils_size}" | tar -C "${update_temp_dir}" -zxf -
 
 	if [ "${dwarfs_image}" = 1 ]; then
 		chmod +x utils/dwarfsextract 2>/dev/null
@@ -445,8 +466,8 @@ if { [ "$1" = "-u" ] || [ "$1" = "-U" ]; } && [ -z "${script_is_symlink}" ]; the
 
 	if [ ! -s conty-start.sh ] || [ ! -s utils.tar.gz ]; then
 		echo "Extracting the init script and the integrated utils"
-		tail -c +$((scriptsize+1)) "${script}" | head -c "${utilssize}" > utils.tar.gz
-		head -c "${scriptsize}" "${script}" > conty-start.sh
+		tail -c +$((script_size+1)) "${script}" | head -c "${utils_size}" > utils.tar.gz
+		head -c "${script_size}" "${script}" > conty-start.sh
 	fi
 
 	# Check if there are additional arguments passed
