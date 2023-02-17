@@ -19,7 +19,7 @@ script_version="1.21.3"
 
 # Important variables to manually adjust after modification!
 # Needed to avoid problems with mounting due to an incorrect offset.
-script_size=25161
+script_size=25219
 utils_size=2507588
 
 # Full path to the script
