@@ -15,11 +15,11 @@ if (( EUID == 0 )) && [ -z "$ALLOW_ROOT" ]; then
 fi
 
 # Conty version
-script_version="1.21.4"
+script_version="1.21.5"
 
 # Important variables to manually adjust after modification!
 # Needed to avoid problems with mounting due to an incorrect offset.
-script_size=25219
+script_size=25314
 utils_size=2507588
 
 # Full path to the script
@@ -608,7 +608,6 @@ run_bwrap () {
 
 	if [ "${SANDBOX}" = 1 ]; then
 		sandbox_params+=(--tmpfs /home \
-						 --tmpfs /opt \
 						 --tmpfs /mnt \
 						 --tmpfs /media \
 						 --tmpfs /var \
@@ -700,6 +699,10 @@ run_bwrap () {
                    --unsetenv "XAUTHORITY")
 	fi
 
+	if [ ! "$(ls "${mount_point}"/opt 2>/dev/null)" ] && [ -z "${SANDBOX}" ]; then
+		mount_opt=(--bind-try /opt /opt)
+	fi
+
 	show_msg
 
 	launch_wrapper "${bwrap}" \
@@ -710,7 +713,6 @@ run_bwrap () {
 			--proc /proc \
 			--bind-try /home /home \
 			--bind-try /mnt /mnt \
-			--bind-try /opt /opt \
 			--bind-try /media /media \
 			--bind-try /run /run \
 			--bind-try /var /var \
@@ -726,6 +728,7 @@ run_bwrap () {
 			"${non_standard_home[@]}" \
 			"${sandbox_params[@]}" \
 			"${custom_home[@]}" \
+			"${mount_opt[@]}" \
 			"${xsockets[@]}" \
 			"${unshare_net[@]}" \
 			--setenv PATH "${CUSTOM_PATH}" \
