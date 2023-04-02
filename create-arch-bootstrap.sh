@@ -125,7 +125,7 @@ wine_pkgs="wine-staging winetricks-git wine-nine wineasio \
 	lib32-libxinerama libxslt lib32-libxslt libva lib32-libva gtk3 \
 	lib32-gtk3 vulkan-icd-loader lib32-vulkan-icd-loader sdl2 lib32-sdl2 \
 	vkd3d lib32-vkd3d libgphoto2 ffmpeg gst-plugins-good gst-plugins-bad \
-	gst-plugins-ugly gst-plugins-base lib32-gst-plugins-good lib32-gst-plugins-base"
+	gst-plugins-ugly gst-plugins-base lib32-gst-plugins-good lib32-gst-plugins-base gst-libav"
 
 # List of packages to install
 # You can remove packages that you don't need
