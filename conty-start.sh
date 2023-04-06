@@ -15,11 +15,11 @@ if (( EUID == 0 )) && [ -z "$ALLOW_ROOT" ]; then
 fi
 
 # Conty version
-script_version="1.21.5"
+script_version="1.22"
 
 # Important variables to manually adjust after modification!
 # Needed to avoid problems with mounting due to an incorrect offset.
-script_size=25314
+script_size=26299
 utils_size=2507588
 
 # Full path to the script
@@ -40,6 +40,11 @@ Arguments:
   -H    Display bubblewrap help
 
   -l    Show a list of all installed packages
+
+  -d    Export desktop files from Conty to the application menu of
+        your desktop environment. Note that not all applications have
+        desktop files. To remove the exported files, use this argument
+        again.
 
   -m    Mount/unmount the image
         The image will be mounted if it's not, unmounted otherwise.
@@ -578,6 +583,7 @@ run_bwrap () {
 	unset custom_home
 	unset non_standard_home
 	unset xsockets
+	unset mount_opt
 
 	if [ -n "${WAYLAND_DISPLAY}" ]; then
 		wayland_socket="${WAYLAND_DISPLAY}"
@@ -595,7 +601,7 @@ run_bwrap () {
 		HOME_BASE_DIR="$(echo "${HOME}" | cut -d '/' -f2)"
 
 		case "${HOME_BASE_DIR}" in
-			tmp|mnt|opt|media|run|var)
+			tmp|mnt|media|run|var)
 				;;
 			*)
 				NEW_HOME=/home/"${USER}"
@@ -782,6 +788,38 @@ if [ "$(ls "${mount_point}" 2>/dev/null)" ] || \
 		else
 			echo "Unknown version"
 		fi
+
+		exit
+	fi
+
+	if [ "$1" = "-d" ]; then
+		applications_dir="${HOME}"/.local/share/applications/Conty
+
+		if [ -d "${applications_dir}" ]; then
+			rm -rf "${applications_dir}"
+
+			echo "Desktop files have been removed"
+			exit
+		fi
+
+		mkdir -p "${applications_dir}"
+
+		cd "${mount_point}"/usr/share/applications || exit 1
+		for f in *.desktop; do
+			while read -r line; do
+				line_function="$(echo "${line}" | head -c 5)"
+
+				if [ "${line_function}" = "Name=" ]; then
+					line="${line} (Conty)"
+				elif [ "${line_function}" = "Exec=" ]; then
+					line="Exec=\"${script}\" $(echo "${line}" | tail -c +6)"
+				fi
+
+				echo $line >> "${applications_dir}"/"${f%.desktop}"-conty.desktop
+			done < "${f}"
+		done
+
+		echo "Desktop files have been exported"
 
 		exit
 	fi
