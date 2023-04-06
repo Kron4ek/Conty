@@ -247,7 +247,7 @@ if [ -n "\${bad_pkglist}" ]; then
 	echo \${bad_pkglist} > /opt/bad_pkglist.txt
 fi
 
-pacman --noconfirm --needed -S \${good_pkglist}
+pacman --noconfirm --needed -S \${good_pkglist} || pacman --noconfirm --needed -S \${good_pkglist}
 EOF
 
 chmod +x "${bootstrap}"/opt/install_packages.sh
