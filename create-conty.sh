@@ -4,17 +4,23 @@
 
 script_dir="$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")"
 
+# Enable this variable to use the system-wide mksquashfs/mkdwarfs instead
+# of those provided by the Conty project
+USE_SYS_UTILS=0
+
 # Supported compression algorithms: lz4, zstd, gzip, xz, lzo
 # These are the algorithms supported by the integrated squashfuse
 # However, your squashfs-tools (mksquashfs) may not support some of them
-squashfs_compressor="lz4"
-squashfs_compressor_arguments=(-b 256K -comp "${squashfs_compressor}" -Xhc)
+squashfs_compressor="zstd"
+squashfs_compressor_arguments=(-b 1M -comp ${squashfs_compressor} -Xcompression-level 19)
 
-# Uncomment these two lines if you want better compression and your mksquashfs supports zstd
-#squashfs_compressor="zstd"
-#squashfs_compressor_arguments=(-b 1M -comp ${squashfs_compressor} -Xcompression-level 19)
+# Uncomment these variables if your mksquashfs does not support zstd or
+# if you want faster compression/decompression (at the cost of compression ratio)
+#squashfs_compressor="lz4"
+#squashfs_compressor_arguments=(-b 256K -comp "${squashfs_compressor}" -Xhc)
 
-# Use dwarfs instead of squashfs
+# Use DwarFS instead of SquashFS
+# If you enable this, don't forget to change utils_size in conty-start.sh
 dwarfs="false"
 dwarfs_compressor_arguments=(-l7 -C zstd:level=19 --metadata-compression null \
                             -S 22 -B 2 --order nilsimsa:255:60000:60000 \
@@ -28,12 +34,27 @@ image_path="${script_dir}"/image
 
 bootstrap="${script_dir}"/root.x86_64
 
+launch_wrapper () {
+	if [ "${USE_SYS_UTILS}" != 0 ]; then
+		if ! command -v "${1}" 1>/dev/null; then
+			echo "Please install $(echo "${1}" | tail -c +3) and run the script again"
+			exit 1
+		fi
+
+		"$@"
+	else
+		"${script_dir}"/utils/ld-linux-x86-64.so.2 --library-path "${script_dir}"/utils "${script_dir}"/utils/"$@"
+	fi
+}
+
 cd "${script_dir}" || exit 1
 
 if [ "${dwarfs}" = "true" ]; then
 	utils="utils_dwarfs.tar.gz"
+	compressor_command=(mkdwarfs -i "${bootstrap}" -o "${image_path}" "${dwarfs_compressor_arguments[@]}")
 else
 	utils="utils.tar.gz"
+	compressor_command=(mksquashfs "${bootstrap}" "${image_path}" "${squashfs_compressor_arguments[@]}")
 fi
 
 if [ ! -f "${utils}" ] || [ "$(wc -c < "${utils}")" -lt 1000 ]; then
@@ -46,8 +67,20 @@ if [ ! -f conty-start.sh ]; then
 	exit 1
 fi
 
+rm -rf utils
+tar -zxf "${utils}"
+
+if [ $? != 0 ]; then
+	echo "Something is wrong with ${utils}"
+	exit 1
+fi
+
+if [ "${USE_SYS_UTILS}" != 0 ]; then
+	rm -rf utils
+fi
+
 # Check if selected compression algorithm is supported by mksquashfs
-if [ "${dwarfs}" != "true" ] && command -v grep 1>/dev/null; then
+if [ "${USE_SYS_UTILS}" != 0 ] && [ "${dwarfs}" != "true" ] && command -v grep 1>/dev/null; then
 	# mksquashfs writes its output to stderr instead of stdout
 	mksquashfs &>mksquashfs_out.txt
 
@@ -76,21 +109,7 @@ if [ ! -f "${image_path}" ] || [ "${use_existing_image}" != "true" ]; then
 	fi
 
 	rm -f "${image_path}"
-	if [ "${dwarfs}" = "true" ]; then
-		if ! command -v mkdwarfs 1>/dev/null; then
-			echo "Please install dwarfs and run the script again"
-			exit 1
-		fi
-
-		mkdwarfs -i "${bootstrap}" -o "${image_path}" "${dwarfs_compressor_arguments[@]}"
-	else
-		if ! command -v mksquashfs 1>/dev/null; then
-			echo "Please install squashfs-tools and run the script again"
-			exit 1
-		fi
-
-		mksquashfs "${bootstrap}" "${image_path}" "${squashfs_compressor_arguments[@]}"
-	fi
+	launch_wrapper "${compressor_command[@]}"
 fi
 
 # Combine the files into a single executable using cat
