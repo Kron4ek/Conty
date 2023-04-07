@@ -92,11 +92,16 @@ EOF
 
 generate_mirrorlist () {
 	cat <<EOF > mirrorlist
-Server = https://geo.mirror.pkgbuild.com/\$repo/os/\$arch
-Server = https://archlinux.uk.mirror.allworldit.com/archlinux/\$repo/os/\$arch
+Server = https://mirror.moson.org/arch/\$repo/os/\$arch
+Server = https://mirrors.atviras.lt/archlinux/\$repo/os/\$arch
+Server = https://mirror.f4st.host/archlinux/\$repo/os/\$arch
 Server = https://mirror.osbeck.com/archlinux/\$repo/os/\$arch
-Server = https://archlinux.mailtunnel.eu/\$repo/os/\$arch
-Server = https://europe.mirror.pkgbuild.com/\$repo/os/\$arch
+Server = https://mirror.sunred.org/archlinux/\$repo/os/\$arch
+Server = https://mirror.lcarilla.de/archlinux/\$repo/os/\$arch
+Server = https://mirror.hackingand.coffee/arch/\$repo/os/\$arch
+Server = https://arch.hu.fo/archlinux/\$repo/os/\$arch
+Server = https://mirror.cyberbits.eu/archlinux/\$repo/os/\$arch
+Server = https://archlinux.thaller.ws/\$repo/os/\$arch
 EOF
 }
 
@@ -150,9 +155,12 @@ if [ ! -s chaotic-keyring.pkg.tar.zst ] || [ ! -s chaotic-mirrorlist.pkg.tar.zst
 	exit 1
 fi
 
-bootstrap_urls=("mirror.osbeck.com" \
+bootstrap_urls=("mirror.cyberbits.eu" \
+		"arch.hu.fo" \
                 "mirror.f4st.host" \
-                "mirror.luzea.de")
+                "mirror.osbeck.com" \
+		"mirror.lcarilla.de" \
+		"mirror.moson.org")
 
 echo "Downloading Arch Linux bootstrap"
 
