@@ -19,7 +19,7 @@ script_version="1.22"
 
 # Important variables to manually adjust after modification!
 # Needed to avoid problems with mounting due to an incorrect offset.
-script_size=26299
+script_size=26531
 utils_size=2507588
 
 # Full path to the script
@@ -41,10 +41,12 @@ Arguments:
 
   -l    Show a list of all installed packages
 
-  -d    Export desktop files from Conty to the application menu of
-        your desktop environment. Note that not all applications have
-        desktop files. To remove the exported files, use this argument
-        again.
+  -d    Export desktop files from Conty into the application menu of
+        your desktop environment.
+        Note that not all applications have desktop files, and also that
+        desktop files are tied to the current location of Conty, so if
+        you move or rename it, you will need to re-export them.
+        To remove the exported files, use this argument again.
 
   -m    Mount/unmount the image
         The image will be mounted if it's not, unmounted otherwise.
@@ -803,16 +805,19 @@ if [ "$(ls "${mount_point}" 2>/dev/null)" ] || \
 		fi
 
 		mkdir -p "${applications_dir}"
-
 		cd "${mount_point}"/usr/share/applications || exit 1
+
+		echo "Exporting..."
 		for f in *.desktop; do
 			while read -r line; do
-				line_function="$(echo "${line}" | head -c 5)"
+				line_function="$(echo "${line}" | head -c 4)"
 
-				if [ "${line_function}" = "Name=" ]; then
+				if [ "${line_function}" = "Name" ]; then
 					line="${line} (Conty)"
-				elif [ "${line_function}" = "Exec=" ]; then
+				elif [ "${line_function}" = "Exec" ]; then
 					line="Exec=\"${script}\" $(echo "${line}" | tail -c +6)"
+				elif [ "${line_function}" = "TryE" ]; then
+					continue
 				fi
 
 				echo $line >> "${applications_dir}"/"${f%.desktop}"-conty.desktop
