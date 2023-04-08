@@ -185,7 +185,7 @@ There are three main ways to update Conty and get the latest packages, use which
 
 ## How to create your own Conty executables
 
-1. Obtain Arch Linux boostrap by using `create-arch-bootstrap.sh`. Before running it, you can edit the script if you want , for example, to include a different set of packages inside the container, or to include additional locales. Root rights are required for this step.
+1. Obtain Arch Linux boostrap by using `create-arch-bootstrap.sh`. Before running it, you can edit the script if you want , for example, to include a different set of packages inside the container, or to include additional locales. Make sure you have enough free disk space, i recommend at least 10 GB of free space. Root rights are required for this step.
 
     ```
     # ./create-arch-bootstrap.sh
