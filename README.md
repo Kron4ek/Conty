@@ -185,27 +185,23 @@ There are three main ways to update Conty and get the latest packages, use which
 
 ## How to create your own Conty executables
 
-If you want to create an Arch-based container, use the **create-arch-bootstrap.sh** script, it will download latest Arch Linux bootstrap and will install latest packages into it. If you want to use any other distro, then you need to manually obtain it from somewhere. Root rights are required for this step, because chroot is used here.
-```
-# ./create-arch-bootstrap.sh
-```
-You can edit the script if you want to include different set of packages inside
-the container.
+1. Obtain Arch Linux boostrap by using `create-arch-bootstrap.sh`. Before running it, you can edit the script if you want , for example, to include a different set of packages inside the container, or to include additional locales. Root rights are required for this step.
 
-When distro is obtained, you can use the **enter-chroot.sh** script to chroot
-into the bootstrap and do some manual modifications (for instance, modify some
-files, install/remove packages, etc.). This step is optional and you can
-skip it if you don't need it.
+    ```
+    # ./create-arch-bootstrap.sh
+    ```
+2. After that you can use `enter-chroot.sh` to chroot into the bootstrap and do some manual modifications (for instance, modify some files, install/remove packages, etc.). Root rights are needed for this step too. This is an optional step, which you can skip if you wish.
 
-After that use the **create-conty.sh** script to create a squashfs (or dwarfs) image and pack everything needed into a single executable.
-```
-$ ./create-conty.sh
-```
-By default it uses the lz4 algorithm for the squashfs compression, but you can edit it and choose zstd to get better compression ratio (keep in mind though that your squashfs-tools should support zstd for that to work).
+    ```
+    # ./enter-chroot.sh
+    ```
+3. Now use `create-conty.sh` to create a SquashFS (or DwarFS) image and create a ready-to-use Conty executable. Root rights are not needed for this step. By default a SquashFS image with zstd compression (level 19) will be created, however, if you want, you can edit the script and enable DwarFS, select a different compression algorithm and/or compression level. If you enabled DwarFS in the script, make sure to change `utils_size` in `conty-start.sh` to the size of utils_dwarfs.tar.gz, this is important.
 
-Done!
+    ```
+    $ ./create-conty.sh
+    ```
 
-For the sake of convenience, there are compiled binaries (**utils.tar.gz**) of bwrap, squashfuse and dwarfs and their dependencies uploaded in this repo, **create-conty.sh** uses them by default. However, you can easily compile your own binaries by using the **create-utils.sh**, it will compile bwrap, squashfuse and dwarfs and will create utils.tar.gz. If you are going to use your own utils.tar.gz, make sure to set the correct size for it in the **conty-start.sh**.
+For the sake of convenience, there are pre-compiled binaries (utils.tar.gz) of bwrap, squashfuse and dwarfs and their dependencies uploaded in this repo, `create-conty.sh` uses them by default. If you want, you can compile your own binaries by using `create-utils.sh`, it will compile all needed programs and create utils.tar.gz. If you are going to use your own utils.tar.gz, make sure to set corrent `utils_size` in `conty-start.sh`, according to the size of your utils.tar.gz.
 
 ## Main used projects
 
