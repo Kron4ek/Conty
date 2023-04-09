@@ -19,7 +19,7 @@ script_version="1.22"
 
 # Important variables to manually adjust after modification!
 # Needed to avoid problems with mounting due to an incorrect offset.
-script_size=26531
+script_size=26746
 utils_size=2507588
 
 # Full path to the script
@@ -808,20 +808,27 @@ if [ "$(ls "${mount_point}" 2>/dev/null)" ] || \
 		cd "${mount_point}"/usr/share/applications || exit 1
 
 		echo "Exporting..."
-		for f in *.desktop; do
-			while read -r line; do
-				line_function="$(echo "${line}" | head -c 4)"
-
-				if [ "${line_function}" = "Name" ]; then
-					line="${line} (Conty)"
-				elif [ "${line_function}" = "Exec" ]; then
-					line="Exec=\"${script}\" $(echo "${line}" | tail -c +6)"
-				elif [ "${line_function}" = "TryE" ]; then
+		for f in *.desktop */ */*.desktop; do
+			if [ "${f}" != "*.desktop" ] && [ "${f}" != "*/*.desktop" ] && [ "${f}" != "*/" ]; then
+				if [ -d "${f}" ]; then
+					mkdir -p "${applications_dir}"/"${f}"
 					continue
 				fi
 
-				echo $line >> "${applications_dir}"/"${f%.desktop}"-conty.desktop
-			done < "${f}"
+				while read -r line; do
+					line_function="$(echo "${line}" | head -c 4)"
+
+					if [ "${line_function}" = "Name" ]; then
+						line="${line} (Conty)"
+					elif [ "${line_function}" = "Exec" ]; then
+						line="Exec=\"${script}\" $(echo "${line}" | tail -c +6)"
+					elif [ "${line_function}" = "TryE" ]; then
+						continue
+					fi
+
+					echo $line >> "${applications_dir}"/"${f%.desktop}"-conty.desktop
+				done < "${f}"
+			fi
 		done
 
 		echo "Desktop files have been exported"
