@@ -19,7 +19,7 @@ script_version="1.22"
 
 # Important variables to manually adjust after modification!
 # Needed to avoid problems with mounting due to an incorrect offset.
-script_size=26746
+script_size=26757
 utils_size=2507588
 
 # Full path to the script
@@ -808,6 +808,7 @@ if [ "$(ls "${mount_point}" 2>/dev/null)" ] || \
 		cd "${mount_point}"/usr/share/applications || exit 1
 
 		echo "Exporting..."
+		shift
 		for f in *.desktop */ */*.desktop; do
 			if [ "${f}" != "*.desktop" ] && [ "${f}" != "*/*.desktop" ] && [ "${f}" != "*/" ]; then
 				if [ -d "${f}" ]; then
@@ -821,7 +822,7 @@ if [ "$(ls "${mount_point}" 2>/dev/null)" ] || \
 					if [ "${line_function}" = "Name" ]; then
 						line="${line} (Conty)"
 					elif [ "${line_function}" = "Exec" ]; then
-						line="Exec=\"${script}\" $(echo "${line}" | tail -c +6)"
+						line="Exec=\"${script}\" $@ $(echo "${line}" | tail -c +6)"
 					elif [ "${line_function}" = "TryE" ]; then
 						continue
 					fi
