@@ -19,7 +19,7 @@ script_version="1.22"
 
 # Important variables to manually adjust after modification!
 # Needed to avoid problems with mounting due to an incorrect offset.
-script_size=26757
+script_size=27087
 utils_size=2507588
 
 # Full path to the script
@@ -794,7 +794,7 @@ if [ "$(ls "${mount_point}" 2>/dev/null)" ] || \
 		exit
 	fi
 
-	if [ "$1" = "-d" ]; then
+	if [ "$1" = "-d" ] && [ -z "${script_is_symlink}" ]; then
 		applications_dir="${HOME}"/.local/share/applications/Conty
 
 		if [ -d "${applications_dir}" ]; then
@@ -806,6 +806,18 @@ if [ "$(ls "${mount_point}" 2>/dev/null)" ] || \
 
 		mkdir -p "${applications_dir}"
 		cd "${mount_point}"/usr/share/applications || exit 1
+
+		unset variables
+		vars="BASE_DIR DISABLE_NET DISABLE_X11 HOME_DIR SANDBOX SANDBOX_LEVEL USE_SYS_UTILS"
+		for v in ${vars}; do
+			if [ -n "${!v}" ]; then
+				variables="${v}=\"${!v}\" ${variables}"
+			fi
+		done
+
+		if [ -n "${variables}" ]; then
+			variables="env ${variables} "
+		fi
 
 		echo "Exporting..."
 		shift
@@ -822,7 +834,7 @@ if [ "$(ls "${mount_point}" 2>/dev/null)" ] || \
 					if [ "${line_function}" = "Name" ]; then
 						line="${line} (Conty)"
 					elif [ "${line_function}" = "Exec" ]; then
-						line="Exec=\"${script}\" $@ $(echo "${line}" | tail -c +6)"
+						line="Exec=${variables}\"${script}\" $@ $(echo "${line}" | tail -c +6)"
 					elif [ "${line_function}" = "TryE" ]; then
 						continue
 					fi
