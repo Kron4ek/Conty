@@ -12,13 +12,13 @@
 script_dir="$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")"
 
 # Set to true to compile dwarfs instead of squashfuse
-build_dwarfs="false"
+build_dwarfs="true"
 
 squashfuse_version="0.1.105"
-bwrap_version="0.7.0"
+bwrap_version="0.8.0"
 lz4_version="1.9.4"
-zstd_version="1.5.4"
-squashfs_tools_version="4.5.1"
+zstd_version="1.5.5"
+squashfs_tools_version="4.6.1"
 
 export CC=gcc
 export CXX=g++

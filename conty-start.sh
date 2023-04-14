@@ -20,7 +20,7 @@ script_version="1.22"
 # Important variables to manually adjust after modification!
 # Needed to avoid problems with mounting due to an incorrect offset.
 script_size=27087
-utils_size=2507588
+utils_size=2520686
 
 # Full path to the script
 script_literal="${BASH_SOURCE[0]}"
