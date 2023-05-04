@@ -15,11 +15,11 @@ if (( EUID == 0 )) && [ -z "$ALLOW_ROOT" ]; then
 fi
 
 # Conty version
-script_version="1.22"
+script_version="1.22.1"
 
 # Important variables to manually adjust after modification!
 # Needed to avoid problems with mounting due to an incorrect offset.
-script_size=27087
+script_size=27167
 utils_size=2520686
 
 # Full path to the script
@@ -843,6 +843,8 @@ if [ "$(ls "${mount_point}" 2>/dev/null)" ] || \
 				done < "${f}"
 			fi
 		done
+
+		cp -nr "${mount_point}"/usr/share/icons "${HOME}"/.local/share 2>/dev/null
 
 		echo "Desktop files have been exported"
 
