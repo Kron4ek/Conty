@@ -19,7 +19,7 @@ script_version="1.22.1"
 
 # Important variables to manually adjust after modification!
 # Needed to avoid problems with mounting due to an incorrect offset.
-script_size=27167
+script_size=27201
 utils_size=2520686
 
 # Full path to the script
@@ -844,6 +844,7 @@ if [ "$(ls "${mount_point}" 2>/dev/null)" ] || \
 			fi
 		done
 
+		mkdir -p "${HOME}"/.local/share
 		cp -nr "${mount_point}"/usr/share/icons "${HOME}"/.local/share 2>/dev/null
 
 		echo "Desktop files have been exported"
