@@ -15,11 +15,11 @@ if (( EUID == 0 )) && [ -z "$ALLOW_ROOT" ]; then
 fi
 
 # Conty version
-script_version="1.22.1"
+script_version="1.23"
 
 # Important variables to manually adjust after modification!
 # Needed to avoid problems with mounting due to an incorrect offset.
-script_size=27201
+script_size=29108
 utils_size=2520686
 
 # Full path to the script
@@ -38,6 +38,8 @@ Arguments:
   -h    Display this text
 
   -H    Display bubblewrap help
+
+  -g    Run the Conty's graphical interface
 
   -l    Show a list of all installed packages
 
@@ -128,6 +130,10 @@ will be used as the command name.
 For instance, if the script is a symlink with the name \"wine\" it will
 automatically run wine during launch.
 
+Running Conty without any arguments from a graphical interface (for
+example, from a file manager) will automatically launch the Conty's
+graphical interface.
+
 Besides updating all packages, you can also install and remove packages
 using the same -u (or -U) argument. To install packages add them as
 additional arguments, to remove add a minus sign (-) before their names.
@@ -183,7 +189,7 @@ if [ -L "${script_literal}" ]; then
 fi
 
 if [ -z "${script_is_symlink}" ]; then
-    if [ "$1" = "-h" ] || [ -z "$1" ]; then
+    if [ -t 0 ] && ([ "$1" = "-h" ] || [ -z "$1" ]); then
         echo "${msg_help}"
         exit
     elif [ "$1" = "-v" ]; then
@@ -218,6 +224,63 @@ launch_wrapper () {
 		"$@"
 	else
 		"${working_dir}"/utils/ld-linux-x86-64.so.2 --library-path "${working_dir}"/utils "$@"
+	fi
+}
+
+gui () {
+	if ! command -v zenity 1>/dev/null; then
+		exit 1
+	fi
+
+	gui_response=$(zenity --title="Conty" \
+		--entry \
+		--text="Enter a command or select a file you want to run" \
+		--ok-label="Run" \
+		--cancel-label="Quit" \
+		--extra-button="Select a file" \
+		--extra-button="Open a terminal")
+
+	gui_exit_code=$?
+
+	if [ "${gui_response}" = "Select a file" ]; then
+		filepath="$(zenity --title="A file to run" --file-selection)"
+
+		if [ -f "${filepath}" ]; then
+			[ -x "${filepath}" ] || chmod +x "${filepath}"
+			"${filepath}"
+		else
+			zenity --error --text="You did not select a file"
+		fi
+	elif [ "${gui_response}" = "Open a terminal" ]; then
+		if command -v lxterminal 1>/dev/null; then
+			lxterminal -T "Conty terminal" --command="bash -c 'echo Welcome to Conty; echo Enter any commands you want to execute; bash'"
+		else
+			zenity --error --text="A terminal emulator is not installed in this instance of Conty"
+		fi
+	elif [ "${gui_exit_code}" = 0 ]; then
+		if [ -z "${gui_response}" ]; then
+			zenity --error --text="You need to enter a command to execute"
+		else
+			for a in ${gui_response}; do
+				if [ "${a:0:1}" = "\"" ] || [ "${a:0:1}" = "'" ] || [ -n "${combined_args}" ]; then
+					combined_args="${combined_args} ${a}"
+
+					if [ "${a: -1}" = "\"" ] || [ "${a: -1}" = "'" ]; then
+						combined_args="${combined_args:2}"
+						combined_args="${combined_args%?}"
+
+						launch_command+=("${combined_args}")
+						unset combined_args
+					fi
+
+					continue
+				fi
+
+				launch_command+=("${a}")
+			done
+
+			"${launch_command[@]}"
+		fi
 	fi
 }
 
@@ -895,6 +958,9 @@ if [ "$(ls "${mount_point}" 2>/dev/null)" ] || \
 
 		show_msg "Autostarting ${script_name}"
 		run_bwrap "${script_name}" "$@"
+	elif [ "$1" = "-g" ] || ([ ! -t 0 ] && [ -z "${1}" ] && [ -z "${script_is_symlink}" ]); then
+		export -f gui
+		run_bwrap bash -c gui
 	else
 		run_bwrap "$@"
 	fi
