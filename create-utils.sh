@@ -12,13 +12,14 @@
 script_dir="$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")"
 
 # Set to true to compile dwarfs instead of squashfuse
-build_dwarfs="true"
+build_dwarfs="false"
 
 squashfuse_version="0.1.105"
 bwrap_version="0.8.0"
 lz4_version="1.9.4"
 zstd_version="1.5.5"
 squashfs_tools_version="4.6.1"
+fuse_overlayfs_version="1.12"
 
 export CC=gcc
 export CXX=g++
@@ -33,10 +34,12 @@ cd "${script_dir}"/build-utils || exit 1
 curl -#Lo lz4.tar.gz https://github.com/lz4/lz4/archive/refs/tags/v${lz4_version}.tar.gz
 curl -#Lo zstd.tar.gz https://github.com/facebook/zstd/archive/refs/tags/v${zstd_version}.tar.gz
 curl -#Lo bwrap.tar.gz https://github.com/containers/bubblewrap/archive/refs/tags/v${bwrap_version}.tar.gz
+curl -#Lo fuse-overlayfs.tar.gz https://github.com/containers/fuse-overlayfs/archive/refs/tags/v${fuse_overlayfs_version}.tar.gz
 
 tar xf lz4.tar.gz
 tar xf zstd.tar.gz
 tar xf bwrap.tar.gz
+tar xf fuse-overlayfs.tar.gz
 
 if [ "${build_dwarfs}" != "true" ]; then
 	curl -#Lo squashfuse.tar.gz https://github.com/vasi/squashfuse/archive/refs/tags/${squashfuse_version}.tar.gz
@@ -49,6 +52,11 @@ fi
 cd bubblewrap-"${bwrap_version}" || exit 1
 ./autogen.sh
 ./configure --disable-selinux --disable-man
+make -j"$(nproc)" DESTDIR="${script_dir}"/build-utils/bin install
+
+cd ../fuse-overlayfs-"${fuse_overlayfs_version}" || exit 1
+./autogen.sh
+./configure
 make -j"$(nproc)" DESTDIR="${script_dir}"/build-utils/bin install
 
 cd ../lz4-"${lz4_version}" || exit 1
@@ -76,6 +84,7 @@ mv bin/usr/local/bin/squashfuse utils
 mv bin/usr/local/bin/squashfuse_ll utils
 mv bin/usr/local/bin/mksquashfs utils
 mv bin/usr/local/bin/unsquashfs utils
+mv bin/usr/local/bin/fuse-overlayfs utils
 mv bin/usr/local/lib/liblz4.so."${lz4_version}" utils/liblz4.so.1
 mv bin/usr/local/lib/libzstd.so."${zstd_version}" utils/libzstd.so.1
 mv bin/usr/local/lib/libfuseprivate.so.0.0.0 utils/libfuseprivate.so.0
@@ -130,6 +139,7 @@ find utils -type f -exec strip --strip-unneeded {} \; 2>/dev/null
 
 cat <<EOF > utils/info
 bubblewrap ${bwrap_version}
+fuse-overlayfs ${fuse_overlayfs_version}
 lz4 ${lz4_version}
 zstd ${zstd_version}
 EOF
