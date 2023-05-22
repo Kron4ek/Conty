@@ -1,6 +1,6 @@
 ## Conty
 
-This is an easy to use compressed unprivileged Linux container packed into a single executable that works on most Linux distros. It's designed to be as simple and user-friendly as possible. You can use it to run any applications, including games (Vulkan and OpenGL).
+This is an easy to use compressed unprivileged Linux container packed into a single executable that works on most Linux distros. It is designed to be as simple and user-friendly as possible. You can use it to run any applications, including games (Vulkan and OpenGL).
 
 In its default configuration it includes, among others, these apps: `Wine-GE, Steam, Lutris, PlayOnLinux, GameHub, Minigalaxy, Legendary, Bottles, MultiMC, MangoHud, Gamescope, RetroArch, PPSSPP, PCSX2, DuckStation, OBS Studio, OpenJDK, Firefox`. If these applications are not enough, you can install additional applications or run external binaries from, for example, your home directory.
 
@@ -42,12 +42,21 @@ $ ./conty.sh command command_arguments
 ## Usage
 
 Either download a ready-to-use release from the [**releases**](https://github.com/Kron4ek/Conty/releases) page or create your
-own (the instructions are below). Make it executable before run.
+own (the instructions are [below](https://github.com/Kron4ek/Conty#how-to-create-your-own-conty-executables)). Make it executable (via `chmod` or other ways) before running.
 
 ```
 $ chmod +x conty.sh
-$ ./conty.sh command command_arguments
+$ ./conty.sh [command] [command_arguments]
 ```
+Chmod only need to be executed once (per file). Running Conty from a terminal emulator is not strictly required, if your file manager allows running executables, you can also run Conty from it in which case it will show its graphical interface.
+
+<details>
+
+<summary>The graphical interface</summary>
+
+![gui](https://github.com/Kron4ek/Conty/assets/13851877/05856085-1925-47fa-a2ad-4f6165562d8b)
+
+</details>
 
 Conty contains Steam, Lutris, PlayOnLinux, Bottles, Wine-GE and many more.
 
@@ -169,9 +178,13 @@ If you just want a sandboxing functionality but don't need a container with a fu
 
     For example, if the version of your Nvidia kernel module is 460.56 and the libraries inside the container are from 460.67 version, then graphics acceleration will not work.
 
-    There are two solutions to this problem:
-    * The first and probably the easiest solution is to install the same driver version as included inside Conty, which is usually the latest non-beta version. You can see the exact driver version in pkg_list.txt attached to each Conty release. Of course if your GPU is not supported by new drivers, this is not an option for you.
-    * The second solution is to (re)build Conty and include the same driver version as installed on your system. Read the "**How to create your own Conty executables**" section below, you will need to edit the **create-arch-bootstrap.sh** script or use the **enter-chroot.sh** script to include a different driver version. For instance, if you want to include legacy 470xx or 390xx drivers, edit the **create-arch-bootstrap.sh** script and replace `nvidia-utils` and `lib32-nvidia-utils` with `nvidia-470xx-utils` and `lib32-nvidia-470xx-utils` (replace 470xx with 390xx if you need 390xx drivers) in the `video_pkgs` variable, and then build Conty following the instructions.
+    There are three solutions to this problem:
+    * The first and the easiest solution is to use the `NVIDIA_HANDLER` feature of Conty, it will automatically download and pass the appropriate driver version into the container. It hasn't been widely tested yet, so i would appreciate if you leave a feedback about this feature [here](https://github.com/Kron4ek/Conty/discussions/74). Fuse3 is required for this feature. To enable this feature, run Conty like this:
+        ```
+        $ NVIDIA_HANDLER=1 ./conty.sh [command] [arguments]
+        ```
+    * The second solution is to install the same driver version as included inside Conty, which is usually the latest non-beta version. You can see the exact driver version in pkg_list.txt attached to each Conty release. Of course if your GPU is not supported by new drivers, this is not an option for you.
+    * The third solution is to (re)build Conty and include the same driver version as installed on your system. Read the "**How to create your own Conty executables**" section below, you will need to edit the **create-arch-bootstrap.sh** script or use the **enter-chroot.sh** script to include a different driver version. For instance, if you want to include legacy 470xx or 390xx drivers, edit the **create-arch-bootstrap.sh** script and replace `nvidia-utils` and `lib32-nvidia-utils` with `nvidia-470xx-utils` and `lib32-nvidia-470xx-utils` (replace 470xx with 390xx if you need 390xx drivers) in the `video_pkgs` variable, and then build Conty following the instructions.
 * Some Windows applications running under Wine complain about lack of free disk space. This is because under Conty root partition is seen as full and read-only, so some applications think that there is no free space, even though you might have plenty of space in your HOME. The solution is simple, just run `winecfg`,  move to "Drives" tab and add your `/home` as an additional drive (for example, `D:`), and then install applications to that drive. More info [here](https://github.com/Kron4ek/Conty/issues/67#issuecomment-1460257910).
 * AppImages do not work under Conty. This is because bubblewrap, which is used in Conty, does not allow SUID bit (for security reasons), which is needed to mount AppImages. The solution is to extract an AppImage application before running it with Conty. Some AppImages support `--appimage-extract-and-run` argument, which you can also use.
 * Application may show errors (warnings) about locale, like "Unsupported locale setting" or "Locale not supported by C library". This happens because Conty has a limited set of generated locales inside it, and if your host system uses locale that is not available in Conty, applications may show such warnings. This is usually not a critical problem, most applications will continue to work without issues despite showing the errors. But if you want, you can [create](https://github.com/Kron4ek/Conty#how-to-create-your-own-conty-executables) a Conty executable and include any locales you need.
@@ -180,7 +193,7 @@ If you just want a sandboxing functionality but don't need a container with a fu
 
 There are three main ways to update Conty and get the latest packages, use whichever works best for you.
 
-* First of all, you can simply download latest release from the [releases page](https://github.com/Kron4ek/Conty/releases), i usually upload a new release about every three weeks.
+* First of all, you can simply download latest release from the [releases page](https://github.com/Kron4ek/Conty/releases), i usually upload a new release about every month.
 * You can use the self-update feature (`./conty.sh -u`) integrated into Conty, it will update all integrated packages and will rebuild the squashfs/dwarfs image. Read the internal help for more information about it.
 * You can manually create a Conty executable with latest packages inside, read the "**How to create your own Conty executables**" section below.
 
@@ -209,5 +222,6 @@ For the sake of convenience, there are pre-compiled binaries (utils.tar.gz) of b
 * [bubblewrap](https://github.com/containers/bubblewrap)
 * [squashfuse](https://github.com/vasi/squashfuse)
 * [dwarfs](https://github.com/mhx/dwarfs)
+* [fuse-overlayfs](https://github.com/containers/fuse-overlayfs)
 * [archlinux](https://archlinux.org/)
 * [chaotic-aur](https://aur.chaotic.cx/)
