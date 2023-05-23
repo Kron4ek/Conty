@@ -12,7 +12,7 @@
 script_dir="$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")"
 
 # Set to true to compile dwarfs instead of squashfuse
-build_dwarfs="false"
+build_dwarfs="${build_dwarfs:-false}"
 
 squashfuse_version="0.1.105"
 bwrap_version="0.8.0"
@@ -96,6 +96,11 @@ if ! ldd utils/squashfuse | grep -q libfuse.so.2; then
 fi
 
 if [ "${build_dwarfs}" = "true" ]; then
+	if command -v clang++ 1>/dev/null; then
+		export CC=clang
+		export CXX=clang++
+	fi
+
 	git clone https://github.com/mhx/dwarfs.git --recursive
 
     # Revert commit aeeddae, because otherwise dwarfs might use
@@ -106,6 +111,12 @@ if [ "${build_dwarfs}" = "true" ]; then
     # let's revert the commit
     cd dwarfs || exit 1
     git revert --no-commit aeeddaecab5d4648780b0e11dc03fca19e23409a
+
+	# Fix compilation with GCC 13
+	cd folly
+	curl -#Lo gcc13.patch https://github.com/facebook/folly/commit/39d0cbd592a4d57c34bbf3c751ecd9a4055fbc45.patch
+	patch -Np1 < ./gcc13.patch || exit 1
+	cd ..
 
 	mkdir build
 	cd build || exit 1

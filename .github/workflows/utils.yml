@@ -1,0 +1,57 @@
+name: Utils CI
+
+on:
+  schedule:
+    - cron:  '0 0 1 * *'
+  push:
+    paths:
+      - 'create-utils.sh'
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    container: archlinux:latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Compile utils
+        run: |
+          chmod +x create-utils.sh
+          pacman -Syu --noconfirm --needed base-devel gawk grep lz4 zstd \
+                 curl gcc make autoconf libtool pkgconf libcap fuse2 lzo \
+                 xz zlib findutils openssl jemalloc xxhash boost lz4 xz \
+                 zstd libarchive libunwind google-glog gtest fmt gflags \
+                 double-conversion cmake ruby-ronn libevent libdwarf git \
+                 clang libsodium liburing libaio
+          build_dwarfs=false ./create-utils.sh
+          tar xf utils.tar.gz
+          mv utils utils-bak
+          pacman -Rdd --noconfirm fuse2
+          pacman -S --noconfirm fuse3
+          build_dwarfs=false ./create-utils.sh
+          tar xf utils.tar.gz
+          rm utils.tar.gz
+          mv utils-bak/* utils
+          tar -zcf utils.tar.gz utils
+          rm -rf utils utils-bak
+
+          build_dwarfs=true ./create-utils.sh
+          tar xf utils_dwarfs.tar.gz
+          rm utils_dwarfs.tar.gz
+          mv utils utils-bak
+          pacman -Rdd --noconfirm fuse3
+          pacman -S --noconfirm fuse2
+          build_dwarfs=true ./create-utils.sh
+          tar xf utils_dwarfs.tar.gz
+          rm utils_dwarfs.tar.gz
+          mv utils-bak/* utils
+          tar -zcf utils_dwarfs.tar.gz utils
+
+      - uses: actions/upload-artifact@v3
+        with:
+          name: Utils
+          path: |
+            utils.tar.gz
+            utils_dwarfs.tar.gz

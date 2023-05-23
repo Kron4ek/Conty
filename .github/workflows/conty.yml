@@ -1,0 +1,24 @@
+name: Conty CI
+
+on:
+  schedule:
+    - cron:  '0 0 * * 5'
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Build Conty
+        run: |
+          chmod +x create-arch-bootstrap.sh create-conty.sh
+          sed -i 's/sed/#sed/g' create-arch-bootstrap.sh
+          sudo ./create-arch-bootstrap.sh && ./create-conty.sh
+
+      - uses: actions/upload-artifact@v3
+        with:
+          name: Conty
+          path: conty.sh

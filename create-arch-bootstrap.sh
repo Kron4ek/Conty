@@ -155,12 +155,12 @@ if [ ! -s chaotic-keyring.pkg.tar.zst ] || [ ! -s chaotic-mirrorlist.pkg.tar.zst
 	exit 1
 fi
 
-bootstrap_urls=("mirror.cyberbits.eu" \
-		"arch.hu.fo" \
-                "mirror.f4st.host" \
-                "mirror.osbeck.com" \
-		"mirror.lcarilla.de" \
-		"mirror.moson.org")
+bootstrap_urls=("mirror.f4st.host" \
+			"arch.hu.fo" \
+			"mirror.cyberbits.eu" \
+			"mirror.osbeck.com" \
+			"mirror.lcarilla.de" \
+			"mirror.moson.org")
 
 echo "Downloading Arch Linux bootstrap"
 
@@ -186,6 +186,7 @@ if [ -z "${bootstrap_is_good}" ]; then
 	exit 1
 fi
 
+rm -rf "${bootstrap}"
 tar xf archlinux-bootstrap-x86_64.tar.gz
 rm archlinux-bootstrap-x86_64.tar.gz sha256sums.txt sha256.txt
 
@@ -255,12 +256,18 @@ if [ -n "\${bad_pkglist}" ]; then
 	echo \${bad_pkglist} > /opt/bad_pkglist.txt
 fi
 
-pacman --noconfirm --needed -S \${good_pkglist} || pacman --noconfirm --needed -S \${good_pkglist}
+pacman --noconfirm --needed -S \${good_pkglist} || pacman --noconfirm --needed -S \${good_pkglist} || echo > /opt/pacman_failed.txt
 EOF
 
 chmod +x "${bootstrap}"/opt/install_packages.sh
 run_in_chroot bash /opt/install_packages.sh
 rm "${bootstrap}"/opt/install_packages.sh
+
+if [ -f "${bootstrap}"/opt/pacman_failed.txt ]; then
+	unmount_chroot
+	echo "Pacman failed to install some packages"
+	exit 1
+fi
 
 run_in_chroot locale-gen
 
