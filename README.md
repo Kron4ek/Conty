@@ -42,7 +42,7 @@ $ ./conty.sh command command_arguments
 ## Usage
 
 Either download a ready-to-use release from the [**releases**](https://github.com/Kron4ek/Conty/releases) page or create your
-own (the instructions are [below](https://github.com/Kron4ek/Conty#how-to-create-your-own-conty-executables)). Make it executable (via `chmod` or other ways) before running.
+own (the instructions are [below](#how-to-create-your-own-conty-executables)). Make it executable (via `chmod` or other ways) before running.
 
 ```
 $ chmod +x conty.sh
