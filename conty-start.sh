@@ -15,11 +15,11 @@ if (( EUID == 0 )) && [ -z "$ALLOW_ROOT" ]; then
 fi
 
 # Conty version
-script_version="1.23"
+script_version="1.23.1"
 
 # Important variables to manually adjust after modification!
 # Needed to avoid problems with mounting due to an incorrect offset.
-script_size=33659
+script_size=34762
 utils_size=2564623
 
 # Full path to the script
@@ -114,11 +114,20 @@ Environment variables:
                          isolates X11 server with Xephyr.
                     The default is 1.
 
+  USE_OVERLAYFS     Mounts a writable fuse-overlayfs filesystem on top
+                    of the read-only squashfs/dwarfs image, allowing to
+                    modify files inside it. Fuse3 is required for this
+                    feature.
+                    Overlays are stored in ~/.local/share/Conty. If you
+                    want to undo any changes, delete the entire
+                    directory from there.
+
   NVIDIA_HANDLER    Fixes issues with graphical applications on Nvidia
                     GPUs with the proprietary driver. Enable this only
                     if you are using an Nvidia GPU, the proprietary
                     driver and encountering issues running graphical
-                    applications. Fuse3 is required for this to work.
+                    applications. At least 2 GB of free disk space is
+                    required. And fuse3 is required for this feature.
 
   USE_SYS_UTILS     Tells the script to use squashfuse/dwarfs and bwrap
                     installed on the system instead of the builtin ones.
@@ -172,8 +181,8 @@ fi
 
 mount_point="${working_dir}"/mnt
 
-export overlayfs_dir="${HOME}"/.local/share/Conty/overlayfs
-export nvidia_drivers_dir="${HOME}"/.local/share/Conty/nvidia
+export overlayfs_dir="${HOME}"/.local/share/Conty/overlayfs_"${script_md5}"
+export nvidia_drivers_dir="${HOME}"/.local/share/Conty/nvidia_"${script_md5}"
 
 # Offset where the image is stored
 offset=$((script_size+utils_size))
@@ -294,26 +303,21 @@ gui () {
 }
 
 mount_overlayfs () {
-	if [ "${script_md5}" != "$(cat "${overlayfs_dir}"/current-image-version 2>/dev/null)" ]; then
-		rm -rf "${overlayfs_dir}"/up "${overlayfs_dir}"/work \
-		       "${nvidia_drivers_dir}"/current-nvidia-version
-	fi
-
 	mkdir -p "${overlayfs_dir}"/up
 	mkdir -p "${overlayfs_dir}"/work
 	mkdir -p "${overlayfs_dir}"/merged
 
-	echo "${script_md5}" > "${overlayfs_dir}"/current-image-version
-
 	if [ ! "$(ls "${overlayfs_dir}"/merged 2>/dev/null)" ]; then
 		if command -v "${fuse_overlayfs}" 1>/dev/null; then
-			if command -v fusermount3 1>/dev/null; then
-				"${fuse_overlayfs}" -o squash_to_uid="$(id -u)" -o squash_to_gid="$(id -g)" -o lowerdir="${mount_point}",upperdir="${overlayfs_dir}"/up,workdir="${overlayfs_dir}"/work "${overlayfs_dir}"/merged
+			if [ -n "${fuse_version}" ]; then
+				"${fuse_overlayfs}" -o noatime,squash_to_uid="$(id -u)",squash_to_gid="$(id -g)",lowerdir="${mount_point}",upperdir="${overlayfs_dir}"/up,workdir="${overlayfs_dir}"/work "${overlayfs_dir}"/merged
 			else
 				echo "Fuse3 is required for fuse-overlayfs"
+				return 1
 			fi
 		else
 			echo "fuse-overlayfs not found"
+			return 1
 		fi
 	fi
 }
@@ -334,22 +338,23 @@ nvidia_driver_handler () {
 		exit 1
 	fi
 
-	if [ "$(cat "${nvidia_drivers_dir}"/current-nvidia-version 2>/dev/null)" = "${nvidia_driver_version}" ]; then
-		exit
-	fi
-
 	if [ -z "${nvidia_driver_version}" ]; then
 		echo "Unable to determine the Nvidia driver version"
 		exit 1
 	fi
 
+	if [ "$(cat "${nvidia_drivers_dir}"/current-nvidia-version 2>/dev/null)" = "${nvidia_driver_version}" ]; then
+		exit
+	fi
+
 	OLD_PWD="${PWD}"
 
+	rm -rf "${nvidia_drivers_dir}"/nvidia.run "${nvidia_drivers_dir}"/nvidia-driver
 	mkdir -p "${nvidia_drivers_dir}"
 	cd "${nvidia_drivers_dir}"
 
 	echo "Found Nvidia driver ${nvidia_driver_version}"
-	echo "Downloading the Nvidia driver ${nvidia_driver_version}, please wait..."
+	echo "Downloading the Nvidia driver ${nvidia_driver_version}..."
 
 	# Try to download the driver from the default Nvidia URL
 	driver_url="https://us.download.nvidia.com/XFree86/Linux-x86_64/${nvidia_driver_version}/NVIDIA-Linux-x86_64-${nvidia_driver_version}.run"
@@ -366,12 +371,21 @@ nvidia_driver_handler () {
 		echo "Installing the Nvidia driver, please wait..."
 		chmod +x nvidia.run
 		./nvidia.run --target nvidia-driver -x &>/dev/null
-		cd nvidia-driver || exit 1
-		fakeroot ./nvidia-installer --silent --no-x-check --no-kernel-module &>/dev/null
-		cd "${nvidia_drivers_dir}"
-		echo "${nvidia_driver_version}" > current-nvidia-version
-		rm -rf nvidia.run nvidia-driver
-		echo "The driver has been installed"
+
+		if [ -f nvidia-driver/nvidia-installer ]; then
+			cd nvidia-driver || exit 1
+			chmod +x nvidia-installer
+			fakeroot ./nvidia-installer --silent --no-x-check --no-kernel-module &>/dev/null
+			echo "${nvidia_driver_version}" > "${nvidia_drivers_dir}"/current-nvidia-version
+			rm -rf "${nvidia_drivers_dir}"/nvidia.run "${nvidia_drivers_dir}"/nvidia-driver
+			echo "The driver installed successfully"
+		else
+			echo "Failed to extract the driver"
+			exit 1
+		fi
+	else
+		echo "Failed to download the driver"
+		exit 1
 	fi
 
 	cd "${OLD_PWD}"
@@ -870,7 +884,8 @@ run_bwrap () {
 		mount_opt=(--bind-try /opt /opt)
 	fi
 
-	if [ "${NVIDIA_HANDLER}" = 1 ] && [ "$(ls "${overlayfs_dir}"/merged 2>/dev/null)" ]; then
+	if ([ "${NVIDIA_HANDLER}" = 1 ] || [ "${USE_OVERLAYFS}" = 1 ]) && \
+		[ "$(ls "${overlayfs_dir}"/merged 2>/dev/null)" ]; then
 		newroot_path="${overlayfs_dir}"/merged
 	else
 		newroot_path="${mount_point}"
@@ -911,12 +926,12 @@ run_bwrap () {
 trap_exit () {
 	rm -f "${working_dir}"/running_"${script_id}"
 
-	if [ -d "${overlayfs_dir}"/merged ]; then
-		fusermount"${fuse_version}" -uz "${overlayfs_dir}"/merged 2>/dev/null || \
-		umount --lazy "${overlayfs_dir}"/merged 2>/dev/null
-	fi
-
 	if [ ! "$(ls "${working_dir}"/running_* 2>/dev/null)" ]; then
+		if [ -d "${overlayfs_dir}"/merged ]; then
+			fusermount"${fuse_version}" -uz "${overlayfs_dir}"/merged 2>/dev/null || \
+			umount --lazy "${overlayfs_dir}"/merged 2>/dev/null
+		fi
+
 		fusermount"${fuse_version}" -uz "${mount_point}" 2>/dev/null || \
 		umount --lazy "${mount_point}" 2>/dev/null
 
@@ -1033,17 +1048,35 @@ if [ "$(ls "${mount_point}" 2>/dev/null)" ] || \
 		exit
 	fi
 
-	if [ "${NVIDIA_HANDLER}" = 1 ]; then
-		show_msg "Nvidia driver handler is enabled"
+	if [ "${USE_OVERLAYFS}" = 1 ]; then
+		if mount_overlayfs; then
+			show_msg "Using overlayfs"
+		else
+			echo "Failed to mount overlayfs"
+			unset USE_OVERLAYFS
+		fi
+	fi
 
-		mount_overlayfs
-		mkdir -p "${nvidia_drivers_dir}"
-		export -f nvidia_driver_handler
-		run_bwrap --tmpfs /tmp --tmpfs /var --tmpfs /run \
+	if [ "${NVIDIA_HANDLER}" = 1 ]; then
+		if mount_overlayfs; then
+			show_msg "Nvidia driver handler is enabled"
+
+			if [ -f "${nvidia_drivers_dir}"/current-nvidia-version ] && \
+				[ ! "$(ls "${overlayfs_dir}"/up 2>/dev/null)" ]; then
+				rm -f "${nvidia_drivers_dir}"/current-nvidia-version
+			fi
+
+			mkdir -p "${nvidia_drivers_dir}"
+			export -f nvidia_driver_handler
+			DISABLE_NET=0 run_bwrap --tmpfs /tmp --tmpfs /var --tmpfs /run \
 		          --bind-try /usr/lib /tmp/hostlibs \
 		          --bind-try /usr/lib64 /tmp/hostlibs \
 		          --bind-try "${nvidia_drivers_dir}" "${nvidia_drivers_dir}" \
 		          bash -c nvidia_driver_handler
+		else
+			echo "Nvidia driver handler disabled due to overlayfs errors"
+			unset NVIDIA_HANDLER
+		fi
 	fi
 
 	# If SANDBOX_LEVEL is 3, run Xephyr and openbox before running applications
