@@ -122,7 +122,7 @@ As for prefix management, it's the same as with any other Wine build, the contai
 $ ./conty.sh winetricks dxvk vkd3d
 ```
 
-As already mentioned in the [Usage](https://github.com/Kron4ek/Conty#usage) section, Windows applications can be launched like this:
+As already mentioned in the [Usage](#usage) section, Windows applications can be launched like this:
 
 ```
 $ ./conty.sh wine someapplication.exe
