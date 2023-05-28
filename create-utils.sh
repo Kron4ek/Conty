@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 
 # General build dependencies: gawk grep lz4 zstd curl gcc make autoconf
-# 	libtool pkgconf libcap fuse2 (or fuse3) lzo xz zlib findutils
+# 	libtool pkgconf libcap fuse2 (or fuse3) lzo xz zlib findutils musl
+#	kernel-headers-musl sed
 #
 # Dwarfs build dependencies: fuse2 (or fuse3) openssl jemalloc
 # 	xxhash boost lz4 xz zstd libarchive libunwind google-glod gtest fmt
@@ -20,6 +21,8 @@ lz4_version="1.9.4"
 zstd_version="1.5.5"
 squashfs_tools_version="4.6.1"
 fuse_overlayfs_version="1.12"
+busybox_version="1.36.1"
+bash_version="5.2.15"
 
 export CC=gcc
 export CXX=g++
@@ -35,11 +38,16 @@ curl -#Lo lz4.tar.gz https://github.com/lz4/lz4/archive/refs/tags/v${lz4_version
 curl -#Lo zstd.tar.gz https://github.com/facebook/zstd/archive/refs/tags/v${zstd_version}.tar.gz
 curl -#Lo bwrap.tar.gz https://github.com/containers/bubblewrap/archive/refs/tags/v${bwrap_version}.tar.gz
 curl -#Lo fuse-overlayfs.tar.gz https://github.com/containers/fuse-overlayfs/archive/refs/tags/v${fuse_overlayfs_version}.tar.gz
+curl -#Lo busybox.tar.bz2 https://busybox.net/downloads/busybox-${busybox_version}.tar.bz2
+curl -#Lo bash.tar.gz https://ftp.gnu.org/gnu/bash/bash-${bash_version}.tar.gz
+cp "${script_dir}"/init.c init.c
 
 tar xf lz4.tar.gz
 tar xf zstd.tar.gz
 tar xf bwrap.tar.gz
 tar xf fuse-overlayfs.tar.gz
+tar xf busybox.tar.bz2
+tar xf bash.tar.gz
 
 if [ "${build_dwarfs}" != "true" ]; then
 	curl -#Lo squashfuse.tar.gz https://github.com/vasi/squashfuse/archive/refs/tags/${squashfuse_version}.tar.gz
@@ -65,6 +73,19 @@ make -j"$(nproc)" DESTDIR="${script_dir}"/build-utils/bin install
 cd ../zstd-"${zstd_version}" || exit 1
 ZSTD_LEGACY_SUPPORT=0 HAVE_ZLIB=0 HAVE_LZMA=0 HAVE_LZ4=0 BACKTRACE=0 make -j"$(nproc)" DESTDIR="${script_dir}"/build-utils/bin install
 
+cd ../busybox-${busybox_version} || exit 1
+make defconfig
+sed -i 's/# CONFIG_STATIC is not set/CONFIG_STATIC=y/g' .config
+make CC=musl-gcc -j"$(nproc)"
+
+cd ../bash-${bash_version}
+curl -#Lo bash.patch "https://raw.githubusercontent.com/robxu9/bash-static/master/custom/bash-musl-strtoimax-debian-1023053.patch"
+patch -Np1 < ./bash.patch
+CFLAGS="${CFLAGS} -static" CC=musl-gcc ./configure --without-bash-malloc
+autoconf -f
+CFLAGS="${CFLAGS} -static" CC=musl-gcc ./configure --without-bash-malloc
+CFLAGS="${CFLAGS} -static" CC=musl-gcc make -j"$(nproc)"
+
 if [ "${build_dwarfs}" != "true" ]; then
 	cd ../squashfuse-"${squashfuse_version}" || exit 1
 	./autogen.sh
@@ -89,6 +110,9 @@ mv bin/usr/local/lib/liblz4.so."${lz4_version}" utils/liblz4.so.1
 mv bin/usr/local/lib/libzstd.so."${zstd_version}" utils/libzstd.so.1
 mv bin/usr/local/lib/libfuseprivate.so.0.0.0 utils/libfuseprivate.so.0
 mv bin/usr/local/lib/libsquashfuse.so.0.0.0 utils/libsquashfuse.so.0
+mv "${script_dir}"/build-utils/busybox-${busybox_version}/busybox utils
+mv "${script_dir}"/build-utils/bash-${bash_version}/bash utils
+mv "${script_dir}"/build-utils/init utils
 
 if ! ldd utils/squashfuse | grep -q libfuse.so.2; then
 	mv utils/squashfuse utils/squashfuse3
@@ -99,6 +123,8 @@ if [ "${build_dwarfs}" = "true" ]; then
 	if command -v clang++ 1>/dev/null; then
 		export CC=clang
 		export CXX=clang++
+		export CFLAGS="${CFLAGS} -O3"
+		export CXXFLAGS="${CFLAGS}"
 	fi
 
 	git clone https://github.com/mhx/dwarfs.git --recursive
@@ -148,9 +174,33 @@ fi
 
 find utils -type f -exec strip --strip-unneeded {} \; 2>/dev/null
 
+init_program_size=40000
+conty_script_size="$(($(stat -c%s "${script_dir}"/conty-start.sh)+1000))"
+bash_size="$(stat -c%s utils/bash)"
+
+sed -i "s/#define SCRIPT_SIZE 0/#define SCRIPT_SIZE ${conty_script_size}/g" init.c
+sed -i "s/#define BASH_SIZE 0/#define BASH_SIZE ${bash_size}/g" init.c
+sed -i "s/#define PROGRAM_SIZE 0/#define PROGRAM_SIZE ${init_program_size}/g" init.c
+
+musl-gcc -o init -static init.c
+strip --strip-unneeded init
+
+padding_size="$((init_program_size-$(stat -c%s init)))"
+
+if [ "${padding_size}" -gt 0 ]; then
+	dd if=/dev/zero of=padding bs=1 count="${padding_size}" &>/dev/null
+	cat init padding > init_new
+	rm -f init padding
+	mv init_new init
+fi
+
+mv init utils
+
 cat <<EOF > utils/info
 bubblewrap ${bwrap_version}
 fuse-overlayfs ${fuse_overlayfs_version}
+busybox ${busybox_version}
+bash ${bash_version}
 lz4 ${lz4_version}
 zstd ${zstd_version}
 EOF

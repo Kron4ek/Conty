@@ -15,17 +15,61 @@ if (( EUID == 0 )) && [ -z "$ALLOW_ROOT" ]; then
 fi
 
 # Conty version
-script_version="1.23.1"
+script_version="1.24"
 
 # Important variables to manually adjust after modification!
 # Needed to avoid problems with mounting due to an incorrect offset.
-script_size=34762
-utils_size=2564623
+#
+# If you build Conty without some of the components, you can set their
+# size to 0
+init_size=40000
+bash_size=1339208
+script_size=35842
+busybox_size=1161112
+utils_size=4049807
 
 # Full path to the script
-script_literal="${BASH_SOURCE[0]}"
+if [ -n "${BASH_SOURCE[0]}" ]; then
+	script_literal="${BASH_SOURCE[0]}"
+else
+	script_literal="${0}"
+fi
 script_name="$(basename "${script_literal}")"
 script="$(readlink -f "${script_literal}")"
+
+# MD5 of the last 1 MB of the file
+script_md5="$(tail -c 1000000 "${script}" | md5sum | head -c 7)"
+script_id="$$"
+
+# Working directory where the utils will be extracted
+# And where the image will be mounted
+# The default path is /tmp/scriptname_username_scriptmd5
+# And if /tmp is mounted with noexec, the default path
+# is ~/.local/share/Conty/scriptname_username_scriptmd5
+conty_dir_name="$(basename "${script}")"_"${USER}"_"${script_md5}"
+
+if  [ -z "${BASE_DIR}" ]; then
+	export working_dir=/tmp/"${conty_dir_name}"
+else
+	export working_dir="${BASE_DIR}"/"${conty_dir_name}"
+fi
+
+if [ "${USE_SYS_UTILS}" != 1 ] && [ "${busybox_size}" -gt 0 ]; then
+	busybox_bin_dir="${working_dir}"/busybox_bins
+	busybox_path="${busybox_bin_dir}"/busybox
+
+	if [ ! -f "${busybox_bin_dir}"/echo ]; then
+		mkdir -p "${busybox_bin_dir}"
+		tail -c +$((init_size+bash_size+script_size+1)) "${script}" | head -c "${busybox_size}" > "${busybox_path}"
+
+		chmod +x "${busybox_path}" 2>/dev/null
+		"${busybox_path}" --install -s "${busybox_bin_dir}" &>/dev/null
+	fi
+
+	if "${busybox_bin_dir}"/echo &>/dev/null; then
+		export PATH="${busybox_bin_dir}:${PATH}"
+	fi
+fi
 
 # Help output
 msg_help="
@@ -62,10 +106,6 @@ Arguments:
         a lot of time, depending on your hardware and internet speed.
         Additional disk space (about 6x the size of the current file)
         is needed during the update process.
-
-  -U    Same as -u with the addition of updating the init script and
-        the integrated utils. This option may break Conty in some cases,
-        use with caution!
 
   -v    Display version of this script
 
@@ -135,6 +175,12 @@ Environment variables:
   XEPHYR_SIZE       Sets the size of the Xephyr window. The default is
                     800x600.
 
+  CUSTOM_MNT        Sets a custom mount point for the Conty. This allows
+                    Conty to be used with already mounted filesystems.
+                    Conty will not mount its image on this mount point,
+                    but it will use files that are already present
+                    there.
+
 Additional notes:
 System directories/files will not be available inside the container if
 you set the SANDBOX variable but don't bind (mount) any items or set
@@ -150,8 +196,8 @@ example, from a file manager) will automatically launch the Conty's
 graphical interface.
 
 Besides updating all packages, you can also install and remove packages
-using the same -u (or -U) argument. To install packages add them as
-additional arguments, to remove add a minus sign (-) before their names.
+using the same -u argument. To install packages add them as additional
+arguments, to remove add a minus sign (-) before their names.
   To install: ${script_name} -u pkgname1 pkgname2 pkgname3 ...
   To remove: ${script_name} -u -pkgname1 -pkgname2 -pkgname3 ...
 In this case Conty will update all packages and additionally install
@@ -161,31 +207,17 @@ If you are using an Nvidia GPU, please read the following:
 https://github.com/Kron4ek/Conty#known-issues
 "
 
-# MD5 of the last 1 MB of the file
-script_md5="$(tail -c 1000000 "${script}" | md5sum | head -c 7)"
-
-script_id="${RANDOM}"
-
-# Working directory where the utils will be extracted
-# And where the image will be mounted
-# The default path is /tmp/scriptname_username_scriptmd5
-# And if /tmp is mounted with noexec, the default path
-# is ~/.local/share/Conty/scriptname_username_scriptmd5
-conty_dir_name="$(basename "${script}")"_"${USER}"_"${script_md5}"
-
-if  [ -z "${BASE_DIR}" ]; then
-	export working_dir=/tmp/"${conty_dir_name}"
+if [ -n "${CUSTOM_MNT}" ] && [ -d "${CUSTOM_MNT}" ]; then
+	mount_point="${CUSTOM_MNT}"
 else
-	export working_dir="${BASE_DIR}"/"${conty_dir_name}"
+	mount_point="${working_dir}"/mnt
 fi
-
-mount_point="${working_dir}"/mnt
 
 export overlayfs_dir="${HOME}"/.local/share/Conty/overlayfs_"${script_md5}"
 export nvidia_drivers_dir="${HOME}"/.local/share/Conty/nvidia_"${script_md5}"
 
 # Offset where the image is stored
-offset=$((script_size+utils_size))
+offset=$((init_size+bash_size+script_size+busybox_size+utils_size))
 
 # Detect if the image is compressed with DwarFS or SquashFS
 if [ "$(tail -c +$((offset+1)) "${script}" | head -c 6)" = "DWARFS" ]; then
@@ -200,6 +232,9 @@ squashfs_comp_arguments=(-b 1M -comp zstd -Xcompression-level 19)
 dwarfs_comp_arguments=(-l7 -C zstd:level=19 --metadata-compression null \
                        -S 22 -B 2 --order nilsimsa:255:60000:60000 \
                        --bloom-filter-size 11 -W 15 -w 3 --no-create-timestamp)
+
+# Enable NVIDIA_HANDLER by default
+NVIDIA_HANDLER="${NVIDIA_HANDLER:-1}"
 
 unset script_is_symlink
 if [ -L "${script_literal}" ]; then
@@ -323,27 +358,45 @@ mount_overlayfs () {
 }
 
 nvidia_driver_handler () {
-	if lsmod | grep nvidia 1>/dev/null || nvidia-smi 1>/dev/null; then
-		if [ "$(ls /tmp/hostlibs/x86_64-linux-gnu/libGLX_nvidia.so.* 2>/dev/null)" ]; then
-			nvidia_driver_version="$(basename /tmp/hostlibs/x86_64-linux-gnu/libGLX_nvidia.so.*.* | tail -c +18)"
-		elif [ "$(ls /tmp/hostlibs/libGLX_nvidia.so.* 2>/dev/null)" ]; then
-			nvidia_driver_version="$(basename /tmp/hostlibs/libGLX_nvidia.so.*.* | tail -c +18)"
-		elif nvidia-smi 1>/dev/null; then
-			nvidia_driver_version="$(nvidia-smi --query-gpu=driver_version --format=csv,noheader)"
-		elif modinfo nvidia &>/dev/null; then
-			nvidia_driver_version="$(modinfo -F version nvidia 2>/dev/null)"
-		fi
-	else
-		echo "Seems like your system has no Nvidia driver loaded"
+	if [ -f /sys/module/nvidia/version ]; then
+		nvidia_driver_version="$(cat /sys/module/nvidia/version)"
+	fi
+
+	if [ -z "${nvidia_driver_version}" ] && \
+		[ "$(ls /tmp/hostlibs/x86_64-linux-gnu/libGLX_nvidia.so.* 2>/dev/null)" ]; then
+		nvidia_driver_version="$(basename /tmp/hostlibs/x86_64-linux-gnu/libGLX_nvidia.so.*.* | tail -c +18)"
+	fi
+
+	if ([ "${nvidia_driver_version}" = "*.*" ] || [ -z "${nvidia_driver_version}" ]) && \
+		[ "$(ls /tmp/hostlibs/x86_64-linux-gnu/nvidia/current/libGLX_nvidia.so.* 2>/dev/null)" ]; then
+		nvidia_driver_version="$(basename /tmp/hostlibs/x86_64-linux-gnu/nvidia/current/libGLX_nvidia.so.*.* | tail -c +18)"
+	fi
+
+	if ([ "${nvidia_driver_version}" = "*.*" ] || [ -z "${nvidia_driver_version}" ]) && \
+		[ "$(ls /tmp/hostlibs/libGLX_nvidia.so.* 2>/dev/null)" ]; then
+		nvidia_driver_version="$(basename /tmp/hostlibs/libGLX_nvidia.so.*.* | tail -c +18)"
+	fi
+
+	if ([ "${nvidia_driver_version}" = "*.*" ] || [ -z "${nvidia_driver_version}" ]) && nvidia-smi &>/dev/null; then
+		nvidia_driver_version="$(nvidia-smi --query-gpu=driver_version --format=csv,noheader)"
+	fi
+
+	if ([ "${nvidia_driver_version}" = "*.*" ] || [ -z "${nvidia_driver_version}" ]) && modinfo nvidia &>/dev/null; then
+		nvidia_driver_version="$(modinfo -F version nvidia 2>/dev/null)"
+	fi
+
+	if [ "$(ls /usr/lib/libGLX_nvidia.so.* 2>/dev/null)" ]; then
+		container_nvidia_version="$(basename /usr/lib/libGLX_nvidia.so.*.* | tail -c +18)"
+	fi
+
+	if [ -z "${nvidia_driver_version}" ] || [ "${nvidia_driver_version}" = "" ]; then
+		echo "Unable to determine Nvidia driver version"
+		rm -f "${nvidia_drivers_dir}"/current-nvidia-version
 		exit 1
 	fi
 
-	if [ -z "${nvidia_driver_version}" ]; then
-		echo "Unable to determine the Nvidia driver version"
-		exit 1
-	fi
-
-	if [ "$(cat "${nvidia_drivers_dir}"/current-nvidia-version 2>/dev/null)" = "${nvidia_driver_version}" ]; then
+	if [ "$(cat "${nvidia_drivers_dir}"/current-nvidia-version 2>/dev/null)" = "${nvidia_driver_version}" ] || \
+		[ "${nvidia_driver_version}" = "${container_nvidia_version}" ]; then
 		exit
 	fi
 
@@ -361,7 +414,7 @@ nvidia_driver_handler () {
 	curl -#Lo nvidia.run "${driver_url}"
 
 	# If the previous download failed, get the URL from FlatHub repo
-	if [ ! -s nvidia.run ]; then
+	if [ ! -s nvidia.run ] || [ "$(stat -c%s nvidia.run)" -lt 30000000 ]; then
 		rm -f nvidia.run
 		driver_url="https:$(curl -#Lo - "https://raw.githubusercontent.com/flathub/org.freedesktop.Platform.GL.nvidia/master/data/nvidia-${nvidia_driver_version}-i386.data" | cut -d ':' -f 6)"
 		curl -#Lo nvidia.run "${driver_url}"
@@ -389,6 +442,27 @@ nvidia_driver_handler () {
 	fi
 
 	cd "${OLD_PWD}"
+}
+
+update_conty () {
+	reflector --protocol https --score 5 --sort rate --save /etc/pacman.d/mirrorlist
+	fakeroot -- pacman -Syy 2>/dev/null
+	date -u +"%d-%m-%Y %H:%M (DMY UTC)" > /version
+	fakeroot -- pacman --noconfirm -S archlinux-keyring 2>/dev/null
+	fakeroot -- pacman --noconfirm -S chaotic-keyring 2>/dev/null
+	rm -rf /etc/pacman.d/gnupg/*
+	fakeroot -- pacman-key --init
+	echo "keyserver hkps://keyserver.ubuntu.com" >> /etc/pacman.d/gnupg/gpg.conf
+	fakeroot -- pacman-key --populate archlinux
+	fakeroot -- pacman-key --populate chaotic
+	fakeroot -- pacman --noconfirm --overwrite "*" -Su 2>/dev/null
+	fakeroot -- pacman --noconfirm -Runs ${pkgsremove} 2>/dev/null
+	fakeroot -- pacman --noconfirm -S ${pkgsinstall} 2>/dev/null
+	ldconfig -C /etc/ld.so.cache
+	rm -f /var/cache/pacman/pkg/*
+	pacman -Q > /pkglist.x86_64.txt
+	update-ca-trust
+	locale-gen
 }
 
 # Check if FUSE is installed
@@ -434,12 +508,15 @@ fi
 # Extract utils.tar.gz
 mkdir -p "${working_dir}"
 
-if [ "${USE_SYS_UTILS}" != 1 ]; then
+if ([ "${USE_SYS_UTILS}" != 1 ] && [ "${utils_size}" -gt 0 ]) || [ "$1" = "-u" ]; then
 	# Check if filesystem of the working_dir is mounted without noexec
 	if ! exec_test; then
 		if [ -z "${BASE_DIR}" ]; then
 			export working_dir="${HOME}"/.local/share/Conty/"${conty_dir_name}"
-			mount_point="${working_dir}"/mnt
+
+			if [ -z "${CUSTOM_MNT}" ]; then
+				mount_point="${working_dir}"/mnt
+			fi
 		fi
 
 		if ! exec_test; then
@@ -458,16 +535,18 @@ if [ "${USE_SYS_UTILS}" != 1 ]; then
 	if [ "${dwarfs_image}" = 1 ]; then
 		mount_tool="${working_dir}"/utils/dwarfs"${fuse_version}"
 		extraction_tool="${working_dir}"/utils/dwarfsextract
+		compression_tool="${working_dir}"/utils/mkdwarfs
 	else
 		mount_tool="${working_dir}"/utils/squashfuse"${fuse_version}"
 		extraction_tool="${working_dir}"/utils/unsquashfs
+		compression_tool="${working_dir}"/utils/mksquashfs
 	fi
 
 	bwrap="${working_dir}"/utils/bwrap
 	fuse_overlayfs="${working_dir}"/utils/fuse-overlayfs
 
 	if [ ! -f "${mount_tool}" ] || [ ! -f "${bwrap}" ]; then
-		tail -c +$((script_size+1)) "${script}" | head -c "${utils_size}" | tar -C "${working_dir}" -zxf -
+		tail -c +$((init_size+bash_size+script_size+busybox_size+1)) "${script}" | head -c "${utils_size}" | tar -C "${working_dir}" -zxf -
 
 		if [ ! -f "${mount_tool}" ] || [ ! -f "${bwrap}" ]; then
 			clear
@@ -481,6 +560,7 @@ if [ "${USE_SYS_UTILS}" != 1 ]; then
 		chmod +x "${bwrap}" 2>/dev/null
 		chmod +x "${extraction_tool}" 2>/dev/null
 		chmod +x "${fuse_overlayfs}" 2>/dev/null
+		chmod +x "${compression_tool}" 2>/dev/null
 	fi
 else
 	if ! command -v bwrap 1>/dev/null; then
@@ -546,212 +626,6 @@ if [ "$1" = "-H" ] && [ -z "${script_is_symlink}" ]; then
 	exit
 fi
 
-if { [ "$1" = "-u" ] || [ "$1" = "-U" ]; } && [ -z "${script_is_symlink}" ]; then
-	OLD_PWD="${PWD}"
-
-	# Check if the current directory is writable
-	# And if it's not, use ~/.local/share/Conty as a working directory
-	if ! touch test_rw 2>/dev/null; then
-		update_temp_dir="${HOME}"/.local/share/Conty/conty_update_temp
-	else
-		update_temp_dir="${OLD_PWD}"/conty_update_temp
-	fi
-	rm -f test_rw
-
-	# Remove conty_update_temp directory if it already exists
-	chmod -R 700 "${update_temp_dir}" 2>/dev/null
-	rm -rf "${update_temp_dir}"
-
-	mkdir -p "${update_temp_dir}"
-	cd "${update_temp_dir}" || exit 1
-
-	if command -v awk 1>/dev/null; then
-		current_file_size="$(stat -c "%s" "${script}")"
-		available_disk_space="$(df -P -B1 "${update_temp_dir}" | awk 'END {print $4}')"
-		required_disk_space="$((current_file_size*7))"
-
-		if [ "${available_disk_space}" -lt "${required_disk_space}" ]; then
-			echo "Not enough free disk space"
-			echo "You need at least $((required_disk_space/1024/1024)) MB of free space"
-			exit 1
-		fi
-	fi
-
-	tail -c +$((script_size+1)) "${script}" | head -c "${utils_size}" | tar -C "${update_temp_dir}" -zxf -
-
-	if [ "${dwarfs_image}" = 1 ]; then
-		chmod +x utils/dwarfsextract 2>/dev/null
-		chmod +x utils/mkdwarfs 2>/dev/null
-
-		if [ ! -x "utils/dwarfsextract" ] || [ ! -x "utils/mkdwarfs" ]; then
-			missing_utils="dwarfsextract and/or mkdwarfs"
-		fi
-	else
-		chmod +x utils/unsquashfs 2>/dev/null
-		chmod +x utils/mksquashfs 2>/dev/null
-
-		if [ ! -x "utils/unsquashfs" ] || [ ! -x "utils/mksquashfs" ]; then
-			missing_utils="unsquashfs and/or mksquashfs"
-		fi
-	fi
-
-	if [ -n "${missing_utils}" ]; then
-		echo "The integrated utils don't contain ${missing_utils}."
-		echo "Or your file system is mounted with noexec."
-		exit 1
-	fi
-
-	tools_wrapper () {
-		"${update_temp_dir}"/utils/ld-linux-x86-64.so.2 --library-path "${update_temp_dir}"/utils "$@"
-	}
-
-	# Since Conty is used here to update itself, it's necessary to disable
-	# some environment variables for this to work properly
-	unset DISABLE_NET
-	unset HOME_DIR
-	unset SANDBOX_LEVEL
-
-	# Enable SANDBOX
-	export SANDBOX=1
-
-	export QUIET_MODE=1
-
-	# Extract the image
-	clear
-	echo "Extracting the image"
-	if [ "${dwarfs_image}" = 1 ]; then
-		mkdir sqfs
-		tools_wrapper "${update_temp_dir}"/utils/dwarfsextract \
-		-i "${script}" -o sqfs -O "${offset}" --cache-size "${dwarfs_cache_size}" \
-		--num-workers "${dwarfs_num_workers}"
-	else
-		tools_wrapper "${update_temp_dir}"/utils/unsquashfs \
-		-o "${offset}" -user-xattrs -d sqfs "${script}"
-	fi
-
-	# Download or extract the utils.tar.gz and the init script depending
-	# on what command line argument is used (-u or -U)
-	clear
-	if [ "$1" = "-U" ] && command -v curl 1>/dev/null; then
-		if [ "${dwarfs_image}" = 1 ]; then
-			utils="utils_dwarfs.tar.gz"
-		else
-			utils="utils.tar.gz"
-		fi
-
-		echo "Downloading the init script and the utils"
-		curl -#LO "https://github.com/Kron4ek/Conty/raw/master/conty-start.sh"
-		curl -#Lo utils.tar.gz "https://github.com/Kron4ek/Conty/raw/master/${utils}"
-	fi
-
-	if [ ! -s conty-start.sh ] || [ ! -s utils.tar.gz ]; then
-		echo "Extracting the init script and the integrated utils"
-		tail -c +$((script_size+1)) "${script}" | head -c "${utils_size}" > utils.tar.gz
-		head -c "${script_size}" "${script}" > conty-start.sh
-	fi
-
-	# Check if there are additional arguments passed
-	shift
-	if [ -n "$1" ]; then
-		packagelist=("$@")
-
-		# Check which packages to install and which ones to remove
-		for i in "${packagelist[@]}"; do
-			if [ "$(echo "${i}" | head -c 1)" = "-" ]; then
-				pkgsremove+=" ${i:1}"
-			else
-				pkgsinstall+=" ${i}"
-			fi
-		done
-
-		export pkgsremove
-		export pkgsinstall
-	fi
-
-	# Generate a script to perform inside Conty
-	# It updates Arch mirrorlist
-	# Updates keyrings
-	# Updates all installed packages
-	# Installs additional packages (if requested)
-	# Removes packages (if requested)
-	# Clears package cache
-	# Updates SSL CA certificates
-	# Generates locales
-	cat <<EOF > container-update.sh
-reflector --protocol https --score 5 --sort rate --save /etc/pacman.d/mirrorlist
-fakeroot -- pacman -Syy 2>/dev/null
-date -u +"%d-%m-%Y %H:%M (DMY UTC)" > /version
-fakeroot -- pacman --noconfirm -S archlinux-keyring 2>/dev/null
-fakeroot -- pacman --noconfirm -S chaotic-keyring 2>/dev/null
-rm -rf /etc/pacman.d/gnupg
-fakeroot -- pacman-key --init
-echo "keyserver hkps://keyserver.ubuntu.com" >> /etc/pacman.d/gnupg/gpg.conf
-fakeroot -- pacman-key --populate archlinux
-fakeroot -- pacman-key --populate chaotic
-fakeroot -- pacman --noconfirm --overwrite "*" -Su 2>/dev/null
-fakeroot -- pacman --noconfirm -Runs ${pkgsremove} 2>/dev/null
-fakeroot -- pacman --noconfirm -S ${pkgsinstall} 2>/dev/null
-ldconfig -C /etc/ld.so.cache
-rm -f /var/cache/pacman/pkg/*
-pacman -Qn > /pkglist.x86_64.txt
-pacman -Qm >> /pkglist.x86_64.txt
-update-ca-trust
-locale-gen
-EOF
-
-    rm -f sqfs/etc/resolv.conf
-    cp /etc/resolv.conf sqfs/etc/resolv.conf
-    mkdir -p sqfs/run/shm
-
-	# Execute the previously generated script
-	clear
-	echo "Updating and installing packages"
-	bash "${script}" --bind sqfs / --ro-bind /sys /sys --dev-bind /dev /dev \
-				--proc /proc --bind "${update_temp_dir}" "${update_temp_dir}" \
-				bash container-update.sh
-
-	# Create an image
-	clear
-	echo "Creating an image"
-	if [ "${dwarfs_image}" = 1 ]; then
-		tools_wrapper "${update_temp_dir}"/utils/mkdwarfs \
-		-i sqfs -o image "${dwarfs_comp_arguments[@]}"
-	else
-		tools_wrapper "${update_temp_dir}"/utils/mksquashfs \
-		sqfs image "${squashfs_comp_arguments[@]}"
-	fi
-
-	# Combine into a single executable
-	clear
-	echo "Combining everything into a single executable"
-	cat conty-start.sh utils.tar.gz image > conty_updated.sh
-	chmod +x conty_updated.sh
-
-	mv -f "${script}" "${script}".old."${script_md5}" 2>/dev/null
-	mv -f conty_updated.sh "${script}" 2>/dev/null || move_failed=1
-
-	if [ "${move_failed}" = 1 ]; then
-		mv -f conty_updated.sh "${OLD_PWD}" 2>/dev/null || \
-		mv -f conty_updated.sh "${HOME}" 2>/dev/null
-	fi
-
-	chmod -R 700 sqfs 2>/dev/null
-	rm -rf "${update_temp_dir}"
-
-	clear
-	echo "Conty has been updated!"
-
-	if [ "${move_failed}" = 1 ]; then
-		echo
-		echo "Replacing ${script} with the new one failed!"
-		echo
-		echo "You can find conty_updated.sh in the current working"
-		echo "directory or in your HOME."
-	fi
-
-	exit
-fi
-
 run_bwrap () {
 	unset sandbox_params
 	unset unshare_net
@@ -759,6 +633,7 @@ run_bwrap () {
 	unset non_standard_home
 	unset xsockets
 	unset mount_opt
+	unset pacman_dirs
 
 	if [ -n "${WAYLAND_DISPLAY}" ]; then
 		wayland_socket="${WAYLAND_DISPLAY}"
@@ -887,9 +762,19 @@ run_bwrap () {
 	if ([ "${NVIDIA_HANDLER}" = 1 ] || [ "${USE_OVERLAYFS}" = 1 ]) && \
 		[ "$(ls "${overlayfs_dir}"/merged 2>/dev/null)" ]; then
 		newroot_path="${overlayfs_dir}"/merged
+		pacman_dirs=(--bind-try "${overlayfs_dir}"/merged/var/lib/pacman /var/lib/pacman \
+		             --bind-try "${overlayfs_dir}"/merged/var/cache/pacman /var/cache/pacman)
 	else
 		newroot_path="${mount_point}"
 	fi
+
+	conty_variables="BASE_DIR DISABLE_NET DISABLE_X11 HOME_DIR QUIET_MODE \
+					SANDBOX SANDBOX_LEVEL USE_OVERLAYFS NVIDIA_HANDLER \
+					USE_SYS_UTILS XEPHYR_SIZE CUSTOM_MNT"
+
+	for v in ${conty_variables}; do
+		unset_vars+=(--unsetenv "${v}")
+	done
 
 	show_msg
 
@@ -916,9 +801,11 @@ run_bwrap () {
 			"${non_standard_home[@]}" \
 			"${sandbox_params[@]}" \
 			"${custom_home[@]}" \
+			"${pacman_dirs[@]}" \
 			"${mount_opt[@]}" \
 			"${xsockets[@]}" \
 			"${unshare_net[@]}" \
+			"${unset_vars[@]}" \
 			--setenv PATH "${CUSTOM_PATH}" \
 			"$@"
 }
@@ -932,10 +819,12 @@ trap_exit () {
 			umount --lazy "${overlayfs_dir}"/merged 2>/dev/null
 		fi
 
-		fusermount"${fuse_version}" -uz "${mount_point}" 2>/dev/null || \
-		umount --lazy "${mount_point}" 2>/dev/null
+		if [ -z "${CUSTOM_MNT}" ]; then
+			fusermount"${fuse_version}" -uz "${mount_point}" 2>/dev/null || \
+			umount --lazy "${mount_point}" 2>/dev/null
+		fi
 
-		if [ ! "$(ls "${mount_point}" 2>/dev/null)" ]; then
+		if [ ! "$(ls "${mount_point}" 2>/dev/null)" ] || [ -n "${CUSTOM_MNT}" ]; then
 			rm -rf "${working_dir}"
 		fi
 	fi
@@ -1048,6 +937,118 @@ if [ "$(ls "${mount_point}" 2>/dev/null)" ] || \
 		exit
 	fi
 
+	if [ "$1" = "-u" ] && [ -z "${script_is_symlink}" ] && [ -z "${CUSTOM_MNT}" ]; then
+		export overlayfs_dir="${HOME}"/.local/share/Conty/update_overlayfs
+		rm -rf "${overlayfs_dir}"
+
+		if mount_overlayfs; then
+			USE_OVERLAYFS=1
+			QUIET_MODE=1
+			unset DISABLE_NET
+			unset HOME_DIR
+			unset SANDBOX_LEVEL
+			unset SANDBOX
+			unset DISABLE_X11
+
+			if ! touch test_rw 2>/dev/null; then
+				cd "${HOME}" || exit 1
+			fi
+			rm -f test_rw
+
+			OLD_PWD="${PWD}"
+			mkdir conty_update_temp
+			cd conty_update_temp || exit 1
+
+			if command -v awk 1>/dev/null; then
+				current_file_size="$(stat -c "%s" "${script}")"
+				available_disk_space="$(df -P -B1 "${PWD}" | awk 'END {print $4}')"
+				required_disk_space="$((current_file_size*7))"
+
+				if [ "${available_disk_space}" -lt "${required_disk_space}" ]; then
+					echo "Not enough free disk space"
+					echo "You need at least $((required_disk_space/1024/1024)) MB of free space"
+					exit 1
+				fi
+			fi
+
+			# Check if there are additional arguments passed
+			shift
+			if [ -n "$1" ]; then
+				packagelist=("$@")
+
+				# Check which packages to install and which ones to remove
+				for i in "${packagelist[@]}"; do
+					if [ "$(echo "${i}" | head -c 1)" = "-" ]; then
+						pkgsremove+=" ${i:1}"
+					else
+						pkgsinstall+=" ${i}"
+					fi
+				done
+
+				export pkgsremove
+				export pkgsinstall
+			fi
+
+			clear
+			echo "Updating and installing packages..."
+			cp -r "${mount_point}"/etc/pacman.d/gnupg "${overlayfs_dir}"/gnupg
+			export -f update_conty
+			run_bwrap --bind "${overlayfs_dir}"/gnupg /etc/pacman.d/gnupg \
+				--bind "${overlayfs_dir}"/merged/var/lib/pacman /var/lib/pacman \
+				--bind-try "${overlayfs_dir}"/merged/var/cache/pacman /var/cache/pacman \
+				bash -c update_conty
+
+			if [ "${dwarfs_image}" = 1 ]; then
+				compression_command=("${compression_tool}" -i "${overlayfs_dir}"/merged -o image "${dwarfs_comp_arguments[@]}")
+			else
+				compression_command=("${compression_tool}" "${overlayfs_dir}"/merged image "${squashfs_comp_arguments[@]}")
+			fi
+
+			clear
+			echo "Creating an image..."
+			launch_wrapper "${compression_command[@]}"
+
+			if [ "${init_size}" -gt 0 ]; then
+				tail -c +$((init_size+bash_size+1)) "${script}" | head -c "${script_size}" > conty-start.sh
+			else
+				head -c "${script_size}" "${script}" > conty-start.sh
+			fi
+
+			tail -c +$((init_size+bash_size+script_size+busybox_size+1)) "${script}" | head -c "${utils_size}" > utils.tar.gz
+
+			# Combine into a single executable
+			clear
+			echo "Combining everything into a single executable..."
+			cat "${working_dir}"/utils/init "${working_dir}"/utils/bash \
+				conty-start.sh "${working_dir}"/utils/busybox utils.tar.gz \
+				image > conty_updated.sh
+			chmod +x conty_updated.sh
+
+			mv -f "${script}" "${script}".old."${script_md5}" 2>/dev/null
+			mv -f conty_updated.sh "${script}" 2>/dev/null || move_failed=1
+
+			fusermount"${fuse_version}" -uz "${overlayfs_dir}"/merged 2>/dev/null || \
+			umount --lazy "${overlayfs_dir}"/merged 2>/dev/null
+			rm -rf "${overlayfs_dir}" "${OLD_PWD}"/conty_update_temp
+
+			clear
+			echo "Conty has been updated!"
+
+			if [ "${move_failed}" = 1 ]; then
+				echo
+				echo "Replacing ${script} with the new one failed!"
+				echo
+				echo "You can find conty_updated.sh in the current working"
+				echo "directory or in your HOME."
+			fi
+		else
+			echo "Failed to mount overlayfs"
+			echo "Cannot update Conty"
+		fi
+
+		exit
+	fi
+
 	if [ "${USE_OVERLAYFS}" = 1 ]; then
 		if mount_overlayfs; then
 			show_msg "Using overlayfs"
@@ -1058,23 +1059,31 @@ if [ "$(ls "${mount_point}" 2>/dev/null)" ] || \
 	fi
 
 	if [ "${NVIDIA_HANDLER}" = 1 ]; then
-		if mount_overlayfs; then
-			show_msg "Nvidia driver handler is enabled"
+		if [ -f /sys/module/nvidia/version ] || lsmod | grep nvidia 1>/dev/null; then
+			if mount_overlayfs; then
+				show_msg "Nvidia driver handler is enabled"
 
-			if [ -f "${nvidia_drivers_dir}"/current-nvidia-version ] && \
-				[ ! "$(ls "${overlayfs_dir}"/up 2>/dev/null)" ]; then
-				rm -f "${nvidia_drivers_dir}"/current-nvidia-version
-			fi
+				if [ -f "${nvidia_drivers_dir}"/current-nvidia-version ] && \
+					[ ! "$(ls "${overlayfs_dir}"/up 2>/dev/null)" ]; then
+					rm -f "${nvidia_drivers_dir}"/current-nvidia-version
+				fi
 
-			mkdir -p "${nvidia_drivers_dir}"
-			export -f nvidia_driver_handler
-			DISABLE_NET=0 run_bwrap --tmpfs /tmp --tmpfs /var --tmpfs /run \
+				mkdir -p "${nvidia_drivers_dir}"
+				export -f nvidia_driver_handler
+				DISABLE_NET=0 QUIET_MODE=1 run_bwrap --tmpfs /tmp --tmpfs /var --tmpfs /run \
 		          --bind-try /usr/lib /tmp/hostlibs \
 		          --bind-try /usr/lib64 /tmp/hostlibs \
-		          --bind-try "${nvidia_drivers_dir}" "${nvidia_drivers_dir}" \
+		          --bind "${nvidia_drivers_dir}" "${nvidia_drivers_dir}" \
 		          bash -c nvidia_driver_handler
+			else
+				echo "Nvidia driver handler disabled due to overlayfs errors"
+				unset NVIDIA_HANDLER
+			fi
 		else
-			echo "Nvidia driver handler disabled due to overlayfs errors"
+			unset NVIDIA_HANDLER
+		fi
+
+		if [ ! -f "${nvidia_drivers_dir}"/current-nvidia-version ]; then
 			unset NVIDIA_HANDLER
 		fi
 	fi

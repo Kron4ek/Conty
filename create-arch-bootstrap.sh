@@ -69,6 +69,7 @@ ar_EG.UTF-8 UTF-8
 en_US.UTF-8 UTF-8
 en_GB.UTF-8 UTF-8
 en_CA.UTF-8 UTF-8
+en_SG.UTF-8 UTF-8
 es_MX.UTF-8 UTF-8
 zh_CN.UTF-8 UTF-8
 fr_FR.UTF-8 UTF-8
@@ -78,6 +79,7 @@ es_ES.UTF-8 UTF-8
 de_DE.UTF-8 UTF-8
 pt_BR.UTF-8 UTF-8
 it_IT.UTF-8 UTF-8
+id_ID.UTF-8 UTF-8
 ja_JP.UTF-8 UTF-8
 bg_BG.UTF-8 UTF-8
 pl_PL.UTF-8 UTF-8
@@ -87,6 +89,7 @@ tr_TR.UTF-8 UTF-8
 hu_HU.UTF-8 UTF-8
 cs_CZ.UTF-8 UTF-8
 bn_IN UTF-8
+hi_IN UTF-8
 EOF
 }
 

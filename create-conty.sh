@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# Dependencies: squashfs-tools or dwarfs
+# Dependencies: sed, squashfs-tools or dwarfs
 
 script_dir="$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")"
 
@@ -31,7 +31,6 @@ dwarfs_compressor_arguments=(-l7 -C zstd:level=19 --metadata-compression null \
 use_existing_image="false"
 
 image_path="${script_dir}"/image
-
 bootstrap="${script_dir}"/root.x86_64
 
 launch_wrapper () {
@@ -47,6 +46,11 @@ launch_wrapper () {
 	fi
 }
 
+if ! command -v sed 1>/dev/null; then
+	echo "sed is required"
+	exit 1
+fi
+
 cd "${script_dir}" || exit 1
 
 if [ "${dwarfs}" = "true" ]; then
@@ -57,7 +61,7 @@ else
 	compressor_command=(mksquashfs "${bootstrap}" "${image_path}" "${squashfs_compressor_arguments[@]}")
 fi
 
-if [ ! -f "${utils}" ] || [ "$(wc -c < "${utils}")" -lt 1000 ]; then
+if [ ! -f "${utils}" ] || [ "$(wc -c < "${utils}")" -lt 100000 ]; then
 	rm -f "${utils}"
 	curl -#LO "https://github.com/Kron4ek/Conty/raw/master/${utils}"
 fi
@@ -73,10 +77,6 @@ tar -zxf "${utils}"
 if [ $? != 0 ]; then
 	echo "Something is wrong with ${utils}"
 	exit 1
-fi
-
-if [ "${USE_SYS_UTILS}" != 0 ]; then
-	rm -rf utils
 fi
 
 # Check if selected compression algorithm is supported by mksquashfs
@@ -112,8 +112,41 @@ if [ ! -f "${image_path}" ] || [ "${use_existing_image}" != "true" ]; then
 	launch_wrapper "${compressor_command[@]}"
 fi
 
+if command -v sed 1>/dev/null; then
+	utils_size="$(stat -c%s "${utils}")"
+	init_size=0
+	bash_size=0
+	busybox_size=0
+
+	if [ -s utils/init ]; then
+		init_size="$(stat -c%s utils/init)"
+	fi
+
+	if [ -s utils/bash ]; then
+		bash_size="$(stat -c%s utils/bash)"
+	fi
+
+	if [ -s utils/busybox ]; then
+		busybox_size="$(stat -c%s utils/busybox)"
+	fi
+
+	if [ "${init_size}" = 0 ] || [ "${bash_size}" = 0 ]; then
+		init_size=0
+		bash_size=0
+		rm -f utils/init utils/bash
+	fi
+
+	sed -i "s/init_size=.*/init_size=${init_size}/" conty-start.sh
+	sed -i "s/bash_size=.*/bash_size=${bash_size}/" conty-start.sh
+	sed -i "s/busybox_size=.*/busybox_size=${busybox_size}/" conty-start.sh
+	sed -i "s/utils_size=.*/utils_size=${utils_size}/" conty-start.sh
+
+	sed -i "s/script_size=.*/script_size=$(stat -c%s conty-start.sh)/" conty-start.sh
+	sed -i "s/script_size=.*/script_size=$(stat -c%s conty-start.sh)/" conty-start.sh
+fi
+
 # Combine the files into a single executable using cat
-cat conty-start.sh "${utils}" "${image_path}" > conty.sh
+cat utils/init utils/bash conty-start.sh utils/busybox "${utils}" "${image_path}" > conty.sh
 chmod +x conty.sh
 
 clear
