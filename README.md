@@ -22,21 +22,35 @@ In its default release, it includes, among others, these apps: `Wine-GE, Steam, 
 
 If these applications are not enough, you can install additional applications or run external binaries from, for example, your home directory.
 
----
-
-# Navigate
+## Navigate
 
 <details><summary>Expand</summary><p>
 
-[toc]
+  * [Getting Started](#getting-started)
+    + [Download](#download)
+    + [Requirements](#requirements)
+  * [Usage](#usage)
+    + [GUI](#gui)
+    + [CLI](#cli)
+  * [Managing](#managing)
+    + [Install Conty](#install-conty)
+    + [How to update](#how-to-update)
+  * [How to create your own Conty executables](#how-to-create-your-own-conty-executables)
+    + [Manual](#manual)
+    + [Automated (GitHub Actions)](#automated-github-actions)
+  * [Useful Tips](#useful-tips)
+    + [Sandbox](#sandbox)
+    + [About Wine](#about-wine)
+  * [Known issues](#known-issues)
+  * [Main used projects](#main-used-projects)
+
+<small><i><a href='http://ecotrust-canada.github.io/markdown-toc/'>Table of contents generated with markdown-toc</a></i></small>
 
 </p></details>
 
----
+## Getting Started
 
-# Getting Started:
-
-## Download
+### Download
 
 You can download a ready-to-use release from the [**releases**](https://github.com/Kron4ek/Conty/releases) page or create your own (the instructions are [below](#how-to-create-your-own-conty-executables)). Make it executable via `chmod` or your file manager's Properties option (right-click or Alt+Enter) before running.
 
@@ -65,7 +79,7 @@ $ ./conty.sh command command_arguments
 
 ## Usage
 
-## GUI
+### GUI
 
 Running Conty from a terminal emulator is not strictly required, if your file manager allows running executables, you can also run Conty from it in which case it will show its graphical interface.
 
@@ -75,7 +89,7 @@ Currently, to check the binaries / commands in Conty, you can use "Select File" 
 
 You can also manually invoke the GUI from terminal with `conty.sh -g`.
 
-## CLI
+### CLI
 
 Conty can be run from the terminal. To run a program inside Conty, simply put the path to `conty.sh` as a prefix and then insert the program's binary name or directory inside Conty.
 
@@ -153,7 +167,6 @@ There are many other features, see the internal help for more information.
 
 ```
 $ ./conty.sh -h
-$ ./conty.sh --help
 ```
 
 <details><summary>Help Content</summary><p>
@@ -299,9 +312,11 @@ https://github.com/Kron4ek/Conty#known-issues
 
 Much like an AppImage, there is no need to install Conty. However, many distribution includes `$HOME/.local/bin` as part of their `PATH` should the folder exists. You may put Conty there, so that it can be accessed from terminal using `conty.sh` without inputting the full path.
 
+<details><summary>Checking and adding PATH</summary><p>
 
+To check if you have the directory inside your `PATH`, first create the folder, and then use `echo $PATH`. If your distribution does not include the directory, you can add it by adding `export PATH=$PATH:$HOME/.local/bin` somewhere inside the `~/.bashrc` file.
 
-To check if you have the directory inside your `PATH`, you can use `echo $PATH`. If your distribution does not include the directory, you can add it by adding `export PATH=$PATH:$HOME/.local/bin` somewhere inside `~/.bashrc` file.
+</p></details>
 
 In addition, Conty can batch export all .desktop files inside Conty's `/usr/share/applications` to user's `$XDG_DATA_HOME/applications/Conty`  folder (typically means `~/.local/share/applications/Conty`) so that the applications installed in Conty can be accessed from user's application launcher.
 
@@ -327,18 +342,18 @@ Firefox (and other apps) will be exported to `~/.local/share/applications/Conty`
 
 If `$XDG_DATA_HOME/applications/Conty` already exists, `conty.sh -d` will instead delete the folder. If you have modified any .desktop files inside that folder, it is recommended for you to move or back it up to a different folder.
 
-## How to update
+### How to update
 
-There are three main ways to update Conty and get the latest packages, use whichever works best for you.
+There are a few ways to update Conty and get the latest packages, use whichever works best for you.
 
 * First of all, you can simply download latest release from the [releases page](https://github.com/Kron4ek/Conty/releases), i usually upload a new release about every month.
 * You can use the self-update feature (`./conty.sh -u`) integrated into Conty, it will update all integrated packages and will rebuild the squashfs/dwarfs image. Read the internal help for more information about it.
 * You can manually create a Conty executable with latest packages inside, read the "**How to create your own Conty executables**" section below.
-* You can clone the repository and [use GitHub Actions](#automated-github-actions) to get new Conty file according your specifications, every week (see below).
+* You can clone the repository and [use GitHub Actions](#automated-github-actions) to get new Conty file according your specifications, every week (see Automated section below).
 
-# How to create your own Conty executables
+## How to create your own Conty executables
 
-## Manual
+### Manual
 
 1. Obtain Arch Linux boostrap by using `create-arch-bootstrap.sh`. Before running it, you can edit the script if you want , for example, to include a different set of packages inside the container, or to include additional locales. Make sure you have enough free disk space, i recommend at least 10 GB of free space. Root rights are required for this step.
 
@@ -358,7 +373,7 @@ There are three main ways to update Conty and get the latest packages, use which
 
 For the sake of convenience, there are pre-compiled binaries (utils.tar.gz) of bwrap, squashfuse and dwarfs and their dependencies uploaded in this repo, `create-conty.sh` uses them by default. If you want, you can compile your own binaries by using `create-utils.sh`, it will compile all needed programs and create utils.tar.gz. If you are going to use your own utils.tar.gz, make sure to set correct `utils_size` in `conty-start.sh`, according to the size of your utils.tar.gz.
 
-## Automated (GitHub Actions)
+### Automated (GitHub Actions)
 
 This repository has GitHub workflows that allows you to make GitHub automatically generate a new Conty binary of your specification, every week or at any time you want.
 
@@ -368,13 +383,19 @@ In the Actions tab, go to the Conty CI section in the left-hand menu. Choose "Ru
 
 <details><summary>Illustration</summary><p>
 
+![image](https://github.com/bayazidbh/Conty/assets/26621899/c80d08b7-5c4d-41b1-8eab-90178eed7b96)
 
+![image](https://github.com/bayazidbh/Conty/assets/26621899/5cdd837a-d3cd-4c11-ad6b-bb6480ae8183)
+
+![image](https://github.com/bayazidbh/Conty/assets/26621899/c065f6c2-f75a-4cf2-9c3d-cf151112ca50)
+
+![image](https://github.com/bayazidbh/Conty/assets/26621899/6a18f7db-e6f2-44e3-9acf-1aee9af855a6)
 
 </p></details>
 
-# Useful Tips
+## Useful Tips
 
-## Sandbox
+### Sandbox
 
 Conty uses bubblewrap and thus supports filesystem sandboxing, X11 isolation is also supported (via Xephyr). By default
 sandbox is disabled and almost all directories and files on your system are available (visible and accessible) for the container.
@@ -424,7 +445,7 @@ These options (and any Conty-related arguments and variables exported in `env` a
 
 If you just want a sandboxing functionality but don't need a container with a full-size Linux distro inside (which is what Conty mainly is), i recommend to take a look directly at these projects: [bubblewrap](https://github.com/containers/bubblewrap) and [firejail](https://github.com/netblue30/firejail). Sandboxing is a good additional feature of Conty, but is not its main purpose.
 
-## About Wine
+### About Wine
 
 Conty releases from the releases page include `Wine-GE`, and if you build your own Conty you will get `Wine-Staging` by default (but you can change that).
 
