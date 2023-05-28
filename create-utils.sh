@@ -129,20 +129,14 @@ if [ "${build_dwarfs}" = "true" ]; then
 
 	git clone https://github.com/mhx/dwarfs.git --recursive
 
-    # Revert commit aeeddae, because otherwise dwarfs might use
-    # /usr/lib/locale/locale-archive file, which would break it
-    # on systems using musl libc
-    #
-    # This can also be worked around by setting LC_ALL=C, but for now
-    # let's revert the commit
-    cd dwarfs || exit 1
-    git revert --no-commit aeeddaecab5d4648780b0e11dc03fca19e23409a
-
-	# Fix compilation with GCC 13
-	cd folly
-	curl -#Lo gcc13.patch https://github.com/facebook/folly/commit/39d0cbd592a4d57c34bbf3c751ecd9a4055fbc45.patch
-	patch -Np1 < ./gcc13.patch || exit 1
-	cd ..
+    	# Revert commit aeeddae, because otherwise dwarfs might use
+    	# /usr/lib/locale/locale-archive file, which would break it
+	# on systems using musl libc
+	#
+	# This can also be worked around by setting LC_ALL=C, but for now
+	# let's revert the commit
+	cd dwarfs || exit 1
+	git revert --no-commit aeeddaecab5d4648780b0e11dc03fca19e23409a
 
 	mkdir build
 	cd build || exit 1
