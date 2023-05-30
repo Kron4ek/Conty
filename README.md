@@ -86,8 +86,10 @@ Conty can be run from a terminal emulator. To run a program inside Conty, simply
 ```
 $ ./conty.sh [command] [command_arguments]
 $ ./conty.sh steam
-$ ./conty.sh /usr/bin/bottles
-$ HOME_DIR=~/Documents/Conty ./conty.sh gamescope -f -- env WINEPREFIX=$HOME/wine-conty wine ./game.exe
+$ ./conty.sh bottles
+$ ./conty.sh /usr/bin/steam
+$ ./conty_lite.sh mangohud glxgears
+$ WINEPREFIX=$HOME/wine-conty ./conty.sh gamescope -f -- wine ./game.exe
 ```
 
 ### GUI
