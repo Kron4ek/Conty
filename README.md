@@ -79,19 +79,9 @@ $ ./conty.sh command command_arguments
 
 ## Usage
 
-### GUI
-
-Running Conty from a terminal emulator is not strictly required, if your file manager allows running executables, you can also run Conty from it in which case it will show its graphical interface.
-
-![gui](https://github.com/Kron4ek/Conty/assets/13851877/05856085-1925-47fa-a2ad-4f6165562d8b)
-
-Currently, to check the binaries / commands in Conty, you can use "Select File" and browsing to the `/usr/bin` directory, or by using `ls /usr/bin` using the "Open a terminal" option.
-
-You can also manually invoke the GUI from terminal with `conty.sh -g`.
-
 ### CLI
 
-Conty can be run from the terminal. To run a program inside Conty, simply put the path to `conty.sh` as a prefix and then insert the program's binary name or directory inside Conty.
+Conty can be run from a terminal emulator. To run a program inside Conty, simply put the path to `conty.sh` as a prefix and then insert the program's binary name or the full path to it inside Conty. Examples:
 
 ```
 $ ./conty.sh [command] [command_arguments]
@@ -100,7 +90,18 @@ $ ./conty.sh /usr/bin/bottles
 $ HOME_DIR=~/Documents/Conty ./conty.sh gamescope -f -- env WINEPREFIX=$HOME/wine-conty wine ./game.exe
 ```
 
-There are many packages and usecases that is included in the default `conty.sh` in the release page, such as:
+### GUI
+
+Running Conty from a terminal emulator is not strictly required, if your file manager allows running executables, you can also run Conty from it in which case it will show its graphical interface. You can also manually invoke the GUI from terminal with `conty.sh -g`.
+
+![gui](https://github.com/Kron4ek/Conty/assets/13851877/05856085-1925-47fa-a2ad-4f6165562d8b)
+
+Currently, to check the binaries / commands in Conty, you can use "Select File" and browsing to the `/usr/bin` directory, or by using `ls /usr/bin` using the "Open a terminal" option.
+
+However, the GUI will not notify you about errors, so i recommend running Conty from a terminal emulator to see if there are any errors, at least if you've never used Conty before.
+
+---
+There are many packages and usecases that are included in the default `conty.sh` from the releases page, such as:
 
 <details><summary>File manager</summary><p>
 
@@ -350,7 +351,7 @@ There are a few ways to update Conty and get the latest packages, use whichever 
 
 * First of all, you can simply download latest release from the [releases page](https://github.com/Kron4ek/Conty/releases), i usually upload a new release about every month.
 * You can use the self-update feature (`./conty.sh -u`) integrated into Conty, it will update all integrated packages and will rebuild the squashfs/dwarfs image. Read the internal help for more information about it.
-* You can manually create a Conty executable with latest packages inside, read the "**How to create your own Conty executables**" section below.
+* You can manually create a Conty executable with latest packages inside, read the [How to create your own Conty executables](#how-to-create-your-own-conty-executables) section below.
 * You can clone the repository and [use GitHub Actions](#automated-github-actions) to get new Conty file according your specifications, every week (see Automated section below).
 
 ## How to create your own Conty executables
