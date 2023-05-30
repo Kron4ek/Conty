@@ -81,14 +81,17 @@ $ ./conty.sh command command_arguments
 
 ### CLI
 
-Conty can be run from a terminal emulator. To run a program inside Conty, simply put the path to `conty.sh` as a prefix and then insert the program's binary name or the full path to it inside Conty. Examples:
-
+Conty can be run from a terminal emulator. To run a program inside Conty, simply put the path to `conty.sh` as a prefix and then insert the program's binary name or the full path to it and launch arguments (if needed).
+```
+$ ./conty.sh [command] [command_arguments]
+```
+Examples:
 ```
 $ ./conty.sh [command] [command_arguments]
 $ ./conty.sh steam
 $ ./conty.sh bottles
 $ ./conty.sh /usr/bin/steam
-$ ./conty_lite.sh mangohud glxgears
+$ ./conty.sh mangohud glxgears
 $ WINEPREFIX=$HOME/wine-conty ./conty.sh gamescope -f -- wine ./game.exe
 ```
 
