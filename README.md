@@ -493,7 +493,7 @@ $ WINEFSYNC=1 ./conty.sh wine someapplication.exe
 * [squashfuse](https://github.com/vasi/squashfuse)
 * [dwarfs](https://github.com/mhx/dwarfs)
 * [fuse-overlayfs](https://github.com/containers/fuse-overlayfs)
-* * [zstd](https://github.com/facebook/zstd)
+* [zstd](https://github.com/facebook/zstd)
 * [busybox](https://busybox.net/)
 * [bash](https://www.gnu.org/software/bash/)
 * [archlinux](https://archlinux.org/)
