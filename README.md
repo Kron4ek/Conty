@@ -18,7 +18,7 @@ This is an easy to use compressed unprivileged Linux container packed into a sin
 * Supports Xorg, Wayland and XWayland.
 * Supports filesystem and X11 sandboxing (thanks to bubblewrap and xephyr).
 
-In its default release, it includes, among others, these apps: `Wine-GE, Steam, Lutris, PlayOnLinux, GameHub, Minigalaxy, Legendary, Bottles, MultiMC, MangoHud, Gamescope, RetroArch, PPSSPP, PCSX2, DuckStation, OBS Studio, OpenJDK, Firefox`.  The full list can be read in the [latest release's pkg_list.txt](https://github.com/Kron4ek/Conty/releases/latest/download/pkg_list.txt).
+In its default release, it includes, among others, these apps: `Wine-GE, Steam, Lutris, PlayOnLinux, GameHub, Minigalaxy, Legendary, Bottles, MultiMC, MangoHud, Gamescope, RetroArch, PPSSPP, PCSX2, DuckStation, OBS Studio, OpenJDK, Firefox`. The full list can be read in the [latest release's pkg_list.txt](https://github.com/Kron4ek/Conty/releases/latest/download/pkg_list.txt).
 
 If these applications are not enough, you can install additional applications or run external binaries from, for example, your home directory.
 
@@ -474,17 +474,14 @@ $ WINEFSYNC=1 ./conty.sh wine someapplication.exe
 
 ## Known issues
 
-* Nvidia users with the proprietary driver will experience graphics acceleration problems (probably graphical applications won't work at all) if their Nvidia kernel module version mismatches the version of the Nvidia libraries inside Conty. This applies only to the proprietary driver, Nouveau should work fine without any additional actions (of course, if your GPU is supported by it). AMD and Intel GPUs are not affected by this issue.
+* Nvidia users with the proprietary driver will experience problems running graphical applications if their Nvidia kernel module version mismatches the version of the Nvidia libraries inside Conty. This applies only to the proprietary driver, Nouveau should work fine without any additional actions (of course, if your GPU is supported by it). AMD and Intel GPUs are not affected by this issue.
 
-    For example, if the version of your Nvidia kernel module is 460.56 and the libraries inside the container are from 460.67 version, then graphics acceleration will not work.
+    For example, if the version of your Nvidia kernel module is 460.56 and the libraries inside the container are from 460.67 version, then you won't be able to run graphical applications.
 
     There are three solutions to this problem:
-    * The first and the easiest solution is to use the `NVIDIA_HANDLER` feature of Conty, it will automatically download and pass the appropriate driver version into the container. It hasn't been widely tested yet, so i would appreciate if you leave a feedback about this feature [here](https://github.com/Kron4ek/Conty/discussions/74). Fuse3 is required for this feature. To enable this feature, run Conty like this:
-        ```
-        $ NVIDIA_HANDLER=1 ./conty.sh [command] [arguments]
-        ```
+    * The first and the easiest solution is to use the `NVIDIA_HANDLER` feature of Conty, it will automatically download and pass the appropriate driver version into the container. In the latest verison of Conty this feature is enabled by default and should fix the problem automatically. Fuse3 is required for this feature. It hasn't been extensively tested yet, so if it does not work for you, i would appreciate it if you could leave a feedback [here](https://github.com/Kron4ek/Conty/discussions/74), mentioning your Linux distro and Nvidia driver version.
     * The second solution is to install the same driver version as included inside Conty, which is usually the latest non-beta version. You can see the exact driver version in pkg_list.txt attached to each Conty release. Of course if your GPU is not supported by new drivers, this is not an option for you.
-    * The third solution is to (re)build Conty and include the same driver version as installed on your system. Read the "**How to create your own Conty executables**" section below, you will need to edit the **create-arch-bootstrap.sh** script or use the **enter-chroot.sh** script to include a different driver version. For instance, if you want to include legacy 470xx or 390xx drivers, edit the **create-arch-bootstrap.sh** script and replace `nvidia-utils` and `lib32-nvidia-utils` with `nvidia-470xx-utils` and `lib32-nvidia-470xx-utils` (replace 470xx with 390xx if you need 390xx drivers) in the `video_pkgs` variable, and then build Conty following the instructions.
+    * The third solution is to (re)build Conty and include the same driver version as installed on your system. Read the [How to create your own Conty executables](#how-to-create-your-own-conty-executables) section, you will need to edit the `create-arch-bootstrap.sh` script or use the `enter-chroot.sh` script to include a different driver version. For instance, if you want to include legacy 470xx or 390xx drivers, edit the `create-arch-bootstrap.sh` script and replace `nvidia-utils` and `lib32-nvidia-utils` with `nvidia-470xx-utils` and `lib32-nvidia-470xx-utils` (replace 470xx with 390xx if you need 390xx drivers) in the `video_pkgs` variable, and then build Conty following the instructions.
 * Some Windows applications running under Wine complain about lack of free disk space. This is because under Conty root partition is seen as full and read-only, so some applications think that there is no free space, even though you might have plenty of space in your HOME. The solution is simple, just run `winecfg`,  move to "Drives" tab and add your `/home` as an additional drive (for example, `D:`), and then install applications to that drive. More info [here](https://github.com/Kron4ek/Conty/issues/67#issuecomment-1460257910).
 * AppImages do not work under Conty. This is because bubblewrap, which is used in Conty, does not allow SUID bit (for security reasons), which is needed to mount AppImages. The solution is to extract an AppImage application before running it with Conty. Some AppImages support `--appimage-extract-and-run` argument, which you can also use.
 * Application may show errors (warnings) about locale, like "Unsupported locale setting" or "Locale not supported by C library". This happens because Conty has a limited set of generated locales inside it, and if your host system uses locale that is not available in Conty, applications may show such warnings. This is usually not a critical problem, most applications will continue to work without issues despite showing the errors. But if you want, you can [create](https://github.com/Kron4ek/Conty#how-to-create-your-own-conty-executables) a Conty executable and include any locales you need.
@@ -496,5 +493,8 @@ $ WINEFSYNC=1 ./conty.sh wine someapplication.exe
 * [squashfuse](https://github.com/vasi/squashfuse)
 * [dwarfs](https://github.com/mhx/dwarfs)
 * [fuse-overlayfs](https://github.com/containers/fuse-overlayfs)
+* * [zstd](https://github.com/facebook/zstd)
+* [busybox](https://busybox.net/)
+* [bash](https://www.gnu.org/software/bash/)
 * [archlinux](https://archlinux.org/)
 * [chaotic-aur](https://aur.chaotic.cx/)
