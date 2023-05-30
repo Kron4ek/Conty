@@ -62,7 +62,7 @@ Chmod only need to be executed once (per file). You can now [start using Conty](
 
 ###  Requirements
 
-The only requirements are **bash**, **fuse2** (or **fuse3**), **tar**, **gzip** and **coreutils**. And your /tmp directory should allow files execution (which it does by default on most distros).
+The only requirements are `fuse3` (or `fuse2`) and `coreutils`. And your `/tmp` directory should allow files execution (which it does by default on most distros).
 
 Your Linux kernel must be at least version 4.4 and should support unprivileged user namespaces. On some Linux distros this feature is disabled by default and can be enabled with sysfs:
 
@@ -206,10 +206,6 @@ Arguments:
         Additional disk space (about 6x the size of the current file)
         is needed during the update process.
 
-  -U    Same as -u with the addition of updating the init script and
-        the integrated utils. This option may break Conty in some cases,
-        use with caution!
-
   -v    Display version of this script
 
   -V    Display version of the image
@@ -234,9 +230,9 @@ Environment variables:
                     abstract socket or by disabling network access.
 
   HOME_DIR          Sets the home directory to a custom location.
-                    For example: HOME_DIR="/home/fenglengshun/custom_home"
+                    For example: HOME_DIR="/home/sandy/custom_home"
                     Note: If this variable is set the home directory
-                    inside the container will still appear as /home/fenglengshun,
+                    inside the container will still appear as /home/sandy,
                     even though the custom directory is used.
 
   QUIET_MODE        Disables all non-error Conty messages.
@@ -278,6 +274,12 @@ Environment variables:
   XEPHYR_SIZE       Sets the size of the Xephyr window. The default is
                     800x600.
 
+  CUSTOM_MNT        Sets a custom mount point for the Conty. This allows
+                    Conty to be used with already mounted filesystems.
+                    Conty will not mount its image on this mount point,
+                    but it will use files that are already present
+                    there.
+
 Additional notes:
 System directories/files will not be available inside the container if
 you set the SANDBOX variable but don't bind (mount) any items or set
@@ -293,10 +295,10 @@ example, from a file manager) will automatically launch the Conty's
 graphical interface.
 
 Besides updating all packages, you can also install and remove packages
-using the same -u (or -U) argument. To install packages add them as
-additional arguments, to remove add a minus sign (-) before their names.
-  To install: conty.sh -u pkgname1 pkgname2 pkgname3 ...
-  To remove: conty.sh -u -pkgname1 -pkgname2 -pkgname3 ...
+using the same -u argument. To install packages add them as additional
+arguments, to remove add a minus sign (-) before their names.
+  To install: conty-start.sh -u pkgname1 pkgname2 pkgname3 ...
+  To remove: conty-start.sh -u -pkgname1 -pkgname2 -pkgname3 ...
 In this case Conty will update all packages and additionally install
 and/or remove specified packages.
 
@@ -365,13 +367,13 @@ There are a few ways to update Conty and get the latest packages, use whichever 
     ```
     # ./enter-chroot.sh
     ```
-3. Now use `create-conty.sh` to create a SquashFS (or DwarFS) image and create a ready-to-use Conty executable. Root rights are not needed for this step. By default a SquashFS image with zstd compression (level 19) will be created, however, if you want, you can edit the script and enable DwarFS, select a different compression algorithm and/or compression level. If you enabled DwarFS in the script, make sure to change `utils_size` in `conty-start.sh` to the size of utils_dwarfs.tar.gz, this is important.
+3. Now use `create-conty.sh` to create a SquashFS (or DwarFS) image and create a ready-to-use Conty executable. Root rights are not needed for this step. By default a SquashFS image with zstd compression (level 19) will be created, however, if you want, you can edit the script and enable DwarFS, select a different compression algorithm and/or compression level.
 
     ```
     $ ./create-conty.sh
     ```
 
-For the sake of convenience, there are pre-compiled binaries (utils.tar.gz) of bwrap, squashfuse and dwarfs and their dependencies uploaded in this repo, `create-conty.sh` uses them by default. If you want, you can compile your own binaries by using `create-utils.sh`, it will compile all needed programs and create utils.tar.gz. If you are going to use your own utils.tar.gz, make sure to set correct `utils_size` in `conty-start.sh`, according to the size of your utils.tar.gz.
+For the sake of convenience, there are pre-compiled binaries (utils.tar.gz) of bwrap, squashfuse and dwarfs and their dependencies uploaded in this repo, `create-conty.sh` uses them by default. If you want, you can compile your own binaries by using `create-utils.sh`, it will compile all needed programs and create utils.tar.gz.
 
 ### Automated (GitHub Actions)
 
