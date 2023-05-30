@@ -87,7 +87,6 @@ $ ./conty.sh [command] [command_arguments]
 ```
 Examples:
 ```
-$ ./conty.sh [command] [command_arguments]
 $ ./conty.sh steam
 $ ./conty.sh bottles
 $ ./conty.sh /usr/bin/steam
