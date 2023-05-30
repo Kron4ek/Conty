@@ -230,9 +230,9 @@ Environment variables:
                     abstract socket or by disabling network access.
 
   HOME_DIR          Sets the home directory to a custom location.
-                    For example: HOME_DIR="/home/sandy/custom_home"
+                    For example: HOME_DIR="/home/user/custom_home"
                     Note: If this variable is set the home directory
-                    inside the container will still appear as /home/sandy,
+                    inside the container will still appear as /home/user,
                     even though the custom directory is used.
 
   QUIET_MODE        Disables all non-error Conty messages.
@@ -297,8 +297,8 @@ graphical interface.
 Besides updating all packages, you can also install and remove packages
 using the same -u argument. To install packages add them as additional
 arguments, to remove add a minus sign (-) before their names.
-  To install: conty-start.sh -u pkgname1 pkgname2 pkgname3 ...
-  To remove: conty-start.sh -u -pkgname1 -pkgname2 -pkgname3 ...
+  To install: conty.sh -u pkgname1 pkgname2 pkgname3 ...
+  To remove: conty.sh -u -pkgname1 -pkgname2 -pkgname3 ...
 In this case Conty will update all packages and additionally install
 and/or remove specified packages.
 
