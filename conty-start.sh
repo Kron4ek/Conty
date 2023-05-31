@@ -24,9 +24,9 @@ script_version="1.24.1"
 # size to 0
 init_size=40000
 bash_size=1339208
-script_size=35959
+script_size=35698
 busybox_size=1161112
-utils_size=4049807
+utils_size=4101345
 
 # Full path to the script
 if [ -n "${BASH_SOURCE[0]}" ]; then
@@ -158,10 +158,9 @@ Environment variables:
                          isolates X11 server with Xephyr.
                     The default is 1.
 
-  USE_OVERLAYFS     Mounts a writable fuse-overlayfs filesystem on top
+  USE_OVERLAYFS     Mounts a writable unionfs-fuse filesystem on top
                     of the read-only squashfs/dwarfs image, allowing to
-                    modify files inside it. Fuse3 is required for this
-                    feature.
+                    modify files inside it.
                     Overlays are stored in ~/.local/share/Conty. If you
                     want to undo any changes, delete the entire
                     directory from there.
@@ -171,7 +170,7 @@ Environment variables:
                     if you are using an Nvidia GPU, the proprietary
                     driver and encountering issues running graphical
                     applications. At least 2 GB of free disk space is
-                    required. And fuse3 is required for this feature.
+                    required. This function is enabled by default.
 
   USE_SYS_UTILS     Tells the script to use squashfuse/dwarfs and bwrap
                     installed on the system instead of the builtin ones.
@@ -347,15 +346,10 @@ mount_overlayfs () {
 	mkdir -p "${overlayfs_dir}"/merged
 
 	if [ ! "$(ls "${overlayfs_dir}"/merged 2>/dev/null)" ]; then
-		if command -v "${fuse_overlayfs}" 1>/dev/null; then
-			if [ -n "${fuse_version}" ]; then
-				"${fuse_overlayfs}" -o noatime,squash_to_uid="$(id -u)",squash_to_gid="$(id -g)",lowerdir="${mount_point}",upperdir="${overlayfs_dir}"/up,workdir="${overlayfs_dir}"/work "${overlayfs_dir}"/merged
-			else
-				echo "Fuse3 is required for fuse-overlayfs"
-				return 1
-			fi
+		if command -v "${unionfs_fuse}" 1>/dev/null; then
+			"${unionfs_fuse}" -o relaxed_permissions,cow,noatime "${overlayfs_dir}"/up=RW:"${mount_point}"=RO "${overlayfs_dir}"/merged
 		else
-			echo "fuse-overlayfs not found"
+			echo "unionfs-fuse not found"
 			return 1
 		fi
 	fi
@@ -547,7 +541,7 @@ if ([ "${USE_SYS_UTILS}" != 1 ] && [ "${utils_size}" -gt 0 ]) || [ "$1" = "-u" ]
 	fi
 
 	bwrap="${working_dir}"/utils/bwrap
-	fuse_overlayfs="${working_dir}"/utils/fuse-overlayfs
+	unionfs_fuse="${working_dir}"/utils/unionfs"${fuse_version}"
 
 	if [ ! -f "${mount_tool}" ] || [ ! -f "${bwrap}" ]; then
 		tail -c +$((init_size+bash_size+script_size+busybox_size+1)) "${script}" | head -c "${utils_size}" | tar -C "${working_dir}" -zxf -
@@ -563,7 +557,7 @@ if ([ "${USE_SYS_UTILS}" != 1 ] && [ "${utils_size}" -gt 0 ]) || [ "$1" = "-u" ]
 		chmod +x "${mount_tool}" 2>/dev/null
 		chmod +x "${bwrap}" 2>/dev/null
 		chmod +x "${extraction_tool}" 2>/dev/null
-		chmod +x "${fuse_overlayfs}" 2>/dev/null
+		chmod +x "${unionfs_fuse}" 2>/dev/null
 		chmod +x "${compression_tool}" 2>/dev/null
 	fi
 else
@@ -575,7 +569,7 @@ else
 	fi
 
 	bwrap=bwrap
-	fuse_overlayfs=fuse-overlayfs
+	unionfs_fuse=unionfs
 
 	if [ "${dwarfs_image}" = 1 ]; then
 		if ! command -v dwarfs 1>/dev/null && ! command -v dwarfs2 1>/dev/null; then
@@ -1046,7 +1040,7 @@ if [ "$(ls "${mount_point}" 2>/dev/null)" ] || \
 				echo "directory or in your HOME."
 			fi
 		else
-			echo "Failed to mount overlayfs"
+			echo "Failed to mount unionfs"
 			echo "Cannot update Conty"
 		fi
 
@@ -1055,9 +1049,9 @@ if [ "$(ls "${mount_point}" 2>/dev/null)" ] || \
 
 	if [ "${USE_OVERLAYFS}" = 1 ]; then
 		if mount_overlayfs; then
-			show_msg "Using overlayfs"
+			show_msg "Using unionfs"
 		else
-			echo "Failed to mount overlayfs"
+			echo "Failed to mount unionfs"
 			unset USE_OVERLAYFS
 		fi
 	fi
@@ -1080,7 +1074,7 @@ if [ "$(ls "${mount_point}" 2>/dev/null)" ] || \
 		          --bind "${nvidia_drivers_dir}" "${nvidia_drivers_dir}" \
 		          bash -c nvidia_driver_handler
 			else
-				echo "Nvidia driver handler disabled due to overlayfs errors"
+				echo "Nvidia driver handler disabled due to unionfs errors"
 				unset NVIDIA_HANDLER
 			fi
 		else

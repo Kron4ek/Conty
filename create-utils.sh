@@ -20,7 +20,7 @@ bwrap_version="0.8.0"
 lz4_version="1.9.4"
 zstd_version="1.5.5"
 squashfs_tools_version="4.6.1"
-fuse_overlayfs_version="1.12"
+unionfs_fuse_version="3.3"
 busybox_version="1.36.1"
 bash_version="5.2.15"
 
@@ -37,7 +37,7 @@ cd "${script_dir}"/build-utils || exit 1
 curl -#Lo lz4.tar.gz https://github.com/lz4/lz4/archive/refs/tags/v${lz4_version}.tar.gz
 curl -#Lo zstd.tar.gz https://github.com/facebook/zstd/archive/refs/tags/v${zstd_version}.tar.gz
 curl -#Lo bwrap.tar.gz https://github.com/containers/bubblewrap/archive/refs/tags/v${bwrap_version}.tar.gz
-curl -#Lo fuse-overlayfs.tar.gz https://github.com/containers/fuse-overlayfs/archive/refs/tags/v${fuse_overlayfs_version}.tar.gz
+curl -#Lo unionfs-fuse.tar.gz https://github.com/rpodgorny/unionfs-fuse/archive/refs/tags/v${unionfs_fuse_version}.tar.gz
 curl -#Lo busybox.tar.bz2 https://busybox.net/downloads/busybox-${busybox_version}.tar.bz2
 curl -#Lo bash.tar.gz https://ftp.gnu.org/gnu/bash/bash-${bash_version}.tar.gz
 cp "${script_dir}"/init.c init.c
@@ -45,7 +45,7 @@ cp "${script_dir}"/init.c init.c
 tar xf lz4.tar.gz
 tar xf zstd.tar.gz
 tar xf bwrap.tar.gz
-tar xf fuse-overlayfs.tar.gz
+tar xf unionfs-fuse.tar.gz
 tar xf busybox.tar.bz2
 tar xf bash.tar.gz
 
@@ -62,12 +62,18 @@ cd bubblewrap-"${bwrap_version}" || exit 1
 ./configure --disable-selinux --disable-man
 make -j"$(nproc)" DESTDIR="${script_dir}"/build-utils/bin install
 
-cd ../fuse-overlayfs-"${fuse_overlayfs_version}" || exit 1
-./autogen.sh
-./configure
+cd ../unionfs-fuse-"${unionfs_fuse_version}" || exit 1
+mkdir build-fuse3
+cd build-fuse3
+cmake ../ -DCMAKE_BUILD_TYPE=Release
+make -j"$(nproc)" DESTDIR="${script_dir}"/build-utils/bin install
+mv "${script_dir}"/build-utils/bin/usr/local/bin/unionfs "${script_dir}"/build-utils/bin/usr/local/bin/unionfs3
+mkdir ../build-fuse2
+cd ../build-fuse2
+cmake ../ -DCMAKE_BUILD_TYPE=Release -DWITH_LIBFUSE3=FALSE
 make -j"$(nproc)" DESTDIR="${script_dir}"/build-utils/bin install
 
-cd ../lz4-"${lz4_version}" || exit 1
+cd ../../lz4-"${lz4_version}" || exit 1
 make -j"$(nproc)" DESTDIR="${script_dir}"/build-utils/bin install
 
 cd ../zstd-"${zstd_version}" || exit 1
@@ -105,7 +111,8 @@ mv bin/usr/local/bin/squashfuse utils
 mv bin/usr/local/bin/squashfuse_ll utils
 mv bin/usr/local/bin/mksquashfs utils
 mv bin/usr/local/bin/unsquashfs utils
-mv bin/usr/local/bin/fuse-overlayfs utils
+mv bin/usr/local/bin/unionfs3 utils
+mv bin/usr/local/bin/unionfs utils
 mv bin/usr/local/lib/liblz4.so."${lz4_version}" utils/liblz4.so.1
 mv bin/usr/local/lib/libzstd.so."${zstd_version}" utils/libzstd.so.1
 mv bin/usr/local/lib/libfuseprivate.so.0.0.0 utils/libfuseprivate.so.0
@@ -192,7 +199,7 @@ mv init utils
 
 cat <<EOF > utils/info
 bubblewrap ${bwrap_version}
-fuse-overlayfs ${fuse_overlayfs_version}
+unionfs-fuse ${unionfs_fuse_version}
 busybox ${busybox_version}
 bash ${bash_version}
 lz4 ${lz4_version}
