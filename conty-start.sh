@@ -24,7 +24,7 @@ script_version="1.24.1"
 # size to 0
 init_size=40000
 bash_size=1339208
-script_size=35698
+script_size=36053
 busybox_size=1161112
 utils_size=4101345
 
@@ -356,48 +356,6 @@ mount_overlayfs () {
 }
 
 nvidia_driver_handler () {
-	if [ -f /sys/module/nvidia/version ]; then
-		nvidia_driver_version="$(cat /sys/module/nvidia/version)"
-	fi
-
-	if [ -z "${nvidia_driver_version}" ] && \
-		[ "$(ls /tmp/hostlibs/x86_64-linux-gnu/libGLX_nvidia.so.* 2>/dev/null)" ]; then
-		nvidia_driver_version="$(basename /tmp/hostlibs/x86_64-linux-gnu/libGLX_nvidia.so.*.* | tail -c +18)"
-	fi
-
-	if ([ "${nvidia_driver_version}" = "*.*" ] || [ -z "${nvidia_driver_version}" ]) && \
-		[ "$(ls /tmp/hostlibs/x86_64-linux-gnu/nvidia/current/libGLX_nvidia.so.* 2>/dev/null)" ]; then
-		nvidia_driver_version="$(basename /tmp/hostlibs/x86_64-linux-gnu/nvidia/current/libGLX_nvidia.so.*.* | tail -c +18)"
-	fi
-
-	if ([ "${nvidia_driver_version}" = "*.*" ] || [ -z "${nvidia_driver_version}" ]) && \
-		[ "$(ls /tmp/hostlibs/libGLX_nvidia.so.* 2>/dev/null)" ]; then
-		nvidia_driver_version="$(basename /tmp/hostlibs/libGLX_nvidia.so.*.* | tail -c +18)"
-	fi
-
-	if ([ "${nvidia_driver_version}" = "*.*" ] || [ -z "${nvidia_driver_version}" ]) && nvidia-smi &>/dev/null; then
-		nvidia_driver_version="$(nvidia-smi --query-gpu=driver_version --format=csv,noheader)"
-	fi
-
-	if ([ "${nvidia_driver_version}" = "*.*" ] || [ -z "${nvidia_driver_version}" ]) && modinfo nvidia &>/dev/null; then
-		nvidia_driver_version="$(modinfo -F version nvidia 2>/dev/null)"
-	fi
-
-	if [ "$(ls /usr/lib/libGLX_nvidia.so.* 2>/dev/null)" ]; then
-		container_nvidia_version="$(basename /usr/lib/libGLX_nvidia.so.*.* | tail -c +18)"
-	fi
-
-	if [ -z "${nvidia_driver_version}" ] || [ "${nvidia_driver_version}" = "" ]; then
-		echo "Unable to determine Nvidia driver version"
-		rm -f "${nvidia_drivers_dir}"/current-nvidia-version
-		exit 1
-	fi
-
-	if [ "$(cat "${nvidia_drivers_dir}"/current-nvidia-version 2>/dev/null)" = "${nvidia_driver_version}" ] || \
-		[ "${nvidia_driver_version}" = "${container_nvidia_version}" ]; then
-		exit
-	fi
-
 	OLD_PWD="${PWD}"
 
 	rm -rf "${nvidia_drivers_dir}"/nvidia.run "${nvidia_drivers_dir}"/nvidia-driver
@@ -414,7 +372,7 @@ nvidia_driver_handler () {
 	# If the previous download failed, get the URL from FlatHub repo
 	if [ ! -s nvidia.run ] || [ "$(stat -c%s nvidia.run)" -lt 30000000 ]; then
 		rm -f nvidia.run
-		driver_url="https:$(curl -#Lo - "https://raw.githubusercontent.com/flathub/org.freedesktop.Platform.GL.nvidia/master/data/nvidia-${nvidia_driver_version}-i386.data" | cut -d ':' -f 6)"
+		driver_url="https:$(curl -#Lo - "https://raw.githubusercontent.com/flathub/org.freedesktop.Platform.GL.nvidia/master/data/nvidia-${nvidia_driver_version}-x86_64.data" | cut -d ':' -f 6)"
 		curl -#Lo nvidia.run "${driver_url}"
 	fi
 
@@ -836,6 +794,10 @@ if [ "$(ls "${working_dir}"/running_* 2>/dev/null)" ] && [ ! "$(ls "${mount_poin
 	rm -f "${working_dir}"/running_*
 fi
 
+if [ -f "${nvidia_drivers_dir}"/lock ] && [ ! "$(ls "${working_dir}"/running_* 2>/dev/null)" ]; then
+	rm -f "${nvidia_drivers_dir}"/lock
+fi
+
 # Mount the image
 mkdir -p "${mount_point}"
 
@@ -880,7 +842,7 @@ if [ "$(ls "${mount_point}" 2>/dev/null)" ] || \
 		cd "${mount_point}"/usr/share/applications || exit 1
 
 		unset variables
-		vars="BASE_DIR DISABLE_NET DISABLE_X11 HOME_DIR SANDBOX SANDBOX_LEVEL USE_SYS_UTILS"
+		vars="BASE_DIR DISABLE_NET DISABLE_X11 HOME_DIR SANDBOX SANDBOX_LEVEL USE_SYS_UTILS CUSTOM_MNT"
 		for v in ${vars}; do
 			if [ -n "${!v}" ]; then
 				variables="${v}=\"${!v}\" ${variables}"
@@ -936,7 +898,7 @@ if [ "$(ls "${mount_point}" 2>/dev/null)" ] || \
 	fi
 
 	if [ "$1" = "-u" ] && [ -z "${script_is_symlink}" ] && [ -z "${CUSTOM_MNT}" ]; then
-		export overlayfs_dir="${HOME}"/.local/share/Conty/update_overlayfs
+		export overlayfs_dir="${HOME}"/.local/share/Conty/update_overlayfs_"${script_md5}"
 		rm -rf "${overlayfs_dir}"
 
 		if mount_overlayfs; then
@@ -954,8 +916,10 @@ if [ "$(ls "${mount_point}" 2>/dev/null)" ] || \
 			rm -f test_rw
 
 			OLD_PWD="${PWD}"
-			mkdir conty_update_temp
-			cd conty_update_temp || exit 1
+
+			conty_update_temp_dir="${PWD}"/conty_update_temp_"${script_md5}"
+			mkdir "${conty_update_temp_dir}"
+			cd "${conty_update_temp_dir}" || exit 1
 
 			if command -v awk 1>/dev/null; then
 				current_file_size="$(stat -c "%s" "${script}")"
@@ -1027,7 +991,7 @@ if [ "$(ls "${mount_point}" 2>/dev/null)" ] || \
 
 			fusermount"${fuse_version}" -uz "${overlayfs_dir}"/merged 2>/dev/null || \
 			umount --lazy "${overlayfs_dir}"/merged 2>/dev/null
-			rm -rf "${overlayfs_dir}" "${OLD_PWD}"/conty_update_temp
+			rm -rf "${overlayfs_dir}" "${conty_update_temp_dir}"
 
 			clear
 			echo "Conty has been updated!"
@@ -1058,21 +1022,80 @@ if [ "$(ls "${mount_point}" 2>/dev/null)" ] || \
 
 	if [ "${NVIDIA_HANDLER}" = 1 ]; then
 		if [ -f /sys/module/nvidia/version ] || lsmod | grep nvidia 1>/dev/null; then
+			if [ -f "${nvidia_drivers_dir}"/lock ]; then
+				echo "Nvidia driver is currently installing"
+				echo "Please wait a moment and run Conty again"
+				exit 1
+			fi
+
 			if mount_overlayfs; then
 				show_msg "Nvidia driver handler is enabled"
+
+				unset nvidia_skip_install
+				unset nvidia_driver_version
+
+				if [ -f /sys/module/nvidia/version ]; then
+					nvidia_driver_version="$(cat /sys/module/nvidia/version)"
+				fi
+
+				if [ -z "${nvidia_driver_version}" ]; then
+					sys_lib_dirs="/usr/lib64 \
+				                  /usr/lib \
+			                      /usr/lib/x86_64-linux-gnu/nvidia/current \
+			                      /usr/lib/x86_64-linux-gnu"
+
+					for dir in ${sys_lib_dirs}; do
+						if [ "$(ls ${dir}/libGLX_nvidia.so.*.* 2>/dev/null)" ]; then
+							nvidia_driver_version="$(basename ${dir}/libGLX_nvidia.so.*.* | tail -c +18)"
+							break
+						fi
+					done
+				fi
+
+				if [ -z "${nvidia_driver_version}" ] && nvidia-smi &>/dev/null; then
+					nvidia_driver_version="$(nvidia-smi --query-gpu=driver_version --format=csv,noheader)"
+				fi
+
+				if [ -z "${nvidia_driver_version}" ] && modinfo nvidia &>/dev/null; then
+					nvidia_driver_version="$(modinfo -F version nvidia 2>/dev/null)"
+				fi
+
+				if [ "$(ls "${mount_point}"/usr/lib/libGLX_nvidia.so.*.* 2>/dev/null)" ]; then
+					container_nvidia_version="$(basename "${mount_point}"/usr/lib/libGLX_nvidia.so.*.* | tail -c +18)"
+				fi
 
 				if [ -f "${nvidia_drivers_dir}"/current-nvidia-version ] && \
 					[ ! "$(ls "${overlayfs_dir}"/up 2>/dev/null)" ]; then
 					rm -f "${nvidia_drivers_dir}"/current-nvidia-version
 				fi
 
-				mkdir -p "${nvidia_drivers_dir}"
-				export -f nvidia_driver_handler
-				DISABLE_NET=0 QUIET_MODE=1 run_bwrap --tmpfs /tmp --tmpfs /var --tmpfs /run \
-		          --bind-try /usr/lib /tmp/hostlibs \
-		          --bind-try /usr/lib64 /tmp/hostlibs \
-		          --bind "${nvidia_drivers_dir}" "${nvidia_drivers_dir}" \
-		          bash -c nvidia_driver_handler
+				if [ -z "${nvidia_driver_version}" ] || [ "${nvidia_driver_version}" = "" ]; then
+					echo "Unable to determine Nvidia driver version"
+					rm -f "${nvidia_drivers_dir}"/current-nvidia-version
+					nvidia_skip_install=1
+				fi
+
+				if [ "${nvidia_driver_version}" = "${container_nvidia_version}" ]; then
+					rm -f "${nvidia_drivers_dir}"/current-nvidia-version
+					nvidia_skip_install=1
+				fi
+
+				if [ "$(cat "${nvidia_drivers_dir}"/current-nvidia-version 2>/dev/null)" = "${nvidia_driver_version}" ]; then
+					nvidia_skip_install=1
+				fi
+
+				if [ -z "${nvidia_skip_install}" ]; then
+					mkdir -p "${nvidia_drivers_dir}"
+					echo > "${nvidia_drivers_dir}"/lock
+
+					export nvidia_driver_version
+					export -f nvidia_driver_handler
+					DISABLE_NET=0 QUIET_MODE=1 run_bwrap --tmpfs /tmp --tmpfs /var --tmpfs /run \
+					--bind "${nvidia_drivers_dir}" "${nvidia_drivers_dir}" \
+					bash -c nvidia_driver_handler
+
+					rm -f "${nvidia_drivers_dir}"/lock
+				fi
 			else
 				echo "Nvidia driver handler disabled due to unionfs errors"
 				unset NVIDIA_HANDLER
