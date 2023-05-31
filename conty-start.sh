@@ -15,7 +15,7 @@ if (( EUID == 0 )) && [ -z "$ALLOW_ROOT" ]; then
 fi
 
 # Conty version
-script_version="1.24"
+script_version="1.24.1"
 
 # Important variables to manually adjust after modification!
 # Needed to avoid problems with mounting due to an incorrect offset.
@@ -24,7 +24,7 @@ script_version="1.24"
 # size to 0
 init_size=40000
 bash_size=1339208
-script_size=35842
+script_size=35959
 busybox_size=1161112
 utils_size=4049807
 
@@ -33,6 +33,10 @@ if [ -n "${BASH_SOURCE[0]}" ]; then
 	script_literal="${BASH_SOURCE[0]}"
 else
 	script_literal="${0}"
+
+	if [ "${script_literal}" = "$(basename "${script_literal}")" ]; then
+		script_literal="$(command -v "${0}")"
+	fi
 fi
 script_name="$(basename "${script_literal}")"
 script="$(readlink -f "${script_literal}")"
