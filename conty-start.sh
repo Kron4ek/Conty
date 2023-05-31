@@ -589,7 +589,6 @@ run_bwrap () {
 	unset non_standard_home
 	unset xsockets
 	unset mount_opt
-	unset pacman_dirs
 
 	if [ -n "${WAYLAND_DISPLAY}" ]; then
 		wayland_socket="${WAYLAND_DISPLAY}"
@@ -718,8 +717,6 @@ run_bwrap () {
 	if ([ "${NVIDIA_HANDLER}" = 1 ] || [ "${USE_OVERLAYFS}" = 1 ]) && \
 		[ "$(ls "${overlayfs_dir}"/merged 2>/dev/null)" ]; then
 		newroot_path="${overlayfs_dir}"/merged
-		pacman_dirs=(--bind-try "${overlayfs_dir}"/merged/var/lib/pacman /var/lib/pacman \
-		             --bind-try "${overlayfs_dir}"/merged/var/cache/pacman /var/cache/pacman)
 	else
 		newroot_path="${mount_point}"
 	fi
@@ -757,7 +754,6 @@ run_bwrap () {
 			"${non_standard_home[@]}" \
 			"${sandbox_params[@]}" \
 			"${custom_home[@]}" \
-			"${pacman_dirs[@]}" \
 			"${mount_opt[@]}" \
 			"${xsockets[@]}" \
 			"${unshare_net[@]}" \
