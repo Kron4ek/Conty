@@ -24,7 +24,7 @@ script_version="1.24.1"
 # size to 0
 init_size=40000
 bash_size=1339208
-script_size=36053
+script_size=36068
 busybox_size=1161112
 utils_size=4101345
 
@@ -347,7 +347,7 @@ mount_overlayfs () {
 
 	if [ ! "$(ls "${overlayfs_dir}"/merged 2>/dev/null)" ]; then
 		if command -v "${unionfs_fuse}" 1>/dev/null; then
-			"${unionfs_fuse}" -o relaxed_permissions,cow,noatime "${overlayfs_dir}"/up=RW:"${mount_point}"=RO "${overlayfs_dir}"/merged
+			launch_wrapper "${unionfs_fuse}" -o relaxed_permissions,cow,noatime "${overlayfs_dir}"/up=RW:"${mount_point}"=RO "${overlayfs_dir}"/merged
 		else
 			echo "unionfs-fuse not found"
 			return 1
