@@ -20,7 +20,6 @@ squashfs_compressor_arguments=(-b 1M -comp ${squashfs_compressor} -Xcompression-
 #squashfs_compressor_arguments=(-b 256K -comp "${squashfs_compressor}" -Xhc)
 
 # Use DwarFS instead of SquashFS
-# If you enable this, don't forget to change utils_size in conty-start.sh
 dwarfs="false"
 dwarfs_compressor_arguments=(-l7 -C zstd:level=19 --metadata-compression null \
                             -S 22 -B 2 --order nilsimsa:255:60000:60000 \
