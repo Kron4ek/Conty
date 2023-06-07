@@ -15,7 +15,7 @@ if (( EUID == 0 )) && [ -z "$ALLOW_ROOT" ]; then
 fi
 
 # Conty version
-script_version="1.24.1"
+script_version="1.24.2"
 
 # Important variables to manually adjust after modification!
 # Needed to avoid problems with mounting due to an incorrect offset.
@@ -987,6 +987,7 @@ if [ "$(ls "${mount_point}" 2>/dev/null)" ] || \
 
 			fusermount"${fuse_version}" -uz "${overlayfs_dir}"/merged 2>/dev/null || \
 			umount --lazy "${overlayfs_dir}"/merged 2>/dev/null
+			chmod -R 700 "${overlayfs_dir}"
 			rm -rf "${overlayfs_dir}" "${conty_update_temp_dir}"
 
 			clear
