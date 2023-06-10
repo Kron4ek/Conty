@@ -835,7 +835,8 @@ if [ "$(ls "${mount_point}" 2>/dev/null)" ] || \
 		fi
 
 		mkdir -p "${applications_dir}"
-		cd "${mount_point}"/usr/share/applications || exit 1
+		cp -r "${mount_point}"/usr/share/applications "${applications_dir}"_temp
+		cd "${applications_dir}"_temp || exit 1
 
 		unset variables
 		vars="BASE_DIR DISABLE_NET DISABLE_X11 HOME_DIR SANDBOX SANDBOX_LEVEL USE_SYS_UTILS CUSTOM_MNT"
@@ -858,6 +859,10 @@ if [ "$(ls "${mount_point}" 2>/dev/null)" ] || \
 					continue
 				fi
 
+				if [ -L "${f}" ]; then
+					cp --remove-destination "${mount_point}"/"$(readlink "${f}")" "${f}"
+				fi
+
 				while read -r line; do
 					line_function="$(echo "${line}" | head -c 4)"
 
@@ -876,6 +881,7 @@ if [ "$(ls "${mount_point}" 2>/dev/null)" ] || \
 
 		mkdir -p "${HOME}"/.local/share
 		cp -nr "${mount_point}"/usr/share/icons "${HOME}"/.local/share 2>/dev/null
+		rm -rf "${applications_dir}"_temp
 
 		echo "Desktop files have been exported"
 
