@@ -762,7 +762,9 @@ run_bwrap () {
 			"$@"
 }
 
-trap_exit () {
+exit_function () {
+	sleep 5
+
 	rm -f "${working_dir}"/running_"${script_id}"
 
 	if [ ! "$(ls "${working_dir}"/running_* 2>/dev/null)" ]; then
@@ -780,6 +782,10 @@ trap_exit () {
 			rm -rf "${working_dir}"
 		fi
 	fi
+}
+
+trap_exit () {
+	exit_function &
 
 	exit
 }
