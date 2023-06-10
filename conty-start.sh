@@ -385,16 +385,20 @@ nvidia_driver_handler () {
 			cd nvidia-driver || exit 1
 			chmod +x nvidia-installer
 			fakeroot ./nvidia-installer --silent --no-x-check --no-kernel-module &>/dev/null
-			echo "${nvidia_driver_version}" > "${nvidia_drivers_dir}"/current-nvidia-version
 			rm -rf "${nvidia_drivers_dir}"/nvidia.run "${nvidia_drivers_dir}"/nvidia-driver
-			echo "The driver installed successfully"
+
+			if [ -s /usr/lib/libGLX_nvidia.so."${nvidia_driver_version}" ] || \
+			   [ -s /usr/lib/libGL.so."${nvidia_driver_version}" ]; then
+				echo "${nvidia_driver_version}" > "${nvidia_drivers_dir}"/current-nvidia-version
+				echo "The driver installed successfully"
+			else
+				echo "Failed to install the driver"
+			fi
 		else
 			echo "Failed to extract the driver"
-			exit 1
 		fi
 	else
 		echo "Failed to download the driver"
-		exit 1
 	fi
 
 	cd "${OLD_PWD}"
@@ -782,12 +786,12 @@ exit_function () {
 			rm -rf "${working_dir}"
 		fi
 	fi
+
+	exit
 }
 
 trap_exit () {
 	exit_function &
-
-	exit
 }
 
 trap 'trap_exit' EXIT
