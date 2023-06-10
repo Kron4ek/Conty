@@ -820,6 +820,10 @@ else
 	               "${script}" "${mount_point}")
 fi
 
+# Increase file descriptors limit in case soft and hard limits are different
+# Useful for unionfs-fuse and for some games
+ulimit -n $(ulimit -Hn) &>/dev/null
+
 # Mount the image
 mkdir -p "${mount_point}"
 
