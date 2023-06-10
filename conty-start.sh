@@ -794,14 +794,26 @@ if [ -f "${nvidia_drivers_dir}"/lock ] && [ ! "$(ls "${working_dir}"/running_* 2
 	rm -f "${nvidia_drivers_dir}"/lock
 fi
 
+if [ "${dwarfs_image}" = 1 ]; then
+	mount_command=("${mount_tool}" \
+	               "${script}" "${mount_point}" \
+	               -o offset="${offset}" \
+	               -o debuglevel=error \
+	               -o workers="${dwarfs_num_workers}" \
+	               -o mlock=try \
+	               -o no_cache_image \
+	               -o cache_files \
+	               -o cachesize="${dwarfs_cache_size}")
+else
+	mount_command=("${mount_tool}" \
+	               -o offset="${offset}",ro \
+	               "${script}" "${mount_point}")
+fi
+
 # Mount the image
 mkdir -p "${mount_point}"
 
-if [ "$(ls "${mount_point}" 2>/dev/null)" ] || \
-	( [ "${dwarfs_image}" != 1 ] && launch_wrapper "${mount_tool}" -o offset="${offset}",ro "${script}" "${mount_point}" ) || \
-	launch_wrapper "${mount_tool}" "${script}" "${mount_point}" -o offset="${offset}" -o debuglevel=error -o workers="${dwarfs_num_workers}" \
-	-o mlock=try -o no_cache_image -o cache_files -o cachesize="${dwarfs_cache_size}"; then
-
+if [ "$(ls "${mount_point}" 2>/dev/null)" ] || launch_wrapper "${mount_command[@]}"; then
 	if [ "$1" = "-m" ] && [ -z "${script_is_symlink}" ]; then
 		if [ ! -f "${working_dir}"/running_mount ]; then
 			echo 1 > "${working_dir}"/running_mount
