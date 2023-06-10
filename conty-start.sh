@@ -24,7 +24,7 @@ script_version="1.24.2"
 # size to 0
 init_size=40000
 bash_size=1339208
-script_size=36068
+script_size=36878
 busybox_size=1161112
 utils_size=4101345
 
@@ -41,16 +41,16 @@ fi
 script_name="$(basename "${script_literal}")"
 script="$(readlink -f "${script_literal}")"
 
-# MD5 of the last 1 MB of the file
-script_md5="$(tail -c 1000000 "${script}" | md5sum | head -c 7)"
+# MD5 of the first 4 MB and the last 1 MB of the script
+script_md5="$(head -c 4000000 "${script}" | md5sum | head -c 7)"_"$(tail -c 1000000 "${script}" | md5sum | head -c 7)"
 script_id="$$"
 
 # Working directory where the utils will be extracted
 # And where the image will be mounted
-# The default path is /tmp/scriptname_username_scriptmd5
+# The default path is /tmp/conty_username_scriptmd5
 # And if /tmp is mounted with noexec, the default path
-# is ~/.local/share/Conty/scriptname_username_scriptmd5
-conty_dir_name="$(basename "${script}")"_"${USER}"_"${script_md5}"
+# is ~/.local/share/Conty/conty_username_scriptmd5
+conty_dir_name=conty_"${USER}"_"${script_md5}"
 
 if  [ -z "${BASE_DIR}" ]; then
 	export working_dir=/tmp/"${conty_dir_name}"
@@ -725,6 +725,12 @@ run_bwrap () {
 		newroot_path="${mount_point}"
 	fi
 
+	if [ "${RW_ROOT}" = 1 ]; then
+		bind_root=(--bind "${newroot_path}" /)
+	else
+		bind_root=(--ro-bind "${newroot_path}" /)
+	fi
+
 	conty_variables="BASE_DIR DISABLE_NET DISABLE_X11 HOME_DIR QUIET_MODE \
 					SANDBOX SANDBOX_LEVEL USE_OVERLAYFS NVIDIA_HANDLER \
 					USE_SYS_UTILS XEPHYR_SIZE CUSTOM_MNT"
@@ -736,7 +742,7 @@ run_bwrap () {
 	show_msg
 
 	launch_wrapper "${bwrap}" \
-			--bind "${newroot_path}" / \
+			"${bind_root[@]}" \
 			--dev-bind /dev /dev \
 			--ro-bind /sys /sys \
 			--bind-try /tmp /tmp \
@@ -1043,6 +1049,7 @@ if [ "$(ls "${mount_point}" 2>/dev/null)" ] || launch_wrapper "${mount_command[@
 	if [ "${USE_OVERLAYFS}" = 1 ]; then
 		if mount_overlayfs; then
 			show_msg "Using unionfs"
+			RW_ROOT=1
 		else
 			echo "Failed to mount unionfs"
 			unset USE_OVERLAYFS
@@ -1119,7 +1126,7 @@ if [ "$(ls "${mount_point}" 2>/dev/null)" ] || launch_wrapper "${mount_command[@
 
 					export nvidia_driver_version
 					export -f nvidia_driver_handler
-					DISABLE_NET=0 QUIET_MODE=1 run_bwrap --tmpfs /tmp --tmpfs /var --tmpfs /run \
+					DISABLE_NET=0 QUIET_MODE=1 RW_ROOT=1 run_bwrap --tmpfs /tmp --tmpfs /var --tmpfs /run \
 					--bind "${nvidia_drivers_dir}" "${nvidia_drivers_dir}" \
 					bash -c nvidia_driver_handler
 
