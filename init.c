@@ -46,7 +46,7 @@ int main(int argc, char* argv[])
 	fread(bash_script, SCRIPT_SIZE, 1, current_program);
 	fclose(current_program);
 
-    char * bash_args[MAX_ARGS_NUMBER + 5] = {program_path, "-c", "--", bash_script, argv[0]};
+	char * bash_args[MAX_ARGS_NUMBER + 5] = {program_path, "-c", "--", bash_script, argv[0]};
 
 	int k = 5;
 	for (int i = 1; i < argc; i++, k++) {

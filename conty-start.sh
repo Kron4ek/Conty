@@ -28,7 +28,7 @@ script_version="1.24.2"
 # size to 0
 init_size=50000
 bash_size=1490760
-script_size=37189
+script_size=37197
 busybox_size=1161112
 utils_size=4321630
 
@@ -237,8 +237,8 @@ dwarfs_num_workers="2"
 # These arguments are used to rebuild the image when using the self-update function
 squashfs_comp_arguments=(-b 1M -comp zstd -Xcompression-level 19)
 dwarfs_comp_arguments=(-l7 -C zstd:level=19 --metadata-compression null \
-                       -S 22 -B 2 --order nilsimsa:255:60000:60000 \
-                       --bloom-filter-size 11 -W 15 -w 3 --no-create-timestamp)
+                            -S 21 -B 1 --order nilsimsa:255:60000:60000 \
+                            -W 12 -w 4 --no-create-timestamp)
 
 # Enable NVIDIA_HANDLER by default
 NVIDIA_HANDLER="${NVIDIA_HANDLER:-1}"
