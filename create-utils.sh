@@ -27,7 +27,7 @@ bash_version="5.2.15"
 export CC=gcc
 export CXX=g++
 
-export CFLAGS="-O2"
+export CFLAGS="-O3"
 export CXXFLAGS="${CFLAGS}"
 export LDFLAGS="-Wl,-O1,--sort-common,--as-needed"
 
@@ -175,8 +175,8 @@ fi
 
 find utils -type f -exec strip --strip-unneeded {} \; 2>/dev/null
 
-init_program_size=40000
-conty_script_size="$(($(stat -c%s "${script_dir}"/conty-start.sh)+1000))"
+init_program_size=50000
+conty_script_size="$(($(stat -c%s "${script_dir}"/conty-start.sh)+2000))"
 bash_size="$(stat -c%s utils/bash)"
 
 sed -i "s/#define SCRIPT_SIZE 0/#define SCRIPT_SIZE ${conty_script_size}/g" init.c
