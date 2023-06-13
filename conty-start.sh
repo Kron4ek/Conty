@@ -1,6 +1,10 @@
 #!/usr/bin/env bash
 ## Dependencies: bash gzip fuse2 (or fuse3) tar coreutils
 
+LD_PRELOAD_ORIG="${LD_PRELOAD:-}"
+LD_LIBRARY_PATH_ORIG="${LD_LIBRARY_PATH:-}"
+unset LD_PRELOAD LD_LIBRARY_PATH
+
 msg_root="
 Do not run this script as root!
 
@@ -22,11 +26,11 @@ script_version="1.24.2"
 #
 # If you build Conty without some of the components, you can set their
 # size to 0
-init_size=40000
-bash_size=1339208
-script_size=36878
+init_size=50000
+bash_size=1490760
+script_size=37189
 busybox_size=1161112
-utils_size=4101345
+utils_size=4321630
 
 # Full path to the script
 if [ -n "${BASH_SOURCE[0]}" ]; then
@@ -593,6 +597,7 @@ run_bwrap () {
 	unset non_standard_home
 	unset xsockets
 	unset mount_opt
+	unset ld_vars
 
 	if [ -n "${WAYLAND_DISPLAY}" ]; then
 		wayland_socket="${WAYLAND_DISPLAY}"
@@ -739,6 +744,9 @@ run_bwrap () {
 		unset_vars+=(--unsetenv "${v}")
 	done
 
+	[ -n "${LD_PRELOAD_ORIG}" ] && ld_vars+=(--setenv LD_PRELOAD "${LD_PRELOAD_ORIG}")
+	[ -n "${LD_LIBRARY_PATH_ORIG}" ] && ld_vars+=(--setenv LD_LIBRARY_PATH "${LD_LIBRARY_PATH_ORIG}")
+
 	show_msg
 
 	launch_wrapper "${bwrap}" \
@@ -768,6 +776,7 @@ run_bwrap () {
 			"${xsockets[@]}" \
 			"${unshare_net[@]}" \
 			"${unset_vars[@]}" \
+			"${ld_vars[@]}" \
 			--setenv PATH "${CUSTOM_PATH}" \
 			"$@"
 }
