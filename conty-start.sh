@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 ## Dependencies: bash gzip fuse2 (or fuse3) tar coreutils
 
-LD_PRELOAD_ORIG="${LD_PRELOAD:-}"
-LD_LIBRARY_PATH_ORIG="${LD_LIBRARY_PATH:-}"
+LD_PRELOAD_ORIG="${LD_PRELOAD}"
+LD_LIBRARY_PATH_ORIG="${LD_LIBRARY_PATH}"
 unset LD_PRELOAD LD_LIBRARY_PATH
 
 msg_root="
@@ -28,7 +28,7 @@ script_version="1.24.2"
 # size to 0
 init_size=50000
 bash_size=1490760
-script_size=37197
+script_size=37193
 busybox_size=1161112
 utils_size=4321630
 
@@ -782,7 +782,7 @@ run_bwrap () {
 }
 
 exit_function () {
-	sleep 5
+	sleep 3
 
 	rm -f "${working_dir}"/running_"${script_id}"
 
