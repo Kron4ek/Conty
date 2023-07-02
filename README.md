@@ -422,6 +422,8 @@ Note that when **SANDBOX** is enabled, none of user files are accessible or visi
 
 Also note that `--bind`, `--ro-bind`, **HOME_DIR** and **DISABLE_NET** can be used even if **SANDBOX** is disabled.
 
+For even more security you can run Conty under a separate user account. An example of how to run applications under a separate user can be seen, for instance, [here](https://wiki.archlinux.org/title/wine#Running_Wine_under_a_separate_user_account).
+
 <details><summary>Example</summary><p>
 Example 1
 
