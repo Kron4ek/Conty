@@ -60,7 +60,11 @@ unmount_chroot () {
 }
 
 run_in_chroot () {
-	chroot "${bootstrap}" /usr/bin/env LANG=en_US.UTF-8 TERM=xterm PATH="/bin:/sbin:/usr/bin:/usr/sbin" "$@"
+	if [ -n "${CHROOT_AUR}" ]; then
+		chroot --userspec=aur:aur "${bootstrap}" /usr/bin/env LANG=en_US.UTF-8 TERM=xterm PATH="/bin:/sbin:/usr/bin:/usr/sbin" "$@"
+	else
+		chroot "${bootstrap}" /usr/bin/env LANG=en_US.UTF-8 TERM=xterm PATH="/bin:/sbin:/usr/bin:/usr/sbin" "$@"
+	fi
 }
 
 generate_localegen () {
@@ -135,9 +139,9 @@ wine_pkgs="wine-staging winetricks-git wine-nine wineasio \
 	vkd3d lib32-vkd3d libgphoto2 ffmpeg gst-plugins-good gst-plugins-bad \
 	gst-plugins-ugly gst-plugins-base lib32-gst-plugins-good lib32-gst-plugins-base gst-libav"
 
-# List of packages to install
+# Packages to install
 # You can remove packages that you don't need
-# Besides packages from the official Arch repos, you can list
+# Apart from packages from the official Arch repos, you can specify
 # packages from the Chaotic-AUR repo here
 export packagelist="${audio_pkgs} ${video_pkgs} ${wine_pkgs} \
 	base-devel nano ttf-dejavu ttf-liberation lutris steam firefox \
@@ -148,6 +152,9 @@ export packagelist="${audio_pkgs} ${video_pkgs} ${wine_pkgs} \
 	wayland lib32-wayland qt5-wayland retroarch xorg-server-xephyr \
 	openbox obs-studio gamehub minigalaxy legendary gamescope \
 	pcsx2-git multimc5 yt-dlp bottles playonlinux minizip duckstation-git"
+
+# If you want to install AUR packages, specify them in this variable
+export aur_packagelist=""
 
 curl -#LO 'https://cdn-mirror.chaotic.cx/chaotic-aur/chaotic-keyring.pkg.tar.zst'
 curl -#LO 'https://cdn-mirror.chaotic.cx/chaotic-aur/chaotic-mirrorlist.pkg.tar.zst'
@@ -272,10 +279,24 @@ if [ -f "${bootstrap}"/opt/pacman_failed.txt ]; then
 	exit 1
 fi
 
+if [ -n "${aur_packagelist}" ]; then
+	run_in_chroot pacman --noconfirm --needed -S base-devel yay
+	run_in_chroot useradd -m -G wheel aur
+	echo "%wheel ALL=(ALL:ALL) NOPASSWD: ALL" >> "${bootstrap}"/etc/sudoers
+
+	for p in ${aur_packagelist}; do
+		aur_pkgs="${aur_pkgs} aur/${p}"
+	done
+	export aur_pkgs
+
+	CHROOT_AUR=1 HOME=/home/aur run_in_chroot yay --noconfirm --removemake --nocleanmenu --nodiffmenu --builddir /home/aur -a -S ${aur_pkgs}
+	rm -rf "${bootstrap}"/home/aur
+fi
+
 run_in_chroot locale-gen
 
 # Generate a list of installed packages
-run_in_chroot pacman -Qn > "${bootstrap}"/pkglist.x86_64.txt
+run_in_chroot pacman -Q > "${bootstrap}"/pkglist.x86_64.txt
 
 unmount_chroot
 
