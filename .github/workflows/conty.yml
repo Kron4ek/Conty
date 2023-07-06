@@ -17,7 +17,26 @@ jobs:
           chmod +x create-arch-bootstrap.sh create-conty.sh
           sed -i 's/sed/#sed/g' create-arch-bootstrap.sh
           sudo ./create-arch-bootstrap.sh && ./create-conty.sh
+          
+      - uses: dev-drprasad/delete-tag-and-release@v1.0
+        with:
+         tag_name: continuous
+         github_token: ${{ secrets.GITHUB_TOKEN }}
+         delete_release: true
 
+      - uses: rickstaa/action-create-tag@v1
+        id: "tag_create"
+        with:
+          tag: "continuous"
+
+      - uses: softprops/action-gh-release@v1
+        with:
+          files: conty.sh
+          prerelease: true
+          draft: true
+          tag_name: continuous
+          name: Continuous build
+          
       - uses: actions/upload-artifact@v3
         with:
           name: Conty
