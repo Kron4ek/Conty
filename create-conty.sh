@@ -11,13 +11,13 @@ USE_SYS_UTILS=0
 # Supported compression algorithms: lz4, zstd, gzip, xz, lzo
 # These are the algorithms supported by the integrated squashfuse
 # However, your squashfs-tools (mksquashfs) may not support some of them
-squashfs_compressor="zstd"
-squashfs_compressor_arguments=(-b 1M -comp ${squashfs_compressor} -Xcompression-level 19)
+#squashfs_compressor="zstd"
+#squashfs_compressor_arguments=(-b 1M -comp ${squashfs_compressor} -Xcompression-level 19)
 
 # Uncomment these variables if your mksquashfs does not support zstd or
 # if you want faster compression/decompression (at the cost of compression ratio)
-#squashfs_compressor="lz4"
-#squashfs_compressor_arguments=(-b 256K -comp "${squashfs_compressor}" -Xhc)
+squashfs_compressor="lz4"
+squashfs_compressor_arguments=(-b 256K -comp "${squashfs_compressor}")
 
 # Use DwarFS instead of SquashFS
 dwarfs="false"
