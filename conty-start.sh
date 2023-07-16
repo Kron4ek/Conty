@@ -31,7 +31,7 @@ script_version="1.24.3"
 # size to 0
 init_size=50000
 bash_size=1490760
-script_size=37233
+script_size=37478
 busybox_size=1161112
 utils_size=4327795
 
@@ -412,6 +412,11 @@ nvidia_driver_handler () {
 }
 
 update_conty () {
+	if [ "$(ls /var/cache/pacman/pkg_host 2>/dev/null)" ]; then
+		mkdir -p /var/cache/pacman/pkg
+		ln -s /var/cache/pacman/pkg_host/* /var/cache/pacman/pkg 2>/dev/null
+	fi
+
 	reflector --protocol https --score 5 --sort rate --save /etc/pacman.d/mirrorlist
 	fakeroot -- pacman -Syy 2>/dev/null
 	date -u +"%d-%m-%Y %H:%M (DMY UTC)" > /version
@@ -1006,8 +1011,10 @@ if [ "$(ls "${mount_point}" 2>/dev/null)" ] || launch_wrapper "${mount_command[@
 			echo "Updating and installing packages..."
 			cp -r "${mount_point}"/etc/pacman.d/gnupg "${overlayfs_dir}"/gnupg
 			export -f update_conty
-			run_bwrap --bind "${overlayfs_dir}"/gnupg /etc/pacman.d/gnupg \
+			run_bwrap \
+			    --bind "${overlayfs_dir}"/gnupg /etc/pacman.d/gnupg \
 				--bind "${overlayfs_dir}"/merged/var /var \
+				--bind-try /var/cache/pacman/pkg /var/cache/pacman/pkg_host \
 				bash -c update_conty
 
 			if [ "${dwarfs_image}" = 1 ]; then
