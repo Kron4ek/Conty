@@ -31,7 +31,7 @@ script_version="1.24.3"
 # size to 0
 init_size=50000
 bash_size=1490760
-script_size=37333
+script_size=37233
 busybox_size=1161112
 utils_size=4327795
 
@@ -1007,8 +1007,7 @@ if [ "$(ls "${mount_point}" 2>/dev/null)" ] || launch_wrapper "${mount_command[@
 			cp -r "${mount_point}"/etc/pacman.d/gnupg "${overlayfs_dir}"/gnupg
 			export -f update_conty
 			run_bwrap --bind "${overlayfs_dir}"/gnupg /etc/pacman.d/gnupg \
-				--bind "${overlayfs_dir}"/merged/var/lib/pacman /var/lib/pacman \
-				--bind-try "${overlayfs_dir}"/merged/var/cache/pacman /var/cache/pacman \
+				--bind "${overlayfs_dir}"/merged/var /var \
 				bash -c update_conty
 
 			if [ "${dwarfs_image}" = 1 ]; then
