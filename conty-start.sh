@@ -31,7 +31,7 @@ script_version="1.24.3"
 # size to 0
 init_size=50000
 bash_size=1490760
-script_size=37320
+script_size=37333
 busybox_size=1161112
 utils_size=4327795
 
@@ -954,6 +954,7 @@ if [ "$(ls "${mount_point}" 2>/dev/null)" ] || launch_wrapper "${mount_command[@
 		if mount_overlayfs; then
 			USE_OVERLAYFS=1
 			QUIET_MODE=1
+			RW_ROOT=1
 			unset DISABLE_NET
 			unset HOME_DIR
 			unset SANDBOX_LEVEL
