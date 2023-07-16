@@ -5,6 +5,9 @@ LD_PRELOAD_ORIG="${LD_PRELOAD}"
 LD_LIBRARY_PATH_ORIG="${LD_LIBRARY_PATH}"
 unset LD_PRELOAD LD_LIBRARY_PATH
 
+LC_ALL_ORIG="${LC_ALL}"
+export LC_ALL=C
+
 msg_root="
 Do not run this script as root!
 
@@ -19,7 +22,7 @@ if (( EUID == 0 )) && [ -z "$ALLOW_ROOT" ]; then
 fi
 
 # Conty version
-script_version="1.24.2"
+script_version="1.24.3"
 
 # Important variables to manually adjust after modification!
 # Needed to avoid problems with mounting due to an incorrect offset.
@@ -28,7 +31,7 @@ script_version="1.24.2"
 # size to 0
 init_size=50000
 bash_size=1490760
-script_size=37193
+script_size=37320
 busybox_size=1161112
 utils_size=4327795
 
@@ -597,7 +600,6 @@ run_bwrap () {
 	unset non_standard_home
 	unset xsockets
 	unset mount_opt
-	unset ld_vars
 
 	if [ -n "${WAYLAND_DISPLAY}" ]; then
 		wayland_socket="${WAYLAND_DISPLAY}"
@@ -741,11 +743,17 @@ run_bwrap () {
 					USE_SYS_UTILS XEPHYR_SIZE CUSTOM_MNT"
 
 	for v in ${conty_variables}; do
-		unset_vars+=(--unsetenv "${v}")
+		set_vars+=(--unsetenv "${v}")
 	done
 
-	[ -n "${LD_PRELOAD_ORIG}" ] && ld_vars+=(--setenv LD_PRELOAD "${LD_PRELOAD_ORIG}")
-	[ -n "${LD_LIBRARY_PATH_ORIG}" ] && ld_vars+=(--setenv LD_LIBRARY_PATH "${LD_LIBRARY_PATH_ORIG}")
+	[ -n "${LD_PRELOAD_ORIG}" ] && set_vars+=(--setenv LD_PRELOAD "${LD_PRELOAD_ORIG}")
+	[ -n "${LD_LIBRARY_PATH_ORIG}" ] && set_vars+=(--setenv LD_LIBRARY_PATH "${LD_LIBRARY_PATH_ORIG}")
+
+	if [ -n "${LC_ALL_ORIG}" ]; then
+		set_vars+=(--setenv LC_ALL "${LC_ALL_ORIG}")
+	else
+		set_vars+=(--unsetenv LC_ALL)
+	fi
 
 	show_msg
 
@@ -775,8 +783,7 @@ run_bwrap () {
 			"${mount_opt[@]}" \
 			"${xsockets[@]}" \
 			"${unshare_net[@]}" \
-			"${unset_vars[@]}" \
-			"${ld_vars[@]}" \
+			"${set_vars[@]}" \
 			--setenv PATH "${CUSTOM_PATH}" \
 			"$@"
 }
