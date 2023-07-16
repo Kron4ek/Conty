@@ -30,7 +30,7 @@ init_size=50000
 bash_size=1490760
 script_size=37193
 busybox_size=1161112
-utils_size=4321630
+utils_size=4327795
 
 # Full path to the script
 if [ -n "${BASH_SOURCE[0]}" ]; then

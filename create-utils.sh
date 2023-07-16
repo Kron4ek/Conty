@@ -6,7 +6,7 @@
 #
 # Dwarfs build dependencies: fuse2 (or fuse3) openssl jemalloc
 # 	xxhash boost lz4 xz zstd libarchive libunwind google-glod gtest fmt
-#	gflags double-conversion cmake ruby-ronn libevent libdwarf git
+#	gflags double-conversion cmake ruby-ronn libevent libdwarf git utf8cpp
 #
 # Dwarfs compilation is optional and disabled by default.
 
@@ -15,7 +15,7 @@ script_dir="$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")"
 # Set to true to compile dwarfs instead of squashfuse
 build_dwarfs="${build_dwarfs:-false}"
 
-squashfuse_version="0.1.105"
+squashfuse_version="0.2.0"
 bwrap_version="0.8.0"
 lz4_version="1.9.4"
 zstd_version="1.5.5"
@@ -136,15 +136,7 @@ if [ "${build_dwarfs}" = "true" ]; then
 
 	git clone https://github.com/mhx/dwarfs.git --recursive
 
-    	# Revert commit aeeddae, because otherwise dwarfs might use
-    	# /usr/lib/locale/locale-archive file, which would break it
-	# on systems using musl libc
-	#
-	# This can also be worked around by setting LC_ALL=C, but for now
-	# let's revert the commit
 	cd dwarfs || exit 1
-	git revert --no-commit aeeddaecab5d4648780b0e11dc03fca19e23409a
-
 	mkdir build
 	cd build || exit 1
 	cmake .. -DCMAKE_BUILD_TYPE=Release \
