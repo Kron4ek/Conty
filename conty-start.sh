@@ -234,9 +234,6 @@ if [ "$(tail -c +$((offset+1)) "${script}" | head -c 6)" = "DWARFS" ]; then
 	dwarfs_image=1
 fi
 
-dwarfs_cache_size="128M"
-dwarfs_num_workers="2"
-
 # These arguments are used to rebuild the image when using the self-update function
 squashfs_comp_arguments=(-b 1M -comp zstd -Xcompression-level 19)
 dwarfs_comp_arguments=(-l7 -C zstd:level=19 --metadata-compression null \
@@ -449,22 +446,28 @@ fi
 
 # Set the dwarfs block cache size depending on how much RAM is available
 # Also set the number of workers depending on the number of CPU cores
+
+dwarfs_cache_size="128M"
+dwarfs_num_workers="2"
+
 if [ "${dwarfs_image}" = 1 ]; then
 	if getconf _PHYS_PAGES &>/dev/null && getconf PAGE_SIZE &>/dev/null; then
 		memory_size="$(($(getconf _PHYS_PAGES) * $(getconf PAGE_SIZE) / (1024 * 1024)))"
 
-		if [ "${memory_size}" -ge 23000 ]; then
-			dwarfs_cache_size="1024M"
+		if [ "${memory_size}" -ge 45000 ]; then
+			dwarfs_cache_size="4096M"
+		elif [ "${memory_size}" -ge 23000 ]; then
+			dwarfs_cache_size="2048M"
 		elif [ "${memory_size}" -ge 15000 ]; then
-			dwarfs_cache_size="512M"
+			dwarfs_cache_size="1024M"
 		elif [ "${memory_size}" -ge 7000 ]; then
-			dwarfs_cache_size="256M"
+			dwarfs_cache_size="512M"
 		elif [ "${memory_size}" -ge 3000 ]; then
-			dwarfs_cache_size="128M"
+			dwarfs_cache_size="256M"
 		elif [ "${memory_size}" -ge 1500 ]; then
-			dwarfs_cache_size="64M"
+			dwarfs_cache_size="128M"
 		else
-			dwarfs_cache_size="32M"
+			dwarfs_cache_size="64M"
 		fi
 	fi
 
@@ -840,7 +843,10 @@ if [ "${dwarfs_image}" = 1 ]; then
 	               -o mlock=try \
 	               -o no_cache_image \
 	               -o cache_files \
-	               -o cachesize="${dwarfs_cache_size}")
+	               -o cachesize="${dwarfs_cache_size}" \
+	               -o decratio=0.6 \
+	               -o tidy_strategy=swap \
+	               -o tidy_interval=5m)
 else
 	mount_command=("${mount_tool}" \
 	               -o offset="${offset}",ro \
