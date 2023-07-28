@@ -16,6 +16,11 @@ jobs:
           sed -i 's/sed/#sed/g' create-arch-bootstrap.sh
           sudo ./create-arch-bootstrap.sh && ./create-conty.sh
 
+          if [ "$(stat -c%s conty.sh)" -gt 2097152000 ]; then
+            split -b 2097152000 --numeric-suffixes=1 conty.sh conty.sh_part
+            rm conty.sh
+          fi
+
       - uses: dev-drprasad/delete-tag-and-release@v1.0
         with:
          tag_name: continuous
@@ -29,7 +34,7 @@ jobs:
 
       - uses: softprops/action-gh-release@v1
         with:
-          files: conty.sh
+          files: ./conty.sh*
           prerelease: true
           draft: false
           tag_name: continuous
