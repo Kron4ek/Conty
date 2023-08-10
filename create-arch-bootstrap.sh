@@ -67,6 +67,32 @@ run_in_chroot () {
 	fi
 }
 
+install_packages () {
+	echo "Checking if packages are present in the repos, please wait..."
+	for p in ${packagelist}; do
+		if pacman -Sp "${p}" &>/dev/null; then
+			good_pkglist="${good_pkglist} ${p}"
+		else
+			bad_pkglist="${bad_pkglist} ${p}"
+		fi
+	done
+
+	if [ -n "${bad_pkglist}" ]; then
+		echo ${bad_pkglist} > /opt/bad_pkglist.txt
+	fi
+
+	for i in {1..10}; do
+		if pacman --noconfirm --needed -S ${good_pkglist}; then
+			good_install=1
+			break
+		fi
+	done
+
+	if [ -z "${good_install}" ]; then
+		echo > /opt/pacman_failed.txt
+	fi
+}
+
 generate_localegen () {
 	cat <<EOF > locale.gen
 ar_EG.UTF-8 UTF-8
@@ -252,26 +278,8 @@ date -u +"%d-%m-%Y %H:%M (DMY UTC)" > "${bootstrap}"/version
 # These packages are required for the self-update feature to work properly
 run_in_chroot pacman --noconfirm --needed -S base reflector squashfs-tools fakeroot
 
-cat <<EOF > "${bootstrap}"/opt/install_packages.sh
-echo "Checking if packages are present in the repos, please wait..."
-for p in \${packagelist}; do
-	if pacman -Sp "\${p}" &>/dev/null; then
-		good_pkglist="\${good_pkglist} \${p}"
-	else
-		bad_pkglist="\${bad_pkglist} \${p}"
-	fi
-done
-
-if [ -n "\${bad_pkglist}" ]; then
-	echo \${bad_pkglist} > /opt/bad_pkglist.txt
-fi
-
-pacman --noconfirm --needed -S \${good_pkglist} || pacman --noconfirm --needed -S \${good_pkglist} || echo > /opt/pacman_failed.txt
-EOF
-
-chmod +x "${bootstrap}"/opt/install_packages.sh
-run_in_chroot bash /opt/install_packages.sh
-rm "${bootstrap}"/opt/install_packages.sh
+export -f install_packages
+run_in_chroot bash -c install_packages
 
 if [ -f "${bootstrap}"/opt/pacman_failed.txt ]; then
 	unmount_chroot
