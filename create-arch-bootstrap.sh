@@ -93,6 +93,27 @@ install_packages () {
 	fi
 }
 
+install_aur_packages () {
+	cd /home/aur
+
+	echo "Checking if packages are present in the AUR, please wait..."
+	for p in ${aur_pkgs}; do
+		if ! yay -a -G "${p}" &>/dev/null; then
+			bad_aur_pkglist="${bad_aur_pkglist} ${p}"
+		fi
+	done
+
+	if [ -n "${bad_aur_pkglist}" ]; then
+		echo ${bad_aur_pkglist} > /home/aur/bad_aur_pkglist.txt
+	fi
+
+	for i in {1..10}; do
+		if yay --needed --noconfirm --removemake --nocleanmenu --nodiffmenu --builddir /home/aur -a -S ${aur_pkgs}; then
+			break
+		fi
+	done
+}
+
 generate_localegen () {
 	cat <<EOF > locale.gen
 ar_EG.UTF-8 UTF-8
@@ -297,7 +318,9 @@ if [ -n "${aur_packagelist}" ]; then
 	done
 	export aur_pkgs
 
-	CHROOT_AUR=1 HOME=/home/aur run_in_chroot yay --noconfirm --removemake --nocleanmenu --nodiffmenu --builddir /home/aur -a -S ${aur_pkgs}
+	export -f install_aur_packages
+	CHROOT_AUR=1 HOME=/home/aur run_in_chroot bash -c install_aur_packages
+	mv "${bootstrap}"/home/aur/bad_aur_pkglist.txt "${bootstrap}"/opt
 	rm -rf "${bootstrap}"/home/aur
 fi
 
@@ -332,4 +355,12 @@ if [ -f "${bootstrap}"/opt/bad_pkglist.txt ]; then
 	echo "These packages are not in the repos and have not been installed:"
 	cat "${bootstrap}"/opt/bad_pkglist.txt
 	rm "${bootstrap}"/opt/bad_pkglist.txt
+fi
+
+if [ -f "${bootstrap}"/opt/bad_aur_pkglist.txt ]; then
+	echo
+	echo "These packages are either not in the AUR or yay failed to download their"
+	echo "PKGBUILDs:"
+	cat "${bootstrap}"/opt/bad_aur_pkglist.txt
+	rm "${bootstrap}"/opt/bad_aur_pkglist.txt
 fi
