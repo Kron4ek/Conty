@@ -252,7 +252,9 @@ mount_chroot
 generate_localegen
 
 if command -v reflector 1>/dev/null; then
-	reflector --protocol https --score 5 --sort rate --save mirrorlist
+	echo "Generating mirrorlist..."
+	reflector --connection-timeout 10 --download-timeout 10 --protocol https --score 7 --sort rate --save mirrorlist
+	reflector_used=1
 else
 	generate_mirrorlist
 fi
@@ -298,6 +300,12 @@ date -u +"%d-%m-%Y %H:%M (DMY UTC)" > "${bootstrap}"/version
 
 # These packages are required for the self-update feature to work properly
 run_in_chroot pacman --noconfirm --needed -S base reflector squashfs-tools fakeroot
+
+# Regenerate the mirrorlist with reflector if reflector was not used before
+if [ -z "${reflector_used}" ]; then
+	echo "Generating mirrorlist..."
+	run_in_chroot reflector --connection-timeout 10 --download-timeout 10 --protocol https --score 7 --sort rate --save /etc/pacman.d/mirrorlist
+fi
 
 export -f install_packages
 run_in_chroot bash -c install_packages
