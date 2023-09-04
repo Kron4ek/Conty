@@ -166,7 +166,7 @@ bootstrap="${script_dir}"/root.x86_64
 # Package groups
 
 audio_pkgs="alsa-lib lib32-alsa-lib alsa-plugins lib32-alsa-plugins libpulse \
-	lib32-libpulse jack2 lib32-jack2 alsa-tools alsa-utils"
+	lib32-libpulse jack2 lib32-jack2 alsa-tools alsa-utils pipewire lib32-pipewire"
 
 video_pkgs="mesa lib32-mesa vulkan-radeon lib32-vulkan-radeon \
 	vulkan-intel lib32-vulkan-intel nvidia-utils lib32-nvidia-utils \
@@ -175,7 +175,7 @@ video_pkgs="mesa lib32-mesa vulkan-radeon lib32-vulkan-radeon \
 	libva-intel-driver lib32-libva-intel-driver intel-media-driver \
 	mesa-utils vulkan-tools nvidia-prime libva-utils lib32-mesa-utils"
 
-wine_pkgs="wine-staging winetricks-git wine-nine wineasio \
+wine_pkgs="wine-tkg-staging-fsync-git winetricks-git wine-nine wineasio \
 	giflib lib32-giflib libpng lib32-libpng libldap lib32-libldap \
 	gnutls lib32-gnutls mpg123 lib32-mpg123 openal lib32-openal \
 	v4l-utils lib32-v4l-utils libpulse lib32-libpulse alsa-plugins \
@@ -184,21 +184,23 @@ wine_pkgs="wine-staging winetricks-git wine-nine wineasio \
 	lib32-libxinerama libxslt lib32-libxslt libva lib32-libva gtk3 \
 	lib32-gtk3 vulkan-icd-loader lib32-vulkan-icd-loader sdl2 lib32-sdl2 \
 	vkd3d lib32-vkd3d libgphoto2 ffmpeg gst-plugins-good gst-plugins-bad \
-	gst-plugins-ugly gst-plugins-base lib32-gst-plugins-good lib32-gst-plugins-base gst-libav"
+	gst-plugins-ugly gst-plugins-base lib32-gst-plugins-good \
+	lib32-gst-plugins-base gst-libav wget faudio lib32-faudio"
+
+devel_pkgs="base-devel git meson mingw-w64-gcc cmake"
 
 # Packages to install
 # You can remove packages that you don't need
 # Apart from packages from the official Arch repos, you can specify
 # packages from the Chaotic-AUR repo here
-export packagelist="${audio_pkgs} ${video_pkgs} ${wine_pkgs} \
-	base-devel nano ttf-dejavu ttf-liberation lutris steam firefox \
-	mpv geany pcmanfm ppsspp dolphin-emu git wget htop qbittorrent \
-	speedcrunch gpicview file-roller xorg-xwayland steam-native-runtime \
-	meson mingw-w64-gcc gamemode lib32-gamemode cmake jre-openjdk \
-	lxterminal steamtinkerlaunch mangohud lib32-mangohud qt6-wayland \
-	wayland lib32-wayland qt5-wayland retroarch xorg-server-xephyr \
-	openbox obs-studio gamehub minigalaxy legendary gamescope \
-	pcsx2-git multimc5 yt-dlp bottles playonlinux minizip duckstation-git"
+export packagelist="${audio_pkgs} ${video_pkgs} ${wine_pkgs} ${devel_pkgs} \
+	nano ttf-dejavu ttf-liberation lutris steam firefox mpv geany pcmanfm \
+	ppsspp dolphin-emu htop qbittorrent speedcrunch gpicview file-roller \
+	xorg-xwayland steam-native-runtime gamemode lib32-gamemode jre-openjdk \
+	lxterminal steamtinkerlaunch mangohud lib32-mangohud qt6-wayland wayland \
+	lib32-wayland qt5-wayland retroarch xorg-server-xephyr openbox obs-studio \
+	gamehub minigalaxy legendary gamescope pcsx2-git multimc5 yt-dlp bottles \
+	playonlinux minizip duckstation-git"
 
 # If you want to install AUR packages, specify them in this variable
 export aur_packagelist=""
