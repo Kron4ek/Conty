@@ -1,7 +1,71 @@
 #!/usr/bin/env bash
 
-# Dependencies: curl tar gzip grep sha256sum
+# Dependencies: curl tar gzip grep coreutils
 # Root rights are required
+
+########################################################################
+
+# Package groups
+audio_pkgs="alsa-lib lib32-alsa-lib alsa-plugins lib32-alsa-plugins libpulse \
+	lib32-libpulse jack2 lib32-jack2 alsa-tools alsa-utils pipewire lib32-pipewire"
+
+video_pkgs="mesa lib32-mesa vulkan-radeon lib32-vulkan-radeon \
+	vulkan-intel lib32-vulkan-intel nvidia-utils lib32-nvidia-utils \
+	vulkan-icd-loader lib32-vulkan-icd-loader vulkan-mesa-layers \
+	lib32-vulkan-mesa-layers libva-mesa-driver lib32-libva-mesa-driver \
+	libva-intel-driver lib32-libva-intel-driver intel-media-driver \
+	mesa-utils vulkan-tools nvidia-prime libva-utils lib32-mesa-utils"
+
+wine_pkgs="wine-tkg-staging-fsync-git winetricks-git wine-nine wineasio \
+	giflib lib32-giflib libpng lib32-libpng libldap lib32-libldap \
+	gnutls lib32-gnutls mpg123 lib32-mpg123 openal lib32-openal \
+	v4l-utils lib32-v4l-utils libpulse lib32-libpulse alsa-plugins \
+	lib32-alsa-plugins alsa-lib lib32-alsa-lib libjpeg-turbo \
+	lib32-libjpeg-turbo libxcomposite lib32-libxcomposite libxinerama \
+	lib32-libxinerama libxslt lib32-libxslt libva lib32-libva gtk3 \
+	lib32-gtk3 vulkan-icd-loader lib32-vulkan-icd-loader sdl2 lib32-sdl2 \
+	vkd3d lib32-vkd3d libgphoto2 ffmpeg gst-plugins-good gst-plugins-bad \
+	gst-plugins-ugly gst-plugins-base lib32-gst-plugins-good \
+	lib32-gst-plugins-base gst-libav wget faudio lib32-faudio"
+
+devel_pkgs="base-devel git meson mingw-w64-gcc cmake"
+
+# Packages to install
+# You can add packages that you want and remove packages that you don't need
+# Apart from packages from the official Arch repos, you can also specify
+# packages from the Chaotic-AUR repo
+export packagelist="${audio_pkgs} ${video_pkgs} ${wine_pkgs} ${devel_pkgs} \
+	nano ttf-dejavu ttf-liberation lutris steam firefox mpv geany pcmanfm \
+	htop qbittorrent speedcrunch gpicview file-roller xorg-xwayland \
+	steam-native-runtime gamemode lib32-gamemode jre-openjdk lxterminal \
+	steamtinkerlaunch mangohud lib32-mangohud qt6-wayland wayland \
+	lib32-wayland qt5-wayland retroarch xorg-server-xephyr openbox \
+	obs-studio gamehub minigalaxy legendary gamescope multimc5 yt-dlp \
+	bottles playonlinux minizip retroarch-assets-ozone libretro-beetle-psx-hw \
+	libretro-blastem libretro-bsnes libretro-dolphin libretro-duckstation \
+	libretro-gambatte libretro-melonds libretro-mgba libretro-nestopia \
+	libretro-parallel-n64 libretro-pcsx2 libretro-picodrive libretro-ppsspp \
+	libretro-retrodream libretro-yabause sunshine"
+
+# If you want to install AUR packages, specify them in this variable
+export aur_packagelist=""
+
+# ALHP is a repository containing packages from the official Arch Linux
+# repos recompiled with -O3, LTO and optimizations for modern CPUs for
+# better performance
+#
+# When this repository is enabled, most of the packages from the official
+# Arch Linux repos will be replaced with their optimized versions from ALHP
+#
+# Set this variable to true, if you want to enable this repository
+enable_alhp_repo="false"
+
+# Feature levels for ALHP. Available feature levels are 2 and 3
+# For level 2 you need a CPU with SSE4.2 instructions
+# For level 3 you need a CPU with AVX2 instructions
+alhp_feature_level="2"
+
+########################################################################
 
 if [ $EUID != 0 ]; then
 	echo "Root rights are required!"
@@ -163,52 +227,6 @@ cd "${script_dir}" || exit 1
 
 bootstrap="${script_dir}"/root.x86_64
 
-# Package groups
-
-audio_pkgs="alsa-lib lib32-alsa-lib alsa-plugins lib32-alsa-plugins libpulse \
-	lib32-libpulse jack2 lib32-jack2 alsa-tools alsa-utils pipewire lib32-pipewire"
-
-video_pkgs="mesa lib32-mesa vulkan-radeon lib32-vulkan-radeon \
-	vulkan-intel lib32-vulkan-intel nvidia-utils lib32-nvidia-utils \
-	vulkan-icd-loader lib32-vulkan-icd-loader vulkan-mesa-layers \
-	lib32-vulkan-mesa-layers libva-mesa-driver lib32-libva-mesa-driver \
-	libva-intel-driver lib32-libva-intel-driver intel-media-driver \
-	mesa-utils vulkan-tools nvidia-prime libva-utils lib32-mesa-utils"
-
-wine_pkgs="wine-tkg-staging-fsync-git winetricks-git wine-nine wineasio \
-	giflib lib32-giflib libpng lib32-libpng libldap lib32-libldap \
-	gnutls lib32-gnutls mpg123 lib32-mpg123 openal lib32-openal \
-	v4l-utils lib32-v4l-utils libpulse lib32-libpulse alsa-plugins \
-	lib32-alsa-plugins alsa-lib lib32-alsa-lib libjpeg-turbo \
-	lib32-libjpeg-turbo libxcomposite lib32-libxcomposite libxinerama \
-	lib32-libxinerama libxslt lib32-libxslt libva lib32-libva gtk3 \
-	lib32-gtk3 vulkan-icd-loader lib32-vulkan-icd-loader sdl2 lib32-sdl2 \
-	vkd3d lib32-vkd3d libgphoto2 ffmpeg gst-plugins-good gst-plugins-bad \
-	gst-plugins-ugly gst-plugins-base lib32-gst-plugins-good \
-	lib32-gst-plugins-base gst-libav wget faudio lib32-faudio"
-
-devel_pkgs="base-devel git meson mingw-w64-gcc cmake"
-
-# Packages to install
-# You can remove packages that you don't need
-# Apart from packages from the official Arch repos, you can specify
-# packages from the Chaotic-AUR repo here
-export packagelist="${audio_pkgs} ${video_pkgs} ${wine_pkgs} ${devel_pkgs} \
-	nano ttf-dejavu ttf-liberation lutris steam firefox mpv geany pcmanfm \
-	htop qbittorrent speedcrunch gpicview file-roller xorg-xwayland \
-	steam-native-runtime gamemode lib32-gamemode jre-openjdk lxterminal \
-	steamtinkerlaunch mangohud lib32-mangohud qt6-wayland wayland \
-	lib32-wayland qt5-wayland retroarch xorg-server-xephyr openbox \
-	obs-studio gamehub minigalaxy legendary gamescope multimc5 yt-dlp \
-	bottles playonlinux minizip retroarch-assets-ozone libretro-beetle-psx-hw \
-	libretro-blastem libretro-bsnes libretro-dolphin libretro-duckstation \
-	libretro-gambatte libretro-melonds libretro-mgba libretro-nestopia \
-	libretro-parallel-n64 libretro-pcsx2 libretro-picodrive libretro-ppsspp \
-	libretro-retrodream libretro-yabause sunshine"
-
-# If you want to install AUR packages, specify them in this variable
-export aur_packagelist=""
-
 curl -#LO 'https://cdn-mirror.chaotic.cx/chaotic-aur/chaotic-keyring.pkg.tar.zst'
 curl -#LO 'https://cdn-mirror.chaotic.cx/chaotic-aur/chaotic-mirrorlist.pkg.tar.zst'
 
@@ -304,6 +322,20 @@ sed -i 's/#NoExtract   =/NoExtract   = usr\/lib\/firmware\/nvidia\/\* usr\/share
 
 run_in_chroot pacman -Sy archlinux-keyring --noconfirm
 run_in_chroot pacman -Su --noconfirm
+
+if [ "${enable_alhp_repo}" = "true" ]; then
+	if [ "${alhp_feature_level}" -gt 2 ]; then
+		alhp_feature_level=3
+	else
+		alhp_feature_level=2
+	fi
+
+	run_in_chroot pacman --noconfirm --needed -S alhp-keyring alhp-mirrorlist
+	sed -i "s/#\[multilib\]/#/" "${bootstrap}"/etc/pacman.conf
+	sed -i "s/\[core\]/\[core-x86-64-v${alhp_feature_level}\]\nInclude = \/etc\/pacman.d\/alhp-mirrorlist\n\n\[extra-x86-64-v${alhp_feature_level}\]\nInclude = \/etc\/pacman.d\/alhp-mirrorlist\n\n\[core\]/" "${bootstrap}"/etc/pacman.conf
+	sed -i "s/\[multilib\]/\[multilib-x86-64-v${alhp_feature_level}\]\nInclude = \/etc\/pacman.d\/alhp-mirrorlist\n\n\[multilib\]/" "${bootstrap}"/etc/pacman.conf
+	run_in_chroot pacman -Syu --noconfirm
+fi
 
 date -u +"%d-%m-%Y %H:%M (DMY UTC)" > "${bootstrap}"/version
 

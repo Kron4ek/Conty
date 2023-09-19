@@ -15,7 +15,6 @@ jobs:
       - name: Build Conty
         run: |
           chmod +x create-arch-bootstrap.sh create-conty.sh
-          sed -i 's/sed/#sed/g' create-arch-bootstrap.sh
           sudo ./create-arch-bootstrap.sh && ./create-conty.sh
 
       - name: Upload artifact
