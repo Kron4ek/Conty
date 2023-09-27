@@ -99,9 +99,9 @@ if [ "${build_dwarfs}" != "true" ]; then
 	make -j"$(nproc)" DESTDIR="${script_dir}"/build-utils/bin install
 
 	cd ../squashfs-tools-"${squashfs_tools_version}"/squashfs-tools || exit 1
-	make -j"$(nproc)" GZIP_SUPPORT=1 XZ_SUPPORT=1 LZO_SUPPORT=1 LZMA_XZ_SUPPORT=1 \
+	CC=gcc CXX=g++ make -j"$(nproc)" GZIP_SUPPORT=1 XZ_SUPPORT=1 LZO_SUPPORT=1 LZMA_XZ_SUPPORT=1 \
 			LZ4_SUPPORT=1 ZSTD_SUPPORT=1 XATTR_SUPPORT=1
-	make INSTALL_DIR="${script_dir}"/build-utils/bin/usr/local/bin install
+	CC=gcc CXX=g++ make INSTALL_DIR="${script_dir}"/build-utils/bin/usr/local/bin install
 fi
 
 cd "${script_dir}"/build-utils || exit 1
