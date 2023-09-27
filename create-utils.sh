@@ -15,7 +15,7 @@ script_dir="$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")"
 # Set to true to compile dwarfs instead of squashfuse
 build_dwarfs="${build_dwarfs:-false}"
 
-squashfuse_version="0.2.0"
+squashfuse_version="0.5.0"
 bwrap_version="0.8.0"
 lz4_version="1.9.4"
 zstd_version="1.5.5"
@@ -24,10 +24,10 @@ unionfs_fuse_version="3.3"
 busybox_version="1.36.1"
 bash_version="5.2.15"
 
-export CC=gcc
-export CXX=g++
+export CC=clang
+export CXX=clang++
 
-export CFLAGS="-O3"
+export CFLAGS="-O3 -flto"
 export CXXFLAGS="${CFLAGS}"
 export LDFLAGS="-Wl,-O1,--sort-common,--as-needed"
 
@@ -127,13 +127,6 @@ if ! ldd utils/squashfuse | grep -q libfuse.so.2; then
 fi
 
 if [ "${build_dwarfs}" = "true" ]; then
-	if command -v clang++ 1>/dev/null; then
-		export CC=clang
-		export CXX=clang++
-		export CFLAGS="${CFLAGS} -O3"
-		export CXXFLAGS="${CFLAGS}"
-	fi
-
 	git clone https://github.com/mhx/dwarfs.git --recursive
 
 	cd dwarfs || exit 1
