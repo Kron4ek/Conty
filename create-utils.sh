@@ -50,7 +50,7 @@ tar xf busybox.tar.bz2
 tar xf bash.tar.gz
 
 if [ "${build_dwarfs}" != "true" ]; then
-	curl -#Lo squashfuse.tar.gz https://github.com/vasi/squashfuse/archive/refs/tags/${squashfuse_version}.tar.gz
+	curl -#Lo squashfuse.tar.gz https://github.com/vasi/squashfuse/archive/refs/tags/v${squashfuse_version}.tar.gz
 	curl -#Lo sqfstools.tar.gz https://github.com/plougher/squashfs-tools/archive/refs/tags/${squashfs_tools_version}.tar.gz
 
 	tar xf squashfuse.tar.gz
