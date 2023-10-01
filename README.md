@@ -19,7 +19,7 @@ This is an easy to use compressed unprivileged Linux container packed into a sin
 * Supports filesystem and X11 sandboxing (thanks to bubblewrap and xephyr).
 * Supports Chaotic-AUR and ALHP repositories. AUR is also supported.
 
-In its default release, it includes, among others, these apps: `Wine-GE, Steam, Lutris, PlayOnLinux, GameHub, Minigalaxy, Legendary, Bottles, MultiMC, MangoHud, Gamescope, RetroArch, PPSSPP, PCSX2, DuckStation, OBS Studio, OpenJDK, Firefox`. The full list can be read in the [latest release's pkg_list.txt](https://github.com/Kron4ek/Conty/releases/latest/download/pkg_list.txt).
+In its default release, it includes, among others, these apps: `Wine-GE, Steam, Lutris, PlayOnLinux, GameHub, Minigalaxy, Legendary, Bottles, MultiMC, MangoHud, Gamescope, RetroArch, Sunshine, OBS Studio, OpenJDK, Firefox`. The full list can be read in the [latest release's pkg_list.txt](https://github.com/Kron4ek/Conty/releases/latest/download/pkg_list.txt).
 
 If these applications are not enough, you can install additional applications or run external binaries from, for example, your home directory.
 
