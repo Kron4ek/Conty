@@ -22,7 +22,7 @@ if (( EUID == 0 )) && [ -z "$ALLOW_ROOT" ]; then
 fi
 
 # Conty version
-script_version="1.24.3"
+script_version="1.25"
 
 # Important variables to manually adjust after modification!
 # Needed to avoid problems with mounting due to an incorrect offset.
@@ -630,8 +630,10 @@ run_bwrap () {
 			*)
 				NEW_HOME=/home/"${USER}"
 				non_standard_home+=(--tmpfs /home \
-									--bind "${HOME}" "${NEW_HOME}" \
-									--setenv "HOME" "${NEW_HOME}")
+							--bind "${HOME}" "${NEW_HOME}" \
+							--setenv "HOME" "${NEW_HOME}" \
+	 						--setenv "XDG_CONFIG_HOME" "${NEW_HOME}"/.config \
+							--setenv "XDG_DATA_HOME" "${NEW_HOME}"/.local/share)
 				;;
 		esac
 	fi
