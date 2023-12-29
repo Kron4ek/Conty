@@ -608,6 +608,9 @@ run_bwrap () {
 	unset non_standard_home
 	unset xsockets
 	unset mount_opt
+	unset command_line
+
+	command_line=("${@}")
 
 	if [ -n "${WAYLAND_DISPLAY}" ]; then
 		wayland_socket="${WAYLAND_DISPLAY}"
@@ -634,6 +637,15 @@ run_bwrap () {
 							--setenv "HOME" "${NEW_HOME}" \
 	 						--setenv "XDG_CONFIG_HOME" "${NEW_HOME}"/.config \
 							--setenv "XDG_DATA_HOME" "${NEW_HOME}"/.local/share)
+
+				unset command_line
+				for arg in "$@"; do
+					if [[ "${arg}" == *"${HOME}"* ]]; then
+						arg="$(echo "${arg/"$HOME"/"$NEW_HOME"}")"
+					fi
+
+					command_line+=("${arg}")
+				done
 				;;
 		esac
 	fi
@@ -795,7 +807,7 @@ run_bwrap () {
 			"${unshare_net[@]}" \
 			"${set_vars[@]}" \
 			--setenv PATH "${CUSTOM_PATH}" \
-			"$@"
+			"${command_line[@]}"
 }
 
 exit_function () {
