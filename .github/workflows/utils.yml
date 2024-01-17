@@ -24,7 +24,8 @@ jobs:
                  xz zlib findutils openssl jemalloc xxhash boost lz4 xz \
                  zstd libarchive libunwind google-glog gtest fmt gflags \
                  double-conversion cmake ruby-ronn libevent libdwarf git \
-                 clang libsodium liburing libaio musl kernel-headers-musl utf8cpp
+                 clang libsodium liburing libaio musl kernel-headers-musl utf8cpp \
+                 chrono-date
           build_dwarfs=false ./create-utils.sh
           tar xf utils.tar.gz
           mv utils utils-bak
