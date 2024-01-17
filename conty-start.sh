@@ -237,7 +237,7 @@ fi
 # These arguments are used to rebuild the image when using the self-update function
 squashfs_comp_arguments=(-b 1M -comp zstd -Xcompression-level 19)
 dwarfs_comp_arguments=(-l7 -C zstd:level=19 --metadata-compression null \
-                            -S 21 -B 1 --order nilsimsa:255:60000:60000 \
+                            -S 21 -B 1 --order nilsimsa \
                             -W 12 -w 4 --no-create-timestamp)
 
 # Enable NVIDIA_HANDLER by default
