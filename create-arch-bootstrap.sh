@@ -30,22 +30,18 @@ wine_pkgs="wine-tkg-staging-fsync-git winetricks-git wine-nine wineasio \
 
 devel_pkgs="base-devel git meson mingw-w64-gcc cmake"
 
+added_pkgs="vim lutris pcsx2 dolphin-emu simple64 yuzu jellyfin-media-player "
+
 # Packages to install
 # You can add packages that you want and remove packages that you don't need
 # Apart from packages from the official Arch repos, you can also specify
 # packages from the Chaotic-AUR repo
 export packagelist="${audio_pkgs} ${video_pkgs} ${wine_pkgs} ${devel_pkgs} \
-	nano ttf-dejavu ttf-liberation lutris steam firefox mpv geany pcmanfm \
-	htop qbittorrent speedcrunch gpicview file-roller xorg-xwayland \
-	steam-native-runtime gamemode lib32-gamemode jre-openjdk lxterminal \
-	steamtinkerlaunch mangohud lib32-mangohud qt6-wayland wayland \
-	lib32-wayland qt5-wayland retroarch xorg-server-xephyr openbox \
-	obs-studio gamehub minigalaxy legendary gamescope multimc5 yt-dlp \
-	bottles playonlinux minizip retroarch-assets-ozone libretro-beetle-psx-hw \
-	libretro-blastem libretro-bsnes libretro-dolphin libretro-duckstation \
-	libretro-gambatte libretro-melonds libretro-mgba libretro-nestopia \
-	libretro-parallel-n64 libretro-pcsx2 libretro-picodrive libretro-ppsspp \
-	libretro-retrodream libretro-yabause sunshine"
+	${added_pkgs} \
+	ttf-liberation mpv geany pcmanfm htop speedcrunch gpicview file-roller \
+ 	xorg-xwayland gamemode lib32-gamemode jre-openjdk lxterminal qt6-wayland \
+  	wayland lib32-wayland qt5-wayland xorg-server-xephyr gamescope multimc5 \
+   	bottles"
 
 # If you want to install AUR packages, specify them in this variable
 export aur_packagelist=""
@@ -58,12 +54,12 @@ export aur_packagelist=""
 # Arch Linux repos will be replaced with their optimized versions from ALHP
 #
 # Set this variable to true, if you want to enable this repository
-enable_alhp_repo="false"
+enable_alhp_repo="true"
 
 # Feature levels for ALHP. Available feature levels are 2 and 3
 # For level 2 you need a CPU with SSE4.2 instructions
 # For level 3 you need a CPU with AVX2 instructions
-alhp_feature_level="2"
+alhp_feature_level="4"
 
 ########################################################################
 
