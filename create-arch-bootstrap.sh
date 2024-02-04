@@ -28,20 +28,19 @@ wine_pkgs="wine-tkg-staging-fsync-git winetricks-git wine-nine wineasio \
 	gst-plugins-ugly gst-plugins-base lib32-gst-plugins-good \
 	lib32-gst-plugins-base gst-libav wget faudio lib32-faudio"
 
-devel_pkgs="base-devel git meson mingw-w64-gcc cmake"
-
-added_pkgs="vim lutris pcsx2 dolphin-emu simple64 yuzu jellyfin-media-player "
+added_pkgs="vim lutris bottles jellyfin-media-player \
+	    pcsx2 dolphin-emu simple64 yuzu cemu \
+     	    gamemode lib32-gamemode"
 
 # Packages to install
 # You can add packages that you want and remove packages that you don't need
 # Apart from packages from the official Arch repos, you can also specify
 # packages from the Chaotic-AUR repo
-export packagelist="${audio_pkgs} ${video_pkgs} ${wine_pkgs} ${devel_pkgs} \
-	${added_pkgs} \
+export packagelist="\
+	${audio_pkgs} ${video_pkgs} ${wine_pkgs} ${added_pkgs} \
 	ttf-liberation mpv geany pcmanfm htop speedcrunch gpicview file-roller \
- 	xorg-xwayland gamemode lib32-gamemode jre-openjdk lxterminal qt6-wayland \
-  	wayland lib32-wayland qt5-wayland xorg-server-xephyr gamescope multimc5 \
-   	bottles"
+ 	xorg-xwayland lxterminal qt6-wayland wayland lib32-wayland qt5-wayland \
+  	xorg-server-xephyr gamescope multimc5"
 
 # If you want to install AUR packages, specify them in this variable
 export aur_packagelist=""
