@@ -30,7 +30,7 @@ wine_pkgs="wine-tkg-staging-fsync-git winetricks-git wine-nine wineasio \
 
 added_pkgs="vim lutris bottles jellyfin-media-player \
 	    pcsx2 dolphin-emu simple64 yuzu cemu \
-     	    gamemode lib32-gamemode"
+     	    gamemode lib32-gamemode bluez bluez-utils"
 
 # Packages to install
 # You can add packages that you want and remove packages that you don't need
