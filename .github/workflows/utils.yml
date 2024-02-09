@@ -25,7 +25,7 @@ jobs:
                  zstd libarchive libunwind google-glog gtest fmt gflags \
                  double-conversion cmake ruby-ronn libevent libdwarf git \
                  clang libsodium liburing libaio musl kernel-headers-musl utf8cpp \
-                 chrono-date python range-v3
+                 chrono-date python python-mistletoe range-v3
           build_dwarfs=false ./create-utils.sh
           tar xf utils.tar.gz
           mv utils utils-bak
