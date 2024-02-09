@@ -29,7 +29,7 @@ wine_pkgs="wine-tkg-staging-fsync-git winetricks-git wine-nine wineasio \
 	lib32-gst-plugins-base gst-libav wget faudio lib32-faudio"
 
 added_pkgs="vim lutris bottles jellyfin-media-player \
-	    pcsx2 dolphin-emu simple64 yuzu cemu \
+	    pcsx2 dolphin-emu simple64 yuzu cemu supertuxkart \
      	    gamemode lib32-gamemode bluez bluez-utils"
 
 # Packages to install
