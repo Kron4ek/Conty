@@ -23,4 +23,4 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: conty_${{ steps.date.outputs.date }}
-          path: conty.sh
+          path: conty_${{ steps.date.outputs.date }}.sh
