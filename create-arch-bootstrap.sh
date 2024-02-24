@@ -30,7 +30,7 @@ wine_pkgs="wine-tkg-staging-fsync-git winetricks-git wine-nine wineasio \
 
 added_pkgs="vim lutris bottles jellyfin-media-player \
 	    pcsx2 dolphin-emu simple64 yuzu cemu supertuxkart \
-     	    gamemode lib32-gamemode gamescope \
+     	    gamemode lib32-gamemode gamescope mangohud lib32-mangohud \
 	    pegasus-frontend-git antimicrox"
 
 # Packages to install
