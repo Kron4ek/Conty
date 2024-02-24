@@ -145,8 +145,9 @@ if command -v sed 1>/dev/null; then
 fi
 
 # Combine the files into a single executable using cat
-cat utils/init utils/bash conty-start.sh utils/busybox "${utils}" "${image_path}" > conty.sh
-chmod +x conty.sh
+export CONTY_NAME="conty_""$(date +'%Y-%m-%d').sh"
+cat utils/init utils/bash conty-start.sh utils/busybox "${utils}" "${image_path}" > "$CONTY_NAME"
+chmod +x "$CONTY_NAME"
 
 clear
 echo "Conty created and ready to use!"
