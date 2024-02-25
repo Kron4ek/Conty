@@ -59,7 +59,7 @@ enable_alhp_repo="true"
 # Feature levels for ALHP. Available feature levels are 2 and 3
 # For level 2 you need a CPU with SSE4.2 instructions
 # For level 3 you need a CPU with AVX2 instructions
-alhp_feature_level="4"
+alhp_feature_level="3"
 
 ########################################################################
 
