@@ -12,7 +12,7 @@ This is an easy to use compressed unprivileged Linux container packed into a sin
 * Root rights are **not required**.
 * Compressed (with squashfs or dwarfs), so it takes a lot less disk space than uncompressed containers and can provide faster filesystem access in some cases.
 * Contains many packages and libraries, it can run almost everything, and you don't need to install anything on your main (host) system. **You can even run 32-bit applications on pure 64-bit systems** (but your kernel needs **CONFIG_IA32_EMULATION**).
-* Based on Arch Linux, contains modern software (including fresh videodrivers).
+* Based on Arch Linux, contains modern software (including fresh videodrivers), but no way to use their package manager Pacman: it stores its databases in /var/lib/pacman and Conty remounts /var with the one from the host system. You won't be able to fully use Pacman anyway since the filesystem is read-only.
 * Almost completely seamless experience. All applications that you run with Conty read and store their configs in your $HOME directory as if you weren't using the container at all.
 * No performance overhead. Since it's just a container, there is virtually no performance overhead, all applications will run at full speed. Regarding memory usage, Conty uses a bit more memory due to compression and because applications from the container can't share libraries with your system apps.
 * Supports Xorg, Wayland and XWayland.
