@@ -40,7 +40,7 @@ export packagelist="${audio_pkgs} ${video_pkgs} ${wine_pkgs} ${devel_pkgs} \
 	steam-native-runtime gamemode lib32-gamemode jre-openjdk lxterminal \
 	steamtinkerlaunch mangohud lib32-mangohud qt6-wayland wayland \
 	lib32-wayland qt5-wayland retroarch xorg-server-xephyr openbox \
-	obs-studio gamehub minigalaxy legendary gamescope multimc5 yt-dlp \
+	obs-studio gamehub minigalaxy legendary gamescope prismlauncher yt-dlp \
 	bottles playonlinux minizip retroarch-assets-ozone libretro-beetle-psx-hw \
 	libretro-blastem libretro-bsnes libretro-dolphin libretro-duckstation \
 	libretro-gambatte libretro-melonds libretro-mgba libretro-nestopia \
