@@ -78,6 +78,8 @@ $ export USE_SYS_UTILS=1
 $ ./conty.sh command command_arguments
 ```
 
+If you plan to run 32-bit applications, your kernel need to be compiled with **CONFIG_IA32_EMULATION** and **CONFIG_COMPAT_32BIT_TIME** options enabled in its config. Kernels in most Linux distributions have these options enabled by default.
+
 ## Usage
 
 ### CLI
