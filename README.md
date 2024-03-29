@@ -11,7 +11,7 @@ This is an easy to use compressed unprivileged Linux container packed into a sin
 * Works on Steam Deck.
 * Root rights are **not required**.
 * Compressed (with squashfs or dwarfs), so it takes a lot less disk space than uncompressed containers and can provide faster filesystem access in some cases.
-* Contains many packages and libraries, it can run almost everything, and you don't need to install anything on your main (host) system. **You can even run 32-bit applications on pure 64-bit systems** (but your kernel needs **CONFIG_IA32_EMULATION**).
+* Contains many packages and libraries, it can run almost everything, and you don't need to install anything on your main (host) system. **You can even run 32-bit applications on pure 64-bit systems**.
 * Based on Arch Linux, contains modern software (including fresh videodrivers).
 * Almost completely seamless experience. All applications that you run with Conty read and store their configs in your $HOME directory as if you weren't using the container at all.
 * No performance overhead. Since it's just a container, there is virtually no performance overhead, all applications will run at full speed. Regarding memory usage, Conty uses a bit more memory due to compression and because applications from the container can't share libraries with your system apps.
@@ -78,7 +78,7 @@ $ export USE_SYS_UTILS=1
 $ ./conty.sh command command_arguments
 ```
 
-If you plan to run 32-bit applications, your kernel need to be compiled with **CONFIG_IA32_EMULATION** and **CONFIG_COMPAT_32BIT_TIME** options enabled in its config. Kernels in most Linux distributions have these options enabled by default.
+If you plan to run 32-bit applications, your kernel must be compiled with **CONFIG_IA32_EMULATION** and **CONFIG_COMPAT_32BIT_TIME** options enabled. Kernels in most Linux distributions have these options enabled by default.
 
 ## Usage
 
