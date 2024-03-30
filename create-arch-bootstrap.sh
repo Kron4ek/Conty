@@ -37,7 +37,7 @@ devel_pkgs="base-devel git meson mingw-w64-gcc cmake"
 export packagelist="${audio_pkgs} ${video_pkgs} ${wine_pkgs} ${devel_pkgs} \
 	nano ttf-dejavu ttf-liberation lutris steam firefox mpv geany pcmanfm \
 	htop qbittorrent speedcrunch gpicview file-roller xorg-xwayland \
-	steam-native-runtime gamemode lib32-gamemode jre-openjdk lxterminal \
+	steam-native-runtime gamemode lib32-gamemode jre17-openjdk lxterminal \
 	steamtinkerlaunch mangohud lib32-mangohud qt6-wayland wayland \
 	lib32-wayland qt5-wayland retroarch xorg-server-xephyr openbox \
 	obs-studio gamehub minigalaxy legendary gamescope prismlauncher yt-dlp \
