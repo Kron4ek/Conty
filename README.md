@@ -61,6 +61,8 @@ $ chmod +x conty.sh
 
 Chmod only need to be executed once (per file). You can now [start using Conty](#usage).
 
+On Gentoo you can emerge [games-emulation/conty](https://github.com/gentoo/guru/tree/master/games-emulation/conty)
+
 ###  Requirements
 
 The only requirements are `fuse3` (or `fuse2`) and `coreutils`. And your `/tmp` directory should allow files execution (which it does by default on most distros).
