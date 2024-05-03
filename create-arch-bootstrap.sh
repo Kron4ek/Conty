@@ -246,7 +246,7 @@ bootstrap_urls=("mirror.f4st.host" \
 echo "Downloading Arch Linux bootstrap"
 
 for link in "${bootstrap_urls[@]}"; do
-	curl -#LO "https://${link}/archlinux/iso/latest/archlinux-bootstrap-x86_64.tar.gz"
+	curl -#LO "https://${link}/archlinux/iso/latest/archlinux-bootstrap-x86_64.tar.zst"
 	curl -#LO "https://${link}/archlinux/iso/latest/sha256sums.txt"
 
 	if [ -s sha256sums.txt ]; then
@@ -268,8 +268,8 @@ if [ -z "${bootstrap_is_good}" ]; then
 fi
 
 rm -rf "${bootstrap}"
-tar xf archlinux-bootstrap-x86_64.tar.gz
-rm archlinux-bootstrap-x86_64.tar.gz sha256sums.txt sha256.txt
+tar xf archlinux-bootstrap-x86_64.tar.zst
+rm archlinux-bootstrap-x86_64.tar.zst sha256sums.txt sha256.txt
 
 mount_chroot
 
