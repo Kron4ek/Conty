@@ -277,7 +277,7 @@ generate_localegen
 
 if command -v reflector 1>/dev/null; then
 	echo "Generating mirrorlist..."
-	reflector --connection-timeout 10 --download-timeout 10 --protocol https --score 7 --sort rate --save mirrorlist
+	reflector --connection-timeout 10 --download-timeout 10 --protocol https --score 10 --sort rate --save mirrorlist
 	reflector_used=1
 else
 	generate_mirrorlist
@@ -345,7 +345,8 @@ run_in_chroot pacman --noconfirm --needed -S base reflector squashfs-tools faker
 # Regenerate the mirrorlist with reflector if reflector was not used before
 if [ -z "${reflector_used}" ]; then
 	echo "Generating mirrorlist..."
-	run_in_chroot reflector --connection-timeout 10 --download-timeout 10 --protocol https --score 7 --sort rate --save /etc/pacman.d/mirrorlist
+	run_in_chroot reflector --connection-timeout 10 --download-timeout 10 --protocol https --score 10 --sort rate --save /etc/pacman.d/mirrorlist
+ 	run_in_chroot pacman -Syu --noconfirm
 fi
 
 export -f install_packages
