@@ -10,11 +10,11 @@ audio_pkgs="alsa-lib lib32-alsa-lib alsa-plugins lib32-alsa-plugins libpulse \
 	lib32-libpulse jack2 lib32-jack2 alsa-tools alsa-utils pipewire lib32-pipewire"
 
 video_pkgs="mesa lib32-mesa vulkan-radeon lib32-vulkan-radeon \
-	vulkan-intel lib32-vulkan-intel nvidia-utils lib32-nvidia-utils \
+	vulkan-intel lib32-vulkan-intel \
 	vulkan-icd-loader lib32-vulkan-icd-loader vulkan-mesa-layers \
 	lib32-vulkan-mesa-layers libva-mesa-driver lib32-libva-mesa-driver \
 	libva-intel-driver lib32-libva-intel-driver intel-media-driver \
-	mesa-utils vulkan-tools nvidia-prime libva-utils lib32-mesa-utils"
+	mesa-utils vulkan-tools libva-utils lib32-mesa-utils"
 
 wine_pkgs="wine-staging winetricks-git wine-nine wineasio \
 	giflib lib32-giflib libpng lib32-libpng libldap lib32-libldap \
