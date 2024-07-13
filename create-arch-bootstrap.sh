@@ -236,12 +236,12 @@ if [ ! -s chaotic-keyring.pkg.tar.zst ] || [ ! -s chaotic-mirrorlist.pkg.tar.zst
 	exit 1
 fi
 
-bootstrap_urls=("mirror.f4st.host" \
-			"arch.hu.fo" \
-			"mirror.cyberbits.eu" \
-			"mirror.osbeck.com" \
-			"mirror.lcarilla.de" \
-			"mirror.moson.org")
+bootstrap_urls=("arch.hu.fo" \
+		"mirror.cyberbits.eu" \
+		"mirror.osbeck.com" \
+		"mirror.lcarilla.de" \
+		"mirror.moson.org" \
+  		"mirror.f4st.host")
 
 echo "Downloading Arch Linux bootstrap"
 
