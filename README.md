@@ -73,6 +73,12 @@ Your Linux kernel must be at least version 4.4 and should support unprivileged u
 # sysctl kernel.unprivileged_userns_clone=1
 ```
 
+On Ubuntu 24.04+ (and maybe some other distros with apparmor enabled) it is needed to disable `kernel.apparmor_restrict_unprivileged_userns` sysctl option.
+
+```
+# sysctl kernel.apparmor_restrict_unprivileged_userns=0
+```
+
 Even if unprivileged user namespaces are not supported by your kernel, you can still use Conty if you have bubblewrap with the SUID bit installed on your system, in this case just tell Conty to use system-wide utils instead of the builtin ones.
 
 ```
