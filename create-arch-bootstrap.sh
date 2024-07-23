@@ -366,8 +366,12 @@ fi
 
 run_in_chroot locale-gen
 
+# Remove base-devel
+run_in_chroot pacman --noconfirm -Rsu "${devel_pkgs}"
+
 # Generate a list of installed packages
 run_in_chroot pacman -Q > "${bootstrap}"/pkglist.x86_64.txt
+run_in_chroot pacman --noconfirm -Scc
 
 unmount_chroot
 
