@@ -16,31 +16,22 @@ jobs:
       run: |
         chmod +x create-arch-bootstrap.sh create-conty.sh
         sudo ./create-arch-bootstrap.sh && ./create-conty.sh
-        mkdir dist
-        mv conty.sh* dist/
-    - name: Upload artifact
-      uses: actions/upload-artifact@v1.0.0
-      with:
-        name: conty
-        path: 'dist'
         
-  release:
-      needs: [build]
-      permissions: write-all
-      runs-on: ubuntu-latest
+    - uses: dev-drprasad/delete-tag-and-release@v1.0
+      with:
+        tag_name: continuous-bottles
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        delete_release: true
 
-      steps:
-        - uses: actions/download-artifact@v1
-          with:
-            name: conty
+    - uses: rickstaa/action-create-tag@v1
+      id: "tag_create"
+      with:
+        tag: "continuous-bottles"
 
-        - name: release
-          uses: marvinpinto/action-automatic-releases@latest
-          with:
-            title: Bottles
-            automatic_release_tag: continuous-bottles
-            prerelease: false
-            draft: false
-            files: |
-              ./conty.sh*
-            repo_token: ${{ secrets.GITHUB_TOKEN }}
+    - uses: softprops/action-gh-release@v1
+      with:
+        files: ./conty.sh*
+        prerelease: false
+        draft: false
+        tag_name: continuous-bottles
+        name: Bottles
