@@ -17,11 +17,11 @@ jobs:
         chmod +x create-arch-bootstrap.sh create-conty.sh
         sudo ./create-arch-bootstrap.sh && ./create-conty.sh
         mkdir dist
-        mv conty.sh dist/
+        mv conty.sh* dist/
     - name: Upload artifact
       uses: actions/upload-artifact@v1.0.0
       with:
-        name: Bottles
+        name: conty
         path: 'dist'
         
   release:
@@ -32,7 +32,7 @@ jobs:
       steps:
         - uses: actions/download-artifact@v1
           with:
-            name: Bottles
+            name: conty
 
         - name: release
           uses: marvinpinto/action-automatic-releases@latest
@@ -42,5 +42,5 @@ jobs:
             prerelease: false
             draft: false
             files: |
-              ./conty.sh
+              ./conty.sh*
             repo_token: ${{ secrets.GITHUB_TOKEN }}
