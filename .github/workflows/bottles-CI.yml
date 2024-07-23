@@ -21,6 +21,7 @@ jobs:
           split -b 2097152000 --numeric-suffixes=1 conty.sh conty.sh_part
           rm conty.sh
         fi
+        mkdir dist
         mv conty.sh dist/
     - name: Upload artifact
       uses: actions/upload-artifact@v1.0.0
