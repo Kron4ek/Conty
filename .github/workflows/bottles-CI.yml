@@ -1,0 +1,50 @@
+name: Release Bottles
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: true
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Build Conty
+      run: |
+        chmod +x create-arch-bootstrap.sh create-conty.sh
+        sudo ./create-arch-bootstrap.sh && ./create-conty.sh
+
+        if [ "$(stat -c%s conty.sh)" -gt 2097152000 ]; then
+          split -b 2097152000 --numeric-suffixes=1 conty.sh conty.sh_part
+          rm conty.sh
+        fi
+        mv conty.sh dist/
+    - name: Upload artifact
+      uses: actions/upload-artifact@v1.0.0
+      with:
+        name: Bottles
+        path: 'dist'
+        
+  release:
+      needs: [build]
+      permissions: write-all
+      runs-on: ubuntu-latest
+
+      steps:
+        - uses: actions/download-artifact@v1
+          with:
+            name: Bottles
+
+        - name: release
+          uses: marvinpinto/action-automatic-releases@latest
+          with:
+            title: Bottles
+            automatic_release_tag: continuous-bottles
+            prerelease: false
+            draft: false
+            files: |
+              ./conty.sh
+            repo_token: ${{ secrets.GITHUB_TOKEN }}
