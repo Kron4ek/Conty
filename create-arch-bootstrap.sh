@@ -35,7 +35,7 @@ devel_pkgs="base-devel git meson mingw-w64-gcc cmake"
 # Apart from packages from the official Arch repos, you can also specify
 # packages from the Chaotic-AUR repo
 export packagelist="${audio_pkgs} ${video_pkgs} ${wine_pkgs} ${devel_pkgs} \
-	ttf-dejavu ttf-liberation gamemode lib32-gamemode lib32-mangohud lib32-wayland"
+	ttf-dejavu ttf-liberation xorg-xwayland gamemode lib32-gamemode wayland lib32-wayland"
 
 # If you want to install AUR packages, specify them in this variable
 export aur_packagelist="bottles"
@@ -365,6 +365,10 @@ if [ -n "${aur_packagelist}" ]; then
 fi
 
 run_in_chroot locale-gen
+
+# Remove unneeded packages
+run_in_chroot pacman --noconfirm -Rsu base-devel meson mingw-w64-gcc cmake gcc
+run_in_chroot pacman --noconfirm -Scc
 
 # Generate a list of installed packages
 run_in_chroot pacman -Q > "${bootstrap}"/pkglist.x86_64.txt
