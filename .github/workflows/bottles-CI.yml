@@ -15,11 +15,11 @@ jobs:
     - name: Build Conty
       run: |
         # Install dwarfs
-        #wget -q "$(curl -Ls https://api.github.com/repos/mhx/dwarfs/releases/latest | sed 's/[()",{} ]/\n/g' | grep -oi "https.*linux.*x86_64.*xz$" | head -1)" &&
-        #tar fx ./dwarfs*xz &&
-        #sudo mv ./dwarfs*/bin/* /usr/bin/ &&
-        #sudo mv ./dwarfs*/sbin/* /usr/sbin/ &&
-        #sudo rsync -av ./dwarfs*/share/man* /usr/share/man/ || exit 1
+        wget -q "$(curl -Ls https://api.github.com/repos/mhx/dwarfs/releases/latest | sed 's/[()",{} ]/\n/g' | grep -oi "https.*linux.*x86_64.*xz$" | head -1)" &&
+        tar fx ./dwarfs*xz &&
+        sudo mv ./dwarfs*/bin/* /usr/bin/ &&
+        sudo mv ./dwarfs*/sbin/* /usr/sbin/ &&
+        sudo rsync -av ./dwarfs*/share/man* /usr/share/man/ || exit 1
         # Create Conty
         chmod +x create-arch-bootstrap.sh create-conty.sh
         sudo ./create-arch-bootstrap.sh && ./create-conty.sh
