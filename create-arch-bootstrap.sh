@@ -35,7 +35,7 @@ devel_pkgs="base-devel git meson mingw-w64-gcc cmake"
 # Apart from packages from the official Arch repos, you can also specify
 # packages from the Chaotic-AUR repo
 #export packagelist="${audio_pkgs} ${video_pkgs} ${wine_pkgs} ${devel_pkgs} \
-export packagelist="${audio_pkgs} ${devel_pkgs} lib32-mpg123 \
+export packagelist="${audio_pkgs} ${devel_pkgs} lib32-mpg123 lib32-freetype2 lib32-libpng lib32-zlib \
 	ttf-dejavu ttf-liberation xorg-xwayland gamemode lib32-gamemode wayland \
 	lib32-wayland xorg-server xorg-apps"
 
