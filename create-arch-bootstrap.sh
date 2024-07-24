@@ -369,6 +369,7 @@ run_in_chroot locale-gen
 
 # Remove unneeded packages
 run_in_chroot pacman --noconfirm -Rsu base-devel meson mingw-w64-gcc cmake gcc
+run_in_chroot pacman --noconfirm -Rdd wine-staging
 run_in_chroot pacman --noconfirm -Scc
 
 # Generate a list of installed packages
