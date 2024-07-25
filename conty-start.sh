@@ -49,7 +49,8 @@ script_name="$(basename "${script_literal}")"
 script="$(readlink -f "${script_literal}")"
 
 # MD5 of the first 4 MB and the last 1 MB of the script
-script_md5="$(head -c 4000000 "${script}" | md5sum | head -c 7)"_"$(tail -c 1000000 "${script}" | md5sum | head -c 7)"
+script_md5="runtime"
+#script_md5="$(head -c 4000000 "${script}" | md5sum | head -c 7)"_"$(tail -c 1000000 "${script}" | md5sum | head -c 7)"
 script_id="$$"
 
 # Working directory where the utils will be extracted
