@@ -16,15 +16,8 @@ video_pkgs="mesa vulkan-radeon \
 	libva-intel-driver intel-media-driver \
 	mesa-utils vulkan-tools libva-utils"
 
-wine_pkgs="libpng gnutls openal \
-	v4l-utils libpulse alsa-plugins \
-	alsa-lib libjpeg-turbo \
-	libxcomposite \
-	libva \
-	vulkan-icd-loader sdl2 \
-	vkd3d ffmpeg gst-plugins-good gst-plugins-bad \
-	gst-plugins-ugly gst-plugins-base \
-	gst-libav wget gst-plugin-pipewire"
+wine_pkgs="libpng gnutls openal v4l-utils libpulse alsa-plugins \
+	alsa-lib libjpeg-turbo"
 
 devel_pkgs="base-devel git meson mingw-w64-gcc cmake"
 
@@ -32,10 +25,8 @@ devel_pkgs="base-devel git meson mingw-w64-gcc cmake"
 # You can add packages that you want and remove packages that you don't need
 # Apart from packages from the official Arch repos, you can also specify
 # packages from the Chaotic-AUR repo
-export packagelist="${audio_pkgs} ${wine_pkgs} ${devel_pkgs} \
-	ttf-dejavu ttf-liberation xorg-xwayland wayland \
-	xorg-server xorg-apps curl virtualbox-kvm \
- 	kvantum qt5ct qt6ct"
+export packagelist="${audio_pkgs} ${wine_pkgs} \
+	curl virtualbox-kvm kvantum qt5ct qt6ct"
 
 # If you want to install AUR packages, specify them in this variable
 export aur_packagelist=""
