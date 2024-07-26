@@ -35,10 +35,10 @@ devel_pkgs="base-devel git meson mingw-w64-gcc cmake"
 export packagelist="${audio_pkgs} ${video_pkgs} ${wine_pkgs} ${devel_pkgs} \
 	ttf-dejavu ttf-liberation xorg-xwayland wayland \
 	xorg-server xorg-apps curl virtualbox-kvm \
- 	kvantum qt5ct qt6ct"
+ 	kvantum kvantum-qt5 qt5ct qt6ct"
 
 # If you want to install AUR packages, specify them in this variable
-export aur_packagelist=""
+export aur_packagelist="virtualbox-bin-guest-iso virtualbox-ext-oracle"
 
 # ALHP is a repository containing packages from the official Arch Linux
 # repos recompiled with -O3, LTO and optimizations for modern CPUs for
