@@ -382,7 +382,7 @@ run_in_chroot sed -i 's/LANG=${LANG:-C}/LANG=$LANG/g' /etc/profile.d/locale.sh
 # Remove bloatwares
 run_in_chroot rm -Rf /usr/include /usr/man
 run_in_chroot "$(cd /usr/share/doc && for d in *; do if [ "$d" != "*bottles*" ]; then rm -Rf "$d"; fi done && cd - || exit 1)"
-run_in_chroot "$(cd /usr/share/locale && find . -type f ! -iname "*bottles*" -delete && cd - || exit 1)"
+run_in_chroot "$(cd /usr/share/locale && for a in *; do cd "$a" && for b in *; do cd "$b" && for c in *; do if [ "$c" != "*bottles*" ]; then rm -Rf "$c"; fi; done; done; done; cd - || exit 1)"
 
 # Check if the command we are interested in has been installed
 run_in_chroot "$(if ! command -v bottles; then echo "Command not found, exiting." && exit 1; fi)"
