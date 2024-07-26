@@ -9,12 +9,15 @@
 audio_pkgs="alsa-lib lib32-alsa-lib alsa-plugins lib32-alsa-plugins libpulse \
 	lib32-libpulse jack2 lib32-jack2 alsa-tools alsa-utils pipewire lib32-pipewire"
 
-video_pkgs="mesa lib32-mesa vulkan-radeon lib32-vulkan-radeon vulkan-intel \
-	lib32-vulkan-intel vulkan-icd-loader lib32-vulkan-icd-loader vulkan-mesa-layers \
+video_pkgs="mesa lib32-mesa vulkan-radeon lib32-vulkan-radeon \
+	vulkan-intel lib32-vulkan-intel \
+	vulkan-icd-loader lib32-vulkan-icd-loader vulkan-mesa-layers \
 	lib32-vulkan-mesa-layers libva-mesa-driver lib32-libva-mesa-driver \
-	libva-intel-driver lib32-libva-intel-driver intel-media-driver lib32-mesa-utils"
+	libva-intel-driver lib32-libva-intel-driver intel-media-driver \
+	mesa-utils vulkan-tools libva-utils lib32-mesa-utils"
 
-wine_pkgs="giflib lib32-giflib libpng lib32-libpng libldap lib32-libldap \
+wine_pkgs="wine-staging winetricks-git wine-nine wineasio \
+	giflib lib32-giflib libpng lib32-libpng libldap lib32-libldap \
 	gnutls lib32-gnutls mpg123 lib32-mpg123 openal lib32-openal \
 	v4l-utils lib32-v4l-utils libpulse lib32-libpulse alsa-plugins \
 	lib32-alsa-plugins alsa-lib lib32-alsa-lib libjpeg-turbo \
@@ -25,19 +28,18 @@ wine_pkgs="giflib lib32-giflib libpng lib32-libpng libldap lib32-libldap \
 	gst-plugins-ugly gst-plugins-base lib32-gst-plugins-good \
 	lib32-gst-plugins-base gst-libav wget gst-plugin-pipewire"
 
-devel_pkgs="base-devel"
+devel_pkgs="base-devel git meson mingw-w64-gcc cmake"
 
 # Packages to install
 # You can add packages that you want and remove packages that you don't need
 # Apart from packages from the official Arch repos, you can also specify
 # packages from the Chaotic-AUR repo
 export packagelist="${audio_pkgs} ${video_pkgs} ${wine_pkgs} ${devel_pkgs} \
-	ttf-dejavu ttf-liberation steam xorg-xwayland qt6-wayland wayland \
-	lib32-wayland qt5-wayland gamescope gamemode lib32-gamemode mangohud \
-	lib32-mangohud zenity-gtk3"
+	ttf-dejavu ttf-liberation xorg-xwayland gamemode lib32-gamemode wayland \
+	lib32-wayland xorg-server xorg-apps"
 
 # If you want to install AUR packages, specify them in this variable
-export aur_packagelist="glibc-eac-bin lib32-glibc-eac-bin steam-screensaver-fix"
+export aur_packagelist="bottles"
 
 # ALHP is a repository containing packages from the official Arch Linux
 # repos recompiled with -O3, LTO and optimizations for modern CPUs for
@@ -379,11 +381,11 @@ run_in_chroot sed -i 's/LANG=${LANG:-C}/LANG=$LANG/g' /etc/profile.d/locale.sh
 
 # Remove bloatwares
 run_in_chroot rm -Rf /usr/include /usr/man
-run_in_chroot "$(for d in /usr/share/doc/*; do if [ "$d" != "*steam*" ]; then rm -Rf "$d"; fi; done)"
-run_in_chroot "$(for f in /usr/share/locale/*/*/*; do if [ "$f" != "*steam*" ]; then rm -Rf "$f"; fi; done)"
+run_in_chroot "$(for d in /usr/share/doc/*; do if [ "$d" != "*bottles*" ]; then rm -Rf "$d"; fi; done)"
+run_in_chroot "$(for f in /usr/share/locale/*/*/*; do if [ "$f" != "*bottles*" ]; then rm -Rf "$f"; fi; done)"
 
 # Check if the command we are interested in has been installed
-run_in_chroot "$(if ! command -v steam-screensaver-fix-runtime; then echo "Command not found, exiting." && exit 1; fi)"
+run_in_chroot "$(if ! command -v bottles; then echo "Command not found, exiting." && exit 1; fi)"
 
 unmount_chroot
 
