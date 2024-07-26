@@ -6,27 +6,25 @@
 ########################################################################
 
 # Package groups
-audio_pkgs="alsa-lib lib32-alsa-lib alsa-plugins lib32-alsa-plugins libpulse \
-	lib32-libpulse jack2 lib32-jack2 alsa-tools alsa-utils pipewire lib32-pipewire"
+audio_pkgs="alsa-lib alsa-plugins libpulse \
+	jack2 alsa-tools alsa-utils pipewire"
 
-video_pkgs="mesa lib32-mesa vulkan-radeon lib32-vulkan-radeon \
-	vulkan-intel lib32-vulkan-intel \
-	vulkan-icd-loader lib32-vulkan-icd-loader vulkan-mesa-layers \
-	lib32-vulkan-mesa-layers libva-mesa-driver lib32-libva-mesa-driver \
-	libva-intel-driver lib32-libva-intel-driver intel-media-driver \
-	mesa-utils vulkan-tools libva-utils lib32-mesa-utils"
+video_pkgs="mesa vulkan-radeon \
+	vulkan-intel \
+	vulkan-icd-loader vulkan-mesa-layers \
+	libva-mesa-driver \
+	libva-intel-driver intel-media-driver \
+	mesa-utils vulkan-tools libva-utils"
 
-wine_pkgs="wine-staging winetricks-git wine-nine wineasio \
-	giflib lib32-giflib libpng lib32-libpng libldap lib32-libldap \
-	gnutls lib32-gnutls mpg123 lib32-mpg123 openal lib32-openal \
-	v4l-utils lib32-v4l-utils libpulse lib32-libpulse alsa-plugins \
-	lib32-alsa-plugins alsa-lib lib32-alsa-lib libjpeg-turbo \
-	lib32-libjpeg-turbo libxcomposite lib32-libxcomposite libxinerama \
-	lib32-libxinerama libxslt lib32-libxslt libva lib32-libva gtk3 \
-	lib32-gtk3 vulkan-icd-loader lib32-vulkan-icd-loader sdl2 lib32-sdl2 \
-	vkd3d lib32-vkd3d libgphoto2 ffmpeg gst-plugins-good gst-plugins-bad \
-	gst-plugins-ugly gst-plugins-base lib32-gst-plugins-good \
-	lib32-gst-plugins-base gst-libav wget gst-plugin-pipewire"
+wine_pkgs="libpng gnutls openal \
+	v4l-utils libpulse alsa-plugins \
+	alsa-lib libjpeg-turbo \
+	libxcomposite \
+	libva \
+	vulkan-icd-loader sdl2 \
+	vkd3d ffmpeg gst-plugins-good gst-plugins-bad \
+	gst-plugins-ugly gst-plugins-base \
+	gst-libav wget gst-plugin-pipewire"
 
 devel_pkgs="base-devel git meson mingw-w64-gcc cmake"
 
@@ -35,11 +33,12 @@ devel_pkgs="base-devel git meson mingw-w64-gcc cmake"
 # Apart from packages from the official Arch repos, you can also specify
 # packages from the Chaotic-AUR repo
 export packagelist="${audio_pkgs} ${video_pkgs} ${wine_pkgs} ${devel_pkgs} \
-	ttf-dejavu ttf-liberation xorg-xwayland gamemode lib32-gamemode wayland \
-	lib32-wayland xorg-server xorg-apps"
+	ttf-dejavu ttf-liberation xorg-xwayland wayland \
+	xorg-server xorg-apps curl virtualbox-kvm \
+ 	kvantum kvantum-qt5 qt5ct qt6ct"
 
 # If you want to install AUR packages, specify them in this variable
-export aur_packagelist="bottles"
+export aur_packagelist=""
 
 # ALHP is a repository containing packages from the official Arch Linux
 # repos recompiled with -O3, LTO and optimizations for modern CPUs for
@@ -378,13 +377,6 @@ run_in_chroot pacman -Q > "${bootstrap}"/pkglist.x86_64.txt
 # Use locale from host
 run_in_chroot rm -f "${bootstrap}"/etc/locale.conf
 run_in_chroot sed -i 's/LANG=${LANG:-C}/LANG=$LANG/g' /etc/profile.d/locale.sh
-
-# Debloat AppImage
-run_in_chroot BIN="bottles"
-run_in_chroot find /usr/share/doc/* -not -iname "*$BIN*" -a -not -name "." -delete 2> /dev/null #remove all documentation not related to the app
-run_in_chroot find /usr/share/locale/*/*/* -not -iname "*$BIN*" -a -not -name "." -delete 2> /dev/null #remove all additional locale files
-run_in_chroot rm -R -f /usr/include #files related to the compiler
-run_in_chroot rm -R -f /usr/man #appimages are not ment to have man command
 
 unmount_chroot
 
