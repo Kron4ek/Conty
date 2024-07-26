@@ -36,7 +36,7 @@ export packagelist="${audio_pkgs} ${video_pkgs} ${wine_pkgs} ${devel_pkgs} \
 	lib32-wayland qt5-wayland gamescope"
 
 # If you want to install AUR packages, specify them in this variable
-export aur_packagelist="glibc-eac lib32-glibc-eac"
+export aur_packagelist="glibc-eac-bin lib32-glibc-eac-bin"
 
 # ALHP is a repository containing packages from the official Arch Linux
 # repos recompiled with -O3, LTO and optimizations for modern CPUs for
