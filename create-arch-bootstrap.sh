@@ -380,7 +380,7 @@ run_in_chroot rm -f "${bootstrap}"/etc/locale.conf
 run_in_chroot sed -i 's/LANG=${LANG:-C}/LANG=$LANG/g' /etc/profile.d/locale.sh
 
 # Debloat AppImage
-BIN="bottles"
+run_in_chroot BIN="bottles"
 run_in_chroot find /usr/share/doc/* -not -iname "*$BIN*" -a -not -name "." -delete 2> /dev/null #remove all documentation not related to the app
 run_in_chroot find /usr/share/locale/*/*/* -not -iname "*$BIN*" -a -not -name "." -delete 2> /dev/null #remove all additional locale files
 run_in_chroot rm -R -f /usr/include #files related to the compiler
