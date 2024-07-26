@@ -377,14 +377,14 @@ run_in_chroot pacman -Q > "${bootstrap}"/pkglist.x86_64.txt
 
 # Use locale from host
 run_in_chroot rm -f "${bootstrap}"/etc/locale.conf
-run_in_chroot sed -i 's/LANG=${LANG:-C}/LANG=$LANG/g' "${bootstrap}"/etc/profile.d/locale.sh
+run_in_chroot sed -i 's/LANG=${LANG:-C}/LANG=$LANG/g' /etc/profile.d/locale.sh
 
 # Debloat AppImage
 BIN="bottles"
-run_in_chroot find "${bootstrap}"/usr/share/doc/* -not -iname "*$BIN*" -a -not -name "." -delete 2> /dev/null #remove all documentation not related to the app
-run_in_chroot find "${bootstrap}"/usr/share/locale/*/*/* -not -iname "*$BIN*" -a -not -name "." -delete 2> /dev/null #remove all additional locale files
-run_in_chroot rm -R -f "${bootstrap}"/usr/include #files related to the compiler
-run_in_chroot rm -R -f "${bootstrap}"/usr/man #appimages are not ment to have man command
+run_in_chroot find /usr/share/doc/* -not -iname "*$BIN*" -a -not -name "." -delete 2> /dev/null #remove all documentation not related to the app
+run_in_chroot find /usr/share/locale/*/*/* -not -iname "*$BIN*" -a -not -name "." -delete 2> /dev/null #remove all additional locale files
+run_in_chroot rm -R -f /usr/include #files related to the compiler
+run_in_chroot rm -R -f /usr/man #appimages are not ment to have man command
 
 unmount_chroot
 
