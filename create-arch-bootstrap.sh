@@ -379,8 +379,8 @@ run_in_chroot sed -i 's/LANG=${LANG:-C}/LANG=$LANG/g' /etc/profile.d/locale.sh
 
 # Remove bloatwares
 run_in_chroot rm -Rf /usr/include /usr/man
-for d in "${bootstrap}"/usr/share/doc/*; do if [ "$d" == "*steam*" ]; then break; else run_in_chroot rm -Rf "$d"; fi; done
-for f in "${bootstrap}"/usr/share/locale/*/*/*; do if [ "$f" == "*steam*" ]; then break; else run_in_chroot rm -Rf "$f"; fi; done
+for d in "${bootstrap}"/usr/share/doc/*; do if [ "$d" != "*steam*" ]; then run_in_chroot rm -Rf "$d"; fi; done
+for f in "${bootstrap}"/usr/share/locale/*/*/*; do if [ "$f" != "*steam*" ]; then run_in_chroot rm -Rf "$f"; fi; done
 
 # Check if the command we are interested in has been installed
 if ! test -f "${bootstrap}"/usr/bin/steam-screensaver-fix-runtime; then exit 1; fi
