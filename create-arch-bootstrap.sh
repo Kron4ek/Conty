@@ -367,6 +367,12 @@ fi
 
 #run_in_chroot locale-gen
 
+# Remove bloatwares
+run_in_chroot rm -Rf /usr/include /usr/man
+run_in_chroot "$(cd /usr/share/doc && for d in *; do if [ "$d" != "*bottles*" ]; then rm -Rf "$d"; fi done && cd - || exit 1)"
+run_in_chroot files=$(find "${bootstrap}"/usr/share/locale/*/*/* | grep -v "bottles" | sort)
+run_in_chroot "$(for f in $files; do rm -Rf "$f"; done)"
+
 # Remove unneeded packages
 run_in_chroot pacman --noconfirm -Rsu base-devel meson mingw-w64-gcc cmake gcc
 run_in_chroot pacman --noconfirm -Rdd wine-staging
@@ -378,12 +384,6 @@ run_in_chroot pacman -Q > "${bootstrap}"/pkglist.x86_64.txt
 # Use locale from host
 run_in_chroot rm -f "${bootstrap}"/etc/locale.conf
 run_in_chroot sed -i 's/LANG=${LANG:-C}/LANG=$LANG/g' /etc/profile.d/locale.sh
-
-# Remove bloatwares
-run_in_chroot rm -Rf /usr/include /usr/man
-run_in_chroot "$(cd /usr/share/doc && for d in *; do if [ "$d" != "*bottles*" ]; then rm -Rf "$d"; fi done && cd - || exit 1)"
-files=$(find "${bootstrap}"/usr/share/locale/*/*/* | grep -v "bottles" | sort)
-for f in $files; do sudo rm -Rf "$f"; done
 
 # Check if the command we are interested in has been installed
 run_in_chroot "$(if ! command -v bottles; then echo "Command not found, exiting." && exit 1; fi)"
