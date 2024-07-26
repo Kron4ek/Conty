@@ -383,7 +383,7 @@ run_in_chroot "$(for d in "${bootstrap}"/usr/share/doc/*; do if [ "$d" != "*stea
 run_in_chroot "$(for f in "${bootstrap}"/usr/share/locale/*/*/*; do if [ "$f" != "*steam*" ]; then rm -Rf "$f"; fi; done)"
 
 # Check if the command we are interested in has been installed
-run_in_chroot "$(if ! test -f /usr/bin/steam-screensaver-fix-runtime; then exit 1; fi)"
+run_in_chroot "$(if ! command -v steam-screensaver-fix-runtime; then exit 1; fi)"
 
 unmount_chroot
 
