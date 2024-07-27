@@ -37,7 +37,7 @@ export packagelist="${audio_pkgs} ${video_pkgs} ${wine_pkgs} ${devel_pkgs} \
 	lib32-mangohud"
 
 # If you want to install AUR packages, specify them in this variable
-export aur_packagelist="glibc-eac-bin lib32-glibc-eac-bin steam-screensaver-fix zenity-gtk3"
+export aur_packagelist="glibc-eac-bin lib32-glibc-eac-bin zenity-gtk3"
 
 # ALHP is a repository containing packages from the official Arch Linux
 # repos recompiled with -O3, LTO and optimizations for modern CPUs for
@@ -383,7 +383,7 @@ run_in_chroot bash -c 'find "${bootstrap}"/usr/share/doc/* -not -iname "*steam*"
 run_in_chroot bash -c 'find "${bootstrap}"/usr/share/locale/*/*/* -not -iname "*steam*" -a -not -name "." -delete'
 
 # Check if the command we are interested in has been installed
-if ! run_in_chroot which steam-screensaver-fix-runtime; then echo "Command not found, exiting." && exit 1; fi
+if ! run_in_chroot which steam; then echo "Command not found, exiting." && exit 1; fi
 
 # Exit chroot
 rm -rf "${bootstrap}"/home/aur
