@@ -380,8 +380,8 @@ run_in_chroot sed -i 's/LANG=${LANG:-C}/LANG=$LANG/g' /etc/profile.d/locale.sh
 
 # Remove bloatwares
 run_in_chroot rm -Rf /usr/include /usr/man
-CHROOT_AUR=1 HOME=/home/aur run_in_chroot bash -c 'find /usr/share/doc/* -not -iname "*steam*" -a -not -name "." -delete'
-CHROOT_AUR=1 HOME=/home/aur run_in_chroot bash -c 'find /usr/share/locale/*/*/* -not -iname "*steam*" -a -not -name "." -delete'
+run_in_chroot bash -c 'find /usr/share/doc/* -not -iname "*steam*" -a -not -name "." -delete'
+run_in_chroot bash -c 'find /usr/share/locale/*/*/* -not -iname "*steam*" -a -not -name "." -delete'
 
 # Check if the command we are interested in has been installed
 if ! run_in_chroot which steam; then echo "Command not found, exiting." && exit 1; fi
