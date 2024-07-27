@@ -381,12 +381,11 @@ run_in_chroot sed -i 's/LANG=${LANG:-C}/LANG=$LANG/g' /etc/profile.d/locale.sh
 
 # Remove bloatwares
 run_in_chroot rm -Rf /usr/include /usr/man
-run_in_chroot chmod -R 777 /usr/share/doc
-run_in_chroot chmod -R 777 /usr/share/locale/*/*/*
+mkdir -p /usr/share
+mount --bind /usr/share "${bootstrap}"/usr/share
 run_in_chroot "$(cd /usr/share/doc && for d in *; do if [ "$d" != "*bottles*" ]; then rm -Rf "$d"; fi done && cd - || exit 1)"
 run_in_chroot rm -Rf "$(find /usr/share/locale/*/*/* | grep -v "bottles" | sort | tr '\n' ' ')"
-run_in_chroot chmod -R 755 /usr/share/doc
-run_in_chroot chmod -R 755 /usr/share/locale/*/*/*
+umount /usr/share
 
 # Check if the command we are interested in has been installed
 run_in_chroot "$(if ! command -v bottles; then echo "Command not found, exiting." && exit 1; fi)"
