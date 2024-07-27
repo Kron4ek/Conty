@@ -7,7 +7,7 @@
 
 # Package groups
 audio_pkgs="alsa-lib alsa-plugins libpulse \
-	alsa-tools alsa-utils pipewire"
+	alsa-tools alsa-utils pipewire libpipewire pipewire-alsa"
 
 video_pkgs="mesa lib32-mesa vulkan-radeon lib32-vulkan-radeon vulkan-intel \
 	lib32-vulkan-intel vulkan-icd-loader lib32-vulkan-icd-loader vulkan-mesa-layers \
@@ -31,10 +31,13 @@ devel_pkgs="base-devel"
 # You can add packages that you want and remove packages that you don't need
 # Apart from packages from the official Arch repos, you can also specify
 # packages from the Chaotic-AUR repo
-export packagelist="${audio_pkgs} ${devel_pkgs}"
+export packagelist="${audio_pkgs} ${devel_pkgs} \
+	which dconf hicolor-icon-theme yt-dlp libx11 lua mpv \
+ 	python-cinemagoer python-gobject python-mpv python-requests \
+  	python-setproctitle python-unidecode xapp yt-dlp python libnih"
 
 # If you want to install AUR packages, specify them in this variable
-export aur_packagelist="hypnotix"
+export aur_packagelist="hypnotix circle-flags"
 
 # ALHP is a repository containing packages from the official Arch Linux
 # repos recompiled with -O3, LTO and optimizations for modern CPUs for
