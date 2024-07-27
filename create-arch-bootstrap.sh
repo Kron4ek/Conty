@@ -37,7 +37,7 @@ export packagelist="${audio_pkgs} ${video_pkgs} ${wine_pkgs} ${devel_pkgs} \
 	lib32-mangohud"
 
 # If you want to install AUR packages, specify them in this variable
-export aur_packagelist=""
+export aur_packagelist="glibc-eac-bin lib32-glibc-eac-bin steam-screensaver-fix zenity-gtk3"
 
 # ALHP is a repository containing packages from the official Arch Linux
 # repos recompiled with -O3, LTO and optimizations for modern CPUs for
@@ -381,7 +381,7 @@ run_in_chroot sed -i 's/LANG=${LANG:-C}/LANG=$LANG/g' /etc/profile.d/locale.sh
 run_in_chroot rm -Rf /usr/include /usr/man
 
 # Check if the command we are interested in has been installed
-if ! run_in_chroot which pippo; then echo "Command not found, exiting." && exit 1; fi
+if ! run_in_chroot which steam-screensaver-fix-runtime; then echo "Command not found, exiting." && exit 1; fi
 
 unmount_chroot
 
