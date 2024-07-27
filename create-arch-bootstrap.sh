@@ -386,8 +386,8 @@ unmount_chroot
 
 # Remove bloatwares
 rm -Rf "${bootstrap}"/usr/include "${bootstrap}"/usr/man
-rm -Rf "$(find "${bootstrap}"/usr/share/doc | grep -v "bottles" | sort | sed "s/\n^\// ${bootstrap}\//g")"
-rm -Rf "$(find "${bootstrap}"/usr/share/locale/*/*/* | grep -v "bottles" | sort | sed "s/\n^\// ${bootstrap}\//g")"
+rm -Rf "$(find "${bootstrap}"/usr/share/doc | grep -v "bottles" | sort | tr '\n' ' ')"
+rm -Rf "$(find "${bootstrap}"/usr/share/locale/*/*/* | grep -v "bottles" | sort | tr '\n' ' ')"
 
 # Clear pacman package cache
 rm -f "${bootstrap}"/var/cache/pacman/pkg/*
