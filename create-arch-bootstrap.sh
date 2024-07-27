@@ -6,39 +6,38 @@
 ########################################################################
 
 # Package groups
-audio_pkgs="alsa-lib alsa-plugins libpulse \
-	jack2 alsa-tools alsa-utils pipewire"
+audio_pkgs="alsa-lib lib32-alsa-lib alsa-plugins lib32-alsa-plugins libpulse \
+	lib32-libpulse jack2 lib32-jack2 alsa-tools alsa-utils pipewire lib32-pipewire"
 
-video_pkgs="mesa vulkan-radeon \
-	vulkan-intel \
-	vulkan-icd-loader vulkan-mesa-layers \
-	libva-mesa-driver \
-	libva-intel-driver intel-media-driver \
-	mesa-utils vulkan-tools libva-utils"
+video_pkgs="mesa lib32-mesa vulkan-radeon lib32-vulkan-radeon vulkan-intel \
+	lib32-vulkan-intel vulkan-icd-loader lib32-vulkan-icd-loader vulkan-mesa-layers \
+	lib32-vulkan-mesa-layers libva-mesa-driver lib32-libva-mesa-driver \
+	libva-intel-driver lib32-libva-intel-driver intel-media-driver lib32-mesa-utils"
 
-wine_pkgs="libpng gnutls openal \
-	v4l-utils libpulse alsa-plugins \
-	alsa-lib libjpeg-turbo \
-	libxcomposite \
-	libva \
-	vulkan-icd-loader sdl2 \
-	vkd3d ffmpeg gst-plugins-good gst-plugins-bad \
-	gst-plugins-ugly gst-plugins-base \
-	gst-libav wget gst-plugin-pipewire"
+wine_pkgs="giflib lib32-giflib libpng lib32-libpng libldap lib32-libldap \
+	gnutls lib32-gnutls mpg123 lib32-mpg123 openal lib32-openal \
+	v4l-utils lib32-v4l-utils libpulse lib32-libpulse alsa-plugins \
+	lib32-alsa-plugins alsa-lib lib32-alsa-lib libjpeg-turbo \
+	lib32-libjpeg-turbo libxcomposite lib32-libxcomposite libxinerama \
+	lib32-libxinerama libxslt lib32-libxslt libva lib32-libva gtk3 \
+	lib32-gtk3 vulkan-icd-loader lib32-vulkan-icd-loader sdl2 lib32-sdl2 \
+	vkd3d lib32-vkd3d libgphoto2 ffmpeg gst-plugins-good gst-plugins-bad \
+	gst-plugins-ugly gst-plugins-base lib32-gst-plugins-good \
+	lib32-gst-plugins-base gst-libav wget gst-plugin-pipewire"
 
-devel_pkgs="base-devel git meson mingw-w64-gcc cmake"
+devel_pkgs="base-devel"
 
 # Packages to install
 # You can add packages that you want and remove packages that you don't need
 # Apart from packages from the official Arch repos, you can also specify
 # packages from the Chaotic-AUR repo
 export packagelist="${audio_pkgs} ${video_pkgs} ${wine_pkgs} ${devel_pkgs} \
-	ttf-dejavu ttf-liberation xorg-xwayland wayland \
-	xorg-server xorg-apps curl virtualbox-kvm \
- 	kvantum kvantum-qt5 qt5ct qt6ct"
+	ttf-dejavu ttf-liberation steam xorg-xwayland qt6-wayland wayland \
+	lib32-wayland qt5-wayland gamescope gamemode lib32-gamemode mangohud \
+	lib32-mangohud"
 
 # If you want to install AUR packages, specify them in this variable
-export aur_packagelist=""
+export aur_packagelist="glibc-eac-bin lib32-glibc-eac-bin steam-screensaver-fix zenity-gtk3"
 
 # ALHP is a repository containing packages from the official Arch Linux
 # repos recompiled with -O3, LTO and optimizations for modern CPUs for
@@ -374,20 +373,15 @@ run_in_chroot pacman --noconfirm -Scc
 # Generate a list of installed packages
 run_in_chroot pacman -Q > "${bootstrap}"/pkglist.x86_64.txt
 
-appimage_tips() {
-	# Use locale from host
-	run_in_chroot rm -f "${bootstrap}"/etc/locale.conf
-	run_in_chroot sed -i 's/LANG=${LANG:-C}/LANG=$LANG/g' /etc/profile.d/locale.sh
+# Use locale from host
+run_in_chroot rm -f "${bootstrap}"/etc/locale.conf
+run_in_chroot sed -i 's/LANG=${LANG:-C}/LANG=$LANG/g' /etc/profile.d/locale.sh
 
-	# Remove bloatwares
-	run_in_chroot rm -Rf /usr/include /usr/man
-	run_in_chroot "$(cd /usr/share/doc && for d in *; do if [ "$d" != "*virtualbox*" ]; then rm -Rf "$d"; fi done && cd - || exit 1)"
+# Remove bloatwares
+run_in_chroot rm -Rf /usr/include /usr/man
 
-	# Check if the command we are interested in has been installed
-	run_in_chroot "$(if ! command -v virtualbox; then echo "Command not found, exiting." && exit 1; fi)"
-}
-
-appimage_tips
+# Check if the command we are interested in has been installed
+if ! run_in_chroot command -v steam-screensaver-fix-runtime; then echo "Command not found, exiting." && exit 1; fi
 
 unmount_chroot
 
