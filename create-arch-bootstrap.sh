@@ -35,7 +35,7 @@ export packagelist="${audio_pkgs} ${devel_pkgs} \
 	which dconf hicolor-icon-theme yt-dlp libx11 lua mpv \
  	python-cinemagoer python-gobject python-mpv python-requests \
   	python-setproctitle python-unidecode xapp yt-dlp python libnih \
-   	gtk3 gtk4 gdk-pixbuf-xlib gdk-pixbuf2"
+   	gtk3 gtk4 gdk-pixbuf-xlib gdk-pixbuf2 shared-mime-info xdg-utils"
 
 # If you want to install AUR packages, specify them in this variable
 export aur_packagelist="hypnotix-wayland circle-flags"
