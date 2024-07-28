@@ -34,7 +34,8 @@ devel_pkgs="base-devel"
 export packagelist="${audio_pkgs} ${devel_pkgs} \
 	which dconf hicolor-icon-theme yt-dlp libx11 lua mpv \
  	python-cinemagoer python-gobject python-mpv python-requests \
-  	python-setproctitle python-unidecode xapp yt-dlp python libnih"
+  	python-setproctitle python-unidecode xapp yt-dlp python libnih \
+   	gtk3 gtk4"
 
 # If you want to install AUR packages, specify them in this variable
 export aur_packagelist="hypnotix circle-flags"
