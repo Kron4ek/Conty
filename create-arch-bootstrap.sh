@@ -38,7 +38,7 @@ export packagelist="${audio_pkgs} ${devel_pkgs} \
    	gtk3 gtk4"
 
 # If you want to install AUR packages, specify them in this variable
-export aur_packagelist="hypnotix circle-flags"
+export aur_packagelist="hypnotix-wayland circle-flags"
 
 # ALHP is a repository containing packages from the official Arch Linux
 # repos recompiled with -O3, LTO and optimizations for modern CPUs for
