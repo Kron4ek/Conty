@@ -379,9 +379,9 @@ run_in_chroot rm -f "${bootstrap}"/etc/locale.conf
 run_in_chroot sed -i 's/LANG=${LANG:-C}/LANG=$LANG/g' /etc/profile.d/locale.sh
 
 # Add guest additions
-run_in_chroot mkdir -p "${bootstrap}"/usr/lib/virtualbox/additions
+run_in_chroot mkdir -p /usr/lib/virtualbox/additions
 run_in_chroot vboxver=$(curl -Ls https://gitlab.com/chaotic-aur/pkgbuilds/-/raw/main/virtualbox-kvm/PKGBUILD | grep vboxver | head -1 | tr "'" '\n' | grep "^[0-9]")
-run_in_chroot wget -q https://download.virtualbox.org/virtualbox/"${vboxver}"/VBoxGuestAdditions_"${vboxver}".iso -O "${bootstrap}"/usr/lib/virtualbox/additions/VBoxGuestAdditions.iso
+run_in_chroot wget https://download.virtualbox.org/virtualbox/"${vboxver}"/VBoxGuestAdditions_"${vboxver}".iso -O /usr/lib/virtualbox/additions/VBoxGuestAdditions.iso
 
 # Remove bloatwares
 run_in_chroot rm -Rf /usr/include /usr/man
