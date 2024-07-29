@@ -7,38 +7,38 @@
 
 # Package groups
 audio_pkgs="alsa-lib alsa-plugins libpulse \
-	alsa-tools alsa-utils pipewire libpipewire pipewire-alsa"
+	jack2 alsa-tools alsa-utils pipewire"
 
-video_pkgs="mesa lib32-mesa vulkan-radeon lib32-vulkan-radeon vulkan-intel \
-	lib32-vulkan-intel vulkan-icd-loader lib32-vulkan-icd-loader vulkan-mesa-layers \
-	lib32-vulkan-mesa-layers libva-mesa-driver lib32-libva-mesa-driver \
-	libva-intel-driver lib32-libva-intel-driver intel-media-driver lib32-mesa-utils"
+video_pkgs="mesa vulkan-radeon \
+	vulkan-intel \
+	vulkan-icd-loader vulkan-mesa-layers \
+	libva-mesa-driver \
+	libva-intel-driver intel-media-driver \
+	mesa-utils vulkan-tools libva-utils"
 
-wine_pkgs="giflib lib32-giflib libpng lib32-libpng libldap lib32-libldap \
-	gnutls lib32-gnutls mpg123 lib32-mpg123 openal lib32-openal \
-	v4l-utils lib32-v4l-utils libpulse lib32-libpulse alsa-plugins \
-	lib32-alsa-plugins alsa-lib lib32-alsa-lib libjpeg-turbo \
-	lib32-libjpeg-turbo libxcomposite lib32-libxcomposite libxinerama \
-	lib32-libxinerama libxslt lib32-libxslt libva lib32-libva gtk3 \
-	lib32-gtk3 vulkan-icd-loader lib32-vulkan-icd-loader sdl2 lib32-sdl2 \
-	vkd3d lib32-vkd3d libgphoto2 ffmpeg gst-plugins-good gst-plugins-bad \
-	gst-plugins-ugly gst-plugins-base lib32-gst-plugins-good \
-	lib32-gst-plugins-base gst-libav wget gst-plugin-pipewire"
+wine_pkgs="libpng gnutls openal \
+	v4l-utils libpulse alsa-plugins \
+	alsa-lib libjpeg-turbo \
+	libxcomposite \
+	libva wget \
+	vulkan-icd-loader sdl2 \
+	vkd3d ffmpeg gst-plugins-good gst-plugins-bad \
+	gst-plugins-ugly gst-plugins-base \
+	gst-libav wget gst-plugin-pipewire"
 
-devel_pkgs="base-devel"
+devel_pkgs="base-devel git meson mingw-w64-gcc cmake gtk3"
 
 # Packages to install
 # You can add packages that you want and remove packages that you don't need
 # Apart from packages from the official Arch repos, you can also specify
 # packages from the Chaotic-AUR repo
-export packagelist="${audio_pkgs} ${devel_pkgs} \
-	which dconf hicolor-icon-theme yt-dlp libx11 lua mpv \
- 	python-cinemagoer python-gobject python-mpv python-requests \
-  	python-setproctitle python-unidecode xapp yt-dlp python libnih \
-   	gtk3 gtk4 gdk-pixbuf-xlib gdk-pixbuf2 shared-mime-info xdg-utils"
+export packagelist="${audio_pkgs} ${video_pkgs} ${wine_pkgs} ${devel_pkgs} \
+	which ttf-dejavu ttf-liberation xorg-xwayland wayland \
+	xorg-server xorg-apps curl virtualbox-kvm \
+ 	kvantum kvantum-qt5 qt5ct qt6ct"
 
 # If you want to install AUR packages, specify them in this variable
-export aur_packagelist="hypnotix-wayland circle-flags"
+export aur_packagelist=""
 
 # ALHP is a repository containing packages from the official Arch Linux
 # repos recompiled with -O3, LTO and optimizations for modern CPUs for
@@ -380,11 +380,11 @@ run_in_chroot sed -i 's/LANG=${LANG:-C}/LANG=$LANG/g' /etc/profile.d/locale.sh
 
 # Remove bloatwares
 run_in_chroot rm -Rf /usr/include /usr/man
-run_in_chroot bash -c 'find "${bootstrap}"/usr/share/doc/* -not -iname "*hypnotix*" -a -not -name "." -delete'
-run_in_chroot bash -c 'find "${bootstrap}"/usr/share/locale/*/*/* -not -iname "*hypnotix*" -a -not -name "." -delete'
+run_in_chroot bash -c 'find "${bootstrap}"/usr/share/doc/* -not -iname "*virtualbox*" -a -not -name "." -delete'
+run_in_chroot bash -c 'find "${bootstrap}"/usr/share/locale/*/*/* -not -iname "*virtualbox*" -a -not -name "." -delete'
 
 # Check if the command we are interested in has been installed
-if ! run_in_chroot which hypnotix; then echo "Command not found, exiting." && exit 1; fi
+if ! run_in_chroot which virtualbox; then echo "Command not found, exiting." && exit 1; fi
 
 # Exit chroot
 rm -rf "${bootstrap}"/home/aur
