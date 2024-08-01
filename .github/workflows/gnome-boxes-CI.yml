@@ -1,0 +1,37 @@
+name: Release GNOME Boxes
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: true
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Build Conty
+      run: |
+        chmod +x create-arch-bootstrap.sh create-conty.sh
+        sudo ./create-arch-bootstrap.sh && ./create-conty.sh
+        
+    - uses: dev-drprasad/delete-tag-and-release@v1.0
+      with:
+        tag_name: continuous-gnome-boxes
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        delete_release: true
+
+    - uses: rickstaa/action-create-tag@v1
+      id: "tag_create"
+      with:
+        tag: "continuous-gnome-boxes"
+
+    - uses: softprops/action-gh-release@v1
+      with:
+        files: ./conty.sh*
+        prerelease: false
+        draft: false
+        tag_name: continuous-gnome-boxes
+        name: GNOME Boxes
