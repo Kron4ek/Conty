@@ -273,7 +273,7 @@ rm archlinux-bootstrap-x86_64.tar.zst sha256sums.txt sha256.txt
 
 mount_chroot
 
-generate_localegen
+#generate_localegen
 
 if command -v reflector 1>/dev/null; then
 	echo "Generating mirrorlist..."
@@ -283,8 +283,8 @@ else
 	generate_mirrorlist
 fi
 
-rm "${bootstrap}"/etc/locale.gen
-mv locale.gen "${bootstrap}"/etc/locale.gen
+#rm "${bootstrap}"/etc/locale.gen
+#mv locale.gen "${bootstrap}"/etc/locale.gen
 
 rm "${bootstrap}"/etc/pacman.d/mirrorlist
 mv mirrorlist "${bootstrap}"/etc/pacman.d/mirrorlist
@@ -374,7 +374,7 @@ if [ -n "${aur_packagelist}" ]; then
 	rm -rf "${bootstrap}"/home/aur
 fi
 
-run_in_chroot locale-gen
+#run_in_chroot locale-gen
 
 # Generate a list of installed packages
 run_in_chroot pacman -Q > "${bootstrap}"/pkglist.x86_64.txt
