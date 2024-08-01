@@ -798,6 +798,7 @@ run_bwrap () {
 			--bind-try /media /media \
 			--bind-try /run /run \
 			--bind-try /var /var \
+			--bind-try /usr/lib/locale /usr/lib/locale \
 			--ro-bind-try /usr/share/steam/compatibilitytools.d /usr/share/steam/compatibilitytools.d \
 			--ro-bind-try /etc/resolv.conf /etc/resolv.conf \
 			--ro-bind-try /etc/hosts /etc/hosts \
