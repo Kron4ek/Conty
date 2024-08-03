@@ -22,7 +22,7 @@ if (( EUID == 0 )) && [ -z "$ALLOW_ROOT" ]; then
 fi
 
 # Conty version
-script_version="1.26"
+script_version="1.26.1"
 
 # Important variables to manually adjust after modification!
 # Needed to avoid problems with mounting due to an incorrect offset.
@@ -1097,16 +1097,6 @@ if [ "$(ls "${mount_point}" 2>/dev/null)" ] || launch_wrapper "${mount_command[@
 		exit
 	fi
 
-	if [ "${USE_OVERLAYFS}" = 1 ]; then
-		if mount_overlayfs; then
-			show_msg "Using unionfs"
-			RW_ROOT=1
-		else
-			echo "Failed to mount unionfs"
-			unset USE_OVERLAYFS
-		fi
-	fi
-
 	if [ "${NVIDIA_HANDLER}" = 1 ]; then
 		if [ -f /sys/module/nvidia/version ]; then
 			unset NVIDIA_SHARED
@@ -1194,6 +1184,16 @@ if [ "$(ls "${mount_point}" 2>/dev/null)" ] || launch_wrapper "${mount_command[@
 
 		if [ -z "${NVIDIA_SHARED}" ] && [ ! -f "${nvidia_drivers_dir}"/current-nvidia-version ]; then
 			unset NVIDIA_HANDLER
+		fi
+	fi
+
+	if [ "${USE_OVERLAYFS}" = 1 ]; then
+		if mount_overlayfs; then
+			show_msg "Using unionfs"
+			RW_ROOT=1
+		else
+			echo "Failed to mount unionfs"
+			unset USE_OVERLAYFS
 		fi
 	fi
 
