@@ -34,7 +34,7 @@ jobs:
           sudo ./create-arch-bootstrap.sh && ./create-conty.sh
 
       - name: Upload artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: Conty
           path: conty.sh
