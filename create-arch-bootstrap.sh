@@ -6,46 +6,36 @@
 ########################################################################
 
 # Package groups
-audio_pkgs="alsa-lib lib32-alsa-lib alsa-plugins lib32-alsa-plugins libpulse \
-	lib32-libpulse jack2 lib32-jack2 alsa-tools alsa-utils pipewire lib32-pipewire"
+audio_pkgs="alsa-lib alsa-plugins libpulse \
+	jack2 alsa-tools alsa-utils pipewire"
 
-video_pkgs="mesa lib32-mesa vulkan-radeon lib32-vulkan-radeon \
-	vulkan-intel lib32-vulkan-intel \
-	vulkan-icd-loader lib32-vulkan-icd-loader vulkan-mesa-layers \
-	lib32-vulkan-mesa-layers libva-mesa-driver lib32-libva-mesa-driver \
-	libva-intel-driver lib32-libva-intel-driver intel-media-driver \
-	mesa-utils vulkan-tools libva-utils lib32-mesa-utils"
+video_pkgs="mesa vulkan-radeon \
+	vulkan-intel \
+	vulkan-icd-loader vulkan-mesa-layers \
+	libva-mesa-driver \
+	libva-intel-driver intel-media-driver \
+	mesa-utils vulkan-tools libva-utils"
 
-wine_pkgs="wine-staging winetricks-git wine-nine wineasio \
-	giflib lib32-giflib libpng lib32-libpng libldap lib32-libldap \
-	gnutls lib32-gnutls mpg123 lib32-mpg123 openal lib32-openal \
-	v4l-utils lib32-v4l-utils libpulse lib32-libpulse alsa-plugins \
-	lib32-alsa-plugins alsa-lib lib32-alsa-lib libjpeg-turbo \
-	lib32-libjpeg-turbo libxcomposite lib32-libxcomposite libxinerama \
-	lib32-libxinerama libxslt lib32-libxslt libva lib32-libva gtk3 \
-	lib32-gtk3 vulkan-icd-loader lib32-vulkan-icd-loader sdl2 lib32-sdl2 \
-	vkd3d lib32-vkd3d libgphoto2 ffmpeg gst-plugins-good gst-plugins-bad \
-	gst-plugins-ugly gst-plugins-base lib32-gst-plugins-good \
-	lib32-gst-plugins-base gst-libav wget gst-plugin-pipewire"
+wine_pkgs="libpng gnutls openal \
+	v4l-utils libpulse alsa-plugins \
+	alsa-lib libjpeg-turbo \
+	libxcomposite \
+	libva wget \
+	vulkan-icd-loader sdl2 \
+	vkd3d ffmpeg gst-plugins-good gst-plugins-bad \
+	gst-plugins-ugly gst-plugins-base \
+	gst-libav wget gst-plugin-pipewire"
 
-devel_pkgs="base-devel git meson mingw-w64-gcc cmake"
+devel_pkgs="base-devel git meson mingw-w64-gcc cmake gtk3"
 
 # Packages to install
 # You can add packages that you want and remove packages that you don't need
 # Apart from packages from the official Arch repos, you can also specify
 # packages from the Chaotic-AUR repo
-export packagelist="${audio_pkgs} ${video_pkgs} ${wine_pkgs} ${devel_pkgs} \
-	nano ttf-dejavu ttf-liberation lutris steam firefox mpv geany pcmanfm \
-	htop qbittorrent speedcrunch gpicview file-roller xorg-xwayland \
-	steam-native-runtime gamemode lib32-gamemode jre17-openjdk lxterminal \
-	steamtinkerlaunch mangohud lib32-mangohud qt6-wayland wayland \
-	lib32-wayland qt5-wayland retroarch xorg-server-xephyr openbox \
-	obs-studio gamehub minigalaxy legendary gamescope prismlauncher yt-dlp \
-	bottles playonlinux minizip retroarch-assets-ozone libretro-beetle-psx-hw \
-	libretro-blastem libretro-bsnes libretro-dolphin libretro-duckstation \
-	libretro-gambatte libretro-melonds libretro-mgba libretro-nestopia \
-	libretro-parallel-n64 libretro-pcsx2 libretro-picodrive libretro-ppsspp \
-	libretro-retrodream libretro-yabause sunshine"
+export packagelist="${audio_pkgs} \
+	which ttf-dejavu ttf-liberation xorg-xwayland wayland \
+	xorg-server xorg-apps curl virtualbox-kvm \
+ 	kvantum kvantum-qt5 qt5ct qt6ct"
 
 # If you want to install AUR packages, specify them in this variable
 export aur_packagelist=""
@@ -371,14 +361,40 @@ if [ -n "${aur_packagelist}" ]; then
 	export -f install_aur_packages
 	CHROOT_AUR=1 HOME=/home/aur run_in_chroot bash -c install_aur_packages
 	mv "${bootstrap}"/home/aur/bad_aur_pkglist.txt "${bootstrap}"/opt
-	rm -rf "${bootstrap}"/home/aur
+	#rm -rf "${bootstrap}"/home/aur
 fi
 
 #run_in_chroot locale-gen
 
+# Remove unneeded packages
+run_in_chroot pacman --noconfirm -Rsudd base-devel meson mingw-w64-gcc cmake gcc
+run_in_chroot pacman --noconfirm -Rdd wine-staging
+run_in_chroot pacman -Qdtq | run_in_chroot pacman --noconfirm -Rsn -
+run_in_chroot pacman --noconfirm -Scc
+
 # Generate a list of installed packages
 run_in_chroot pacman -Q > "${bootstrap}"/pkglist.x86_64.txt
 
+# Use locale from host
+run_in_chroot rm -f "${bootstrap}"/etc/locale.conf
+run_in_chroot sed -i 's/LANG=${LANG:-C}/LANG=$LANG/g' /etc/profile.d/locale.sh
+
+# Add guest additions
+vboxver=$(curl -Ls https://gitlab.com/chaotic-aur/pkgbuilds/-/raw/main/virtualbox-kvm/PKGBUILD | grep vboxver | head -1 | tr "'" '\n' | grep "^[0-9]")
+wget https://download.virtualbox.org/virtualbox/"${vboxver}"/VBoxGuestAdditions_"${vboxver}".iso -O ./VBoxGuestAdditions.iso || exit 1
+mkdir -p "${bootstrap}"/usr/lib/virtualbox/additions
+mv VBoxGuestAdditions.iso "${bootstrap}"/usr/lib/virtualbox/additions/ || exit 1
+
+# Remove bloatwares
+run_in_chroot rm -Rf /usr/include /usr/share/man
+run_in_chroot bash -c 'find "${bootstrap}"/usr/share/doc/* -not -iname "*virtualbox*" -a -not -name "." -delete'
+run_in_chroot bash -c 'find "${bootstrap}"/usr/share/locale/*/*/* -not -iname "*virtualbox*" -a -not -name "." -delete'
+
+# Check if the command we are interested in has been installed
+if ! run_in_chroot which virtualbox; then echo "Command not found, exiting." && exit 1; fi
+
+# Exit chroot
+rm -rf "${bootstrap}"/home/aur
 unmount_chroot
 
 # Clear pacman package cache
