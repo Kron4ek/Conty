@@ -20,7 +20,7 @@ squashfs_compressor_arguments=(-b 1M -comp ${squashfs_compressor} -Xcompression-
 #squashfs_compressor_arguments=(-b 256K -comp "${squashfs_compressor}" -Xhc)
 
 # Use DwarFS instead of SquashFS
-dwarfs="false"
+dwarfs="true"
 dwarfs_compressor_arguments=(-l7 -C zstd:level=19 --metadata-compression null \
                             -S 21 -B 1 --order nilsimsa \
                             -W 12 -w 4 --no-create-timestamp)
