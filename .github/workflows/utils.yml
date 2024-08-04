@@ -2,7 +2,7 @@ name: Utils CI
 
 on:
   schedule:
-    - cron:  '0 0 1 * *'
+    - cron:  '0 0 * * 1'
   push:
     paths:
       - 'create-utils.sh'
@@ -14,7 +14,7 @@ jobs:
     container: archlinux:latest
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Compile utils
         run: |
@@ -50,7 +50,7 @@ jobs:
           mv utils-bak/* utils
           tar -zcf utils_dwarfs.tar.gz utils
 
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           name: Utils
           path: |

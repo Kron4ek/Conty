@@ -61,22 +61,14 @@ else
 fi
 
 if [ ! -f "${utils}" ] || [ "$(wc -c < "${utils}")" -lt 100000 ]; then
-	if [ -d .git ]; then
-		git lfs install
- 		git lfs fetch origin master
-  		git lfs checkout
-    	fi
+ 	if git config --get remote.origin.url; then
+		utils_url="$(git config --get remote.origin.url)"/raw/"$(git rev-parse --abbrev-ref HEAD)"/${utils}
+	else
+		utils_url="https://github.com/Kron4ek/Conty/raw/master/${utils}"
+   	fi
 
-	if [ ! -f "${utils}" ] || [ "$(wc -c < "${utils}")" -lt 100000 ]; then
- 		if git config --get remote.origin.url; then
-   			utils_url="$(git config --get remote.origin.url)"/raw/master/${utils}
-      		else
-			utils_url="https://github.com/Kron4ek/Conty/raw/master/${utils}"
-   		fi
-
-     		rm -f "${utils}"
-		curl -#LO "${utils_url}"
-     	fi
+	rm -f "${utils}"
+	curl -#LO "${utils_url}"
 fi
 
 if [ ! -f conty-start.sh ]; then

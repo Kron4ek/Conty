@@ -8,10 +8,26 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v3
+      - name: checkout
+        uses: actions/checkout@v4
+        with:
+          lfs: 'false'
+
+      - name: Download artifact
+        id: download-artifact
+        uses: dawidd6/action-download-artifact@v6
+        with:
+          workflow: utils.yml
+          workflow_conclusion: success
+          if_no_artifact_found: ignore
+          path: /opt
 
       - name: Build Conty
         run: |
+          if [ -f /opt/Utils/utils.tar.gz ]; then
+              cp /opt/Utils/* .
+          fi
+
           chmod +x create-arch-bootstrap.sh create-conty.sh
           sudo ./create-arch-bootstrap.sh && ./create-conty.sh
 
