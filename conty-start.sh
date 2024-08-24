@@ -1043,6 +1043,7 @@ if [ "$(ls "${mount_point}" 2>/dev/null)" ] || launch_wrapper "${mount_command[@
 			    --bind "${overlayfs_dir}"/gnupg /etc/pacman.d/gnupg \
 				--bind "${overlayfs_dir}"/merged/var /var \
 				--bind-try /var/cache/pacman/pkg /var/cache/pacman/pkg_host \
+				--tmpfs /run \
 				bash -c update_conty
 
 			if [ "${dwarfs_image}" = 1 ]; then
