@@ -13,13 +13,13 @@ This is an easy to use compressed unprivileged Linux container packed into a sin
 * Compressed (with squashfs or dwarfs), so it takes a lot less disk space than uncompressed containers and can provide faster filesystem access in some cases.
 * Contains many packages and libraries, it can run almost everything, and you don't need to install anything on your main (host) system. **You can even run 32-bit applications on pure 64-bit systems**.
 * Based on Arch Linux, contains modern software (including fresh videodrivers).
-* Almost completely seamless experience. All applications that you run with Conty read and store their configs in your HOME directory as if you weren't using the container at all.
+* Almost completely seamless experience. All applications that you run with Conty read and store their configs in your $HOME directory as if you weren't using the container at all.
 * No performance overhead. Since it's just a container, there is virtually no performance overhead, all applications will run at full speed. Regarding memory usage, Conty uses a bit more memory due to compression and because applications from the container can't share libraries with your system apps.
 * Supports Xorg, Wayland and XWayland.
 * Supports filesystem and X11 sandboxing (thanks to bubblewrap and xephyr).
 * Supports Chaotic-AUR and ALHP repositories. AUR is also supported.
 
-In its default release, it includes, among others, these apps: `Wine-GE, Steam, Lutris, PlayOnLinux, GameHub, Minigalaxy, Legendary, Bottles, MultiMC, MangoHud, Gamescope, RetroArch, Sunshine, OBS Studio, OpenJDK, Firefox`. The full list can be read in the [latest release's pkg_list.txt](https://github.com/Kron4ek/Conty/releases/latest/download/pkg_list.txt).
+In its default release, it includes, among others, these apps: `Wine-Proton, Steam, Lutris, PlayOnLinux, GameHub, Minigalaxy, Legendary, Bottles, PrismLauncher, MangoHud, Gamescope, RetroArch, Sunshine, OBS Studio, OpenJDK, Firefox`. The full list can be read in the [latest release's pkg_list.txt](https://github.com/Kron4ek/Conty/releases/latest/download/pkg_list.txt).
 
 If these applications are not enough, you can install additional applications or run external binaries from, for example, your home directory.
 
@@ -61,6 +61,8 @@ $ chmod +x conty.sh
 
 Chmod only need to be executed once (per file). You can now [start using Conty](#usage).
 
+On Gentoo you can emerge [games-emulation/conty](https://github.com/gentoo/guru/tree/master/games-emulation/conty)
+
 ###  Requirements
 
 The only requirements are `fuse3` (or `fuse2`) and `coreutils`. And your `/tmp` directory should allow files execution (which it does by default on most distros).
@@ -71,12 +73,20 @@ Your Linux kernel must be at least version 4.4 and should support unprivileged u
 # sysctl kernel.unprivileged_userns_clone=1
 ```
 
+On Ubuntu 24.04+ (and maybe some other distros with apparmor enabled) it is needed to disable `kernel.apparmor_restrict_unprivileged_userns` sysctl option.
+
+```
+# sysctl kernel.apparmor_restrict_unprivileged_userns=0
+```
+
 Even if unprivileged user namespaces are not supported by your kernel, you can still use Conty if you have bubblewrap with the SUID bit installed on your system, in this case just tell Conty to use system-wide utils instead of the builtin ones.
 
 ```
 $ export USE_SYS_UTILS=1
 $ ./conty.sh command command_arguments
 ```
+
+If you plan to run 32-bit applications, your kernel must be compiled with **CONFIG_IA32_EMULATION** and **CONFIG_COMPAT_32BIT_TIME** options enabled. Kernels in most Linux distributions have these options enabled by default.
 
 ## Usage
 
@@ -456,7 +466,7 @@ If you just want a sandboxing functionality but don't need a container with a fu
 
 ### About Wine
 
-Conty releases from the releases page include `Wine-GE`, and if you build your own Conty you will get `Wine-Staging` by default (but you can change that).
+Conty releases from the releases page include `Wine-Proton`, and if you build your own Conty you will get `Wine-Staging` by default (but you can change that).
 
 As for prefix management, it's the same as with any other Wine build, the container does not affect it. The default prefix is `~/.wine`, but you can specify a custom prefix path with the `WINEPREFIX` environment variable.
 

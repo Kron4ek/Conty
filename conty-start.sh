@@ -22,7 +22,7 @@ if (( EUID == 0 )) && [ -z "$ALLOW_ROOT" ]; then
 fi
 
 # Conty version
-script_version="1.25"
+script_version="1.26.2"
 
 # Important variables to manually adjust after modification!
 # Needed to avoid problems with mounting due to an incorrect offset.
@@ -30,10 +30,10 @@ script_version="1.25"
 # If you build Conty without some of the components, you can set their
 # size to 0
 init_size=50000
-bash_size=1490760
-script_size=37478
-busybox_size=1161112
-utils_size=4327795
+bash_size=1752808
+script_size=38502
+busybox_size=1181592
+utils_size=4392469
 
 # Full path to the script
 if [ -n "${BASH_SOURCE[0]}" ]; then
@@ -224,7 +224,10 @@ else
 fi
 
 export overlayfs_dir="${HOME}"/.local/share/Conty/overlayfs_"${script_md5}"
-export nvidia_drivers_dir="${HOME}"/.local/share/Conty/nvidia_"${script_md5}"
+export nvidia_drivers_dir="${overlayfs_dir}"/nvidia
+
+export overlayfs_shared_dir="${HOME}"/.local/share/Conty/overlayfs_shared
+export nvidia_drivers_shared_dir="${overlayfs_shared_dir}"/nvidia
 
 # Offset where the image is stored
 offset=$((init_size+bash_size+script_size+busybox_size+utils_size))
@@ -348,10 +351,15 @@ mount_overlayfs () {
 	mkdir -p "${overlayfs_dir}"/up
 	mkdir -p "${overlayfs_dir}"/work
 	mkdir -p "${overlayfs_dir}"/merged
+	mkdir -p "${nvidia_drivers_dir}"
 
 	if [ ! "$(ls "${overlayfs_dir}"/merged 2>/dev/null)" ]; then
 		if command -v "${unionfs_fuse}" 1>/dev/null; then
-			launch_wrapper "${unionfs_fuse}" -o relaxed_permissions,cow,noatime "${overlayfs_dir}"/up=RW:"${mount_point}"=RO "${overlayfs_dir}"/merged
+			if [ "${1}" = "share_nvidia" ]; then
+				launch_wrapper "${unionfs_fuse}" -o relaxed_permissions,cow,noatime "${overlayfs_dir}"/up=RW:"${overlayfs_shared_dir}"/up=RO:"${mount_point}"=RO "${overlayfs_dir}"/merged
+			else
+				launch_wrapper "${unionfs_fuse}" -o relaxed_permissions,cow,noatime "${overlayfs_dir}"/up=RW:"${mount_point}"=RO "${overlayfs_dir}"/merged
+			fi
 		else
 			echo "unionfs-fuse not found"
 			return 1
@@ -424,7 +432,7 @@ update_conty () {
 	echo "keyserver hkps://keyserver.ubuntu.com" >> /etc/pacman.d/gnupg/gpg.conf
 	fakeroot -- pacman-key --populate archlinux
 	fakeroot -- pacman-key --populate chaotic
-	fakeroot -- pacman --noconfirm --overwrite "*" -Su 2>/dev/null
+	fakeroot -- pacman --noconfirm --overwrite "*" --ignore fakeroot -Su 2>/dev/null
 	fakeroot -- pacman --noconfirm -Runs ${pkgsremove} 2>/dev/null
 	fakeroot -- pacman --noconfirm -S ${pkgsinstall} 2>/dev/null
 	ldconfig -C /etc/ld.so.cache
@@ -1035,6 +1043,7 @@ if [ "$(ls "${mount_point}" 2>/dev/null)" ] || launch_wrapper "${mount_command[@
 			    --bind "${overlayfs_dir}"/gnupg /etc/pacman.d/gnupg \
 				--bind "${overlayfs_dir}"/merged/var /var \
 				--bind-try /var/cache/pacman/pkg /var/cache/pacman/pkg_host \
+				--tmpfs /run \
 				bash -c update_conty
 
 			if [ "${dwarfs_image}" = 1 ]; then
@@ -1089,18 +1098,16 @@ if [ "$(ls "${mount_point}" 2>/dev/null)" ] || launch_wrapper "${mount_command[@
 		exit
 	fi
 
-	if [ "${USE_OVERLAYFS}" = 1 ]; then
-		if mount_overlayfs; then
-			show_msg "Using unionfs"
-			RW_ROOT=1
-		else
-			echo "Failed to mount unionfs"
-			unset USE_OVERLAYFS
-		fi
-	fi
-
 	if [ "${NVIDIA_HANDLER}" = 1 ]; then
-		if [ -f /sys/module/nvidia/version ] || lsmod | grep nvidia 1>/dev/null; then
+		if [ -f /sys/module/nvidia/version ]; then
+			unset NVIDIA_SHARED
+
+			if [ ! "$(ls "${mount_point}"/usr/lib/libGLX_nvidia.so.*.* 2>/dev/null)" ]; then
+				export overlayfs_dir="${overlayfs_shared_dir}"
+				export nvidia_drivers_dir="${nvidia_drivers_shared_dir}"
+				export NVIDIA_SHARED=1
+			fi
+
 			if [ -f "${nvidia_drivers_dir}"/lock ]; then
 				echo "Nvidia driver is currently installing"
 				echo "Please wait a moment and run Conty again"
@@ -1113,31 +1120,7 @@ if [ "$(ls "${mount_point}" 2>/dev/null)" ] || launch_wrapper "${mount_command[@
 				unset nvidia_skip_install
 				unset nvidia_driver_version
 
-				if [ -f /sys/module/nvidia/version ]; then
-					nvidia_driver_version="$(cat /sys/module/nvidia/version)"
-				fi
-
-				if [ -z "${nvidia_driver_version}" ]; then
-					sys_lib_dirs="/usr/lib64 \
-				                  /usr/lib \
-			                      /usr/lib/x86_64-linux-gnu/nvidia/current \
-			                      /usr/lib/x86_64-linux-gnu"
-
-					for dir in ${sys_lib_dirs}; do
-						if [ "$(ls ${dir}/libGLX_nvidia.so.*.* 2>/dev/null)" ]; then
-							nvidia_driver_version="$(basename ${dir}/libGLX_nvidia.so.*.* | tail -c +18)"
-							break
-						fi
-					done
-				fi
-
-				if [ -z "${nvidia_driver_version}" ] && nvidia-smi &>/dev/null; then
-					nvidia_driver_version="$(nvidia-smi --query-gpu=driver_version --format=csv,noheader)"
-				fi
-
-				if [ -z "${nvidia_driver_version}" ] && modinfo nvidia &>/dev/null; then
-					nvidia_driver_version="$(modinfo -F version nvidia 2>/dev/null)"
-				fi
+				nvidia_driver_version="$(cat /sys/module/nvidia/version)"
 
 				if [ "$(ls "${mount_point}"/usr/lib/libGLX_nvidia.so.*.* 2>/dev/null)" ]; then
 					container_nvidia_version="$(basename "${mount_point}"/usr/lib/libGLX_nvidia.so.*.* | tail -c +18)"
@@ -1175,6 +1158,23 @@ if [ "$(ls "${mount_point}" 2>/dev/null)" ] || launch_wrapper "${mount_command[@
 
 					rm -f "${nvidia_drivers_dir}"/lock
 				fi
+
+				if [ -n "${NVIDIA_SHARED}" ]; then
+					fusermount"${fuse_version}" -uz "${overlayfs_dir}"/merged 2>/dev/null || \
+					umount --lazy "${overlayfs_dir}"/merged 2>/dev/null
+
+					rm -f "${overlayfs_shared_dir}"/up/etc/ld.so.cache
+
+					export overlayfs_dir="${HOME}"/.local/share/Conty/overlayfs_"${script_md5}"
+					export nvidia_drivers_dir="${overlayfs_dir}"/nvidia
+
+					mount_overlayfs share_nvidia
+
+					if [ "$(cat "${nvidia_drivers_dir}"/ld.so.cache.nvidia 2>/dev/null)" != "${nvidia_driver_version}" ]; then
+						QUIET_MODE=1 RW_ROOT=1 run_bwrap ldconfig
+						echo "${nvidia_driver_version}" > "${nvidia_drivers_dir}"/ld.so.cache.nvidia
+					fi
+				fi
 			else
 				echo "Nvidia driver handler disabled due to unionfs errors"
 				unset NVIDIA_HANDLER
@@ -1183,8 +1183,18 @@ if [ "$(ls "${mount_point}" 2>/dev/null)" ] || launch_wrapper "${mount_command[@
 			unset NVIDIA_HANDLER
 		fi
 
-		if [ ! -f "${nvidia_drivers_dir}"/current-nvidia-version ]; then
+		if [ -z "${NVIDIA_SHARED}" ] && [ ! -f "${nvidia_drivers_dir}"/current-nvidia-version ]; then
 			unset NVIDIA_HANDLER
+		fi
+	fi
+
+	if [ "${USE_OVERLAYFS}" = 1 ]; then
+		if mount_overlayfs; then
+			show_msg "Using unionfs"
+			RW_ROOT=1
+		else
+			echo "Failed to mount unionfs"
+			unset USE_OVERLAYFS
 		fi
 	fi
 

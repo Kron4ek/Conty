@@ -10,13 +10,13 @@ audio_pkgs="alsa-lib lib32-alsa-lib alsa-plugins lib32-alsa-plugins libpulse \
 	lib32-libpulse jack2 lib32-jack2 alsa-tools alsa-utils pipewire lib32-pipewire"
 
 video_pkgs="mesa lib32-mesa vulkan-radeon lib32-vulkan-radeon \
-	vulkan-intel lib32-vulkan-intel nvidia-utils lib32-nvidia-utils \
+	vulkan-intel lib32-vulkan-intel \
 	vulkan-icd-loader lib32-vulkan-icd-loader vulkan-mesa-layers \
 	lib32-vulkan-mesa-layers libva-mesa-driver lib32-libva-mesa-driver \
 	libva-intel-driver lib32-libva-intel-driver intel-media-driver \
-	mesa-utils vulkan-tools nvidia-prime libva-utils lib32-mesa-utils"
+	mesa-utils vulkan-tools libva-utils lib32-mesa-utils"
 
-wine_pkgs="wine-tkg-staging-fsync-git winetricks-git wine-nine wineasio \
+wine_pkgs="wine-staging winetricks-git wine-nine wineasio \
 	giflib lib32-giflib libpng lib32-libpng libldap lib32-libldap \
 	gnutls lib32-gnutls mpg123 lib32-mpg123 openal lib32-openal \
 	v4l-utils lib32-v4l-utils libpulse lib32-libpulse alsa-plugins \
@@ -26,17 +26,19 @@ wine_pkgs="wine-tkg-staging-fsync-git winetricks-git wine-nine wineasio \
 	lib32-gtk3 vulkan-icd-loader lib32-vulkan-icd-loader sdl2 lib32-sdl2 \
 	vkd3d lib32-vkd3d libgphoto2 ffmpeg gst-plugins-good gst-plugins-bad \
 	gst-plugins-ugly gst-plugins-base lib32-gst-plugins-good \
-	lib32-gst-plugins-base gst-libav wget faudio lib32-faudio"
+	lib32-gst-plugins-base gst-libav wget gst-plugin-pipewire"
 
 added_pkgs="vim lutris bottles jellyfin-media-player \
-	    pcsx2 dolphin-emu-git rmg ryujinx cemu supertuxkart \
-     	    gamemode lib32-gamemode gamescope mangohud lib32-mangohud \
+	        pcsx2 dolphin-emu-git rmg ryujinx cemu supertuxkart \
+     	gamemode lib32-gamemode gamescope mangohud lib32-mangohud \
+      qt6-wayland wayland xorg-server-xephyr \
 	    pegasus-frontend-git antimicrox"
 
 # Packages to install
 # You can add packages that you want and remove packages that you don't need
 # Apart from packages from the official Arch repos, you can also specify
 # packages from the Chaotic-AUR repo
+
 export packagelist="\
 	${audio_pkgs} ${video_pkgs} ${wine_pkgs} ${added_pkgs} \
 	ttf-liberation mpv geany pcmanfm htop speedcrunch gpicview file-roller \
@@ -168,7 +170,7 @@ install_aur_packages () {
 	fi
 
 	for i in {1..10}; do
-		if yay --needed --noconfirm --removemake --nocleanmenu --nodiffmenu --builddir /home/aur -a -S ${aur_pkgs}; then
+		if yes | yay --needed --removemake --builddir /home/aur -a -S ${aur_pkgs}; then
 			break
 		fi
 	done
@@ -206,16 +208,16 @@ EOF
 
 generate_mirrorlist () {
 	cat <<EOF > mirrorlist
+Server = https://mirror1.sl-chat.ru/archlinux/\$repo/os/\$arch
 Server = https://mirror3.sl-chat.ru/archlinux/\$repo/os/\$arch
+Server = https://us.mirrors.cicku.me/archlinux/\$repo/os/\$arch
 Server = https://mirror.osbeck.com/archlinux/\$repo/os/\$arch
-Server = https://mirror.f4st.host/archlinux/\$repo/os/\$arch
-Server = https://europe.mirror.pkgbuild.com/\$repo/os/\$arch
-Server = https://archlinux.thaller.ws/\$repo/os/\$arch
-Server = https://mirror.moson.org/arch/\$repo/os/\$arch
 Server = https://md.mirrors.hacktegic.com/archlinux/\$repo/os/\$arch
-Server = https://mirror.tux.si/arch/\$repo/os/\$arch
-Server = https://arch.jensgutermuth.de/\$repo/os/\$arch
 Server = https://geo.mirror.pkgbuild.com/\$repo/os/\$arch
+Server = https://mirror.qctronics.com/archlinux/\$repo/os/\$arch
+Server = https://arch.mirror.constant.com/\$repo/os/\$arch
+Server = https://america.mirror.pkgbuild.com/\$repo/os/\$arch
+Server = https://mirror.tmmworkshop.com/archlinux/\$repo/os/\$arch
 EOF
 }
 
@@ -232,17 +234,17 @@ if [ ! -s chaotic-keyring.pkg.tar.zst ] || [ ! -s chaotic-mirrorlist.pkg.tar.zst
 	exit 1
 fi
 
-bootstrap_urls=("mirror.f4st.host" \
-			"arch.hu.fo" \
-			"mirror.cyberbits.eu" \
-			"mirror.osbeck.com" \
-			"mirror.lcarilla.de" \
-			"mirror.moson.org")
+bootstrap_urls=("arch.hu.fo" \
+		"mirror.cyberbits.eu" \
+		"mirror.osbeck.com" \
+		"mirror.lcarilla.de" \
+		"mirror.moson.org" \
+  		"mirror.f4st.host")
 
 echo "Downloading Arch Linux bootstrap"
 
 for link in "${bootstrap_urls[@]}"; do
-	curl -#LO "https://${link}/archlinux/iso/latest/archlinux-bootstrap-x86_64.tar.gz"
+	curl -#LO "https://${link}/archlinux/iso/latest/archlinux-bootstrap-x86_64.tar.zst"
 	curl -#LO "https://${link}/archlinux/iso/latest/sha256sums.txt"
 
 	if [ -s sha256sums.txt ]; then
@@ -264,8 +266,8 @@ if [ -z "${bootstrap_is_good}" ]; then
 fi
 
 rm -rf "${bootstrap}"
-tar xf archlinux-bootstrap-x86_64.tar.gz
-rm archlinux-bootstrap-x86_64.tar.gz sha256sums.txt sha256.txt
+tar xf archlinux-bootstrap-x86_64.tar.zst
+rm archlinux-bootstrap-x86_64.tar.zst sha256sums.txt sha256.txt
 
 mount_chroot
 
@@ -273,7 +275,7 @@ generate_localegen
 
 if command -v reflector 1>/dev/null; then
 	echo "Generating mirrorlist..."
-	reflector --connection-timeout 10 --download-timeout 10 --protocol https --score 7 --sort rate --save mirrorlist
+	reflector --connection-timeout 10 --download-timeout 10 --protocol https --score 10 --sort rate --save mirrorlist
 	reflector_used=1
 else
 	generate_mirrorlist
@@ -341,7 +343,8 @@ run_in_chroot pacman --noconfirm --needed -S base reflector squashfs-tools faker
 # Regenerate the mirrorlist with reflector if reflector was not used before
 if [ -z "${reflector_used}" ]; then
 	echo "Generating mirrorlist..."
-	run_in_chroot reflector --connection-timeout 10 --download-timeout 10 --protocol https --score 7 --sort rate --save /etc/pacman.d/mirrorlist
+	run_in_chroot reflector --connection-timeout 10 --download-timeout 10 --protocol https --score 10 --sort rate --save /etc/pacman.d/mirrorlist
+ 	run_in_chroot pacman -Syu --noconfirm
 fi
 
 export -f install_packages
