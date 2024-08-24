@@ -22,7 +22,7 @@ if (( EUID == 0 )) && [ -z "$ALLOW_ROOT" ]; then
 fi
 
 # Conty version
-script_version="1.26.1"
+script_version="1.26.2"
 
 # Important variables to manually adjust after modification!
 # Needed to avoid problems with mounting due to an incorrect offset.
@@ -30,10 +30,10 @@ script_version="1.26.1"
 # If you build Conty without some of the components, you can set their
 # size to 0
 init_size=50000
-bash_size=1490760
-script_size=37478
-busybox_size=1161112
-utils_size=4327795
+bash_size=1752808
+script_size=38502
+busybox_size=1181592
+utils_size=4392469
 
 # Full path to the script
 if [ -n "${BASH_SOURCE[0]}" ]; then
@@ -432,7 +432,7 @@ update_conty () {
 	echo "keyserver hkps://keyserver.ubuntu.com" >> /etc/pacman.d/gnupg/gpg.conf
 	fakeroot -- pacman-key --populate archlinux
 	fakeroot -- pacman-key --populate chaotic
-	fakeroot -- pacman --noconfirm --overwrite "*" -Su 2>/dev/null
+	fakeroot -- pacman --noconfirm --overwrite "*" --ignore fakeroot -Su 2>/dev/null
 	fakeroot -- pacman --noconfirm -Runs ${pkgsremove} 2>/dev/null
 	fakeroot -- pacman --noconfirm -S ${pkgsinstall} 2>/dev/null
 	ldconfig -C /etc/ld.so.cache
