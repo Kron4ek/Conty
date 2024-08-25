@@ -104,6 +104,17 @@ $ ./conty.sh /usr/bin/steam
 $ ./conty.sh mangohud glxgears
 $ WINEPREFIX=$HOME/wine-conty ./conty.sh gamescope -f -- wine ./game.exe
 ```
+If you start Steam such way (with Gamescope) - you will loose ability to make screenshots; solution: start Gamescope in another terminal and attach into it:
+
+```
+terminalA ~ $  conty gamescope -h 1920 -H 1920
+terminalB ~ $ DISPLAY=:1 conty steam
+```
+`DISPLAY=:1` can have another number - get it from the `terminalA` output:
+
+> wlserver: [xwayland/server.c:108] Starting Xwayland on :1
+
+Solution from https://www.reddit.com/r/linux_gaming/comments/1ds1ei3/steam_input_not_working_under_gamescope/lb10mmf/
 
 ### GUI
 
