@@ -107,7 +107,7 @@ $ WINEPREFIX=$HOME/wine-conty ./conty.sh gamescope -f -- wine ./game.exe
 If you start Steam such way (with Gamescope) - you will loose ability to make screenshots; solution: start Gamescope in another terminal and attach into it:
 
 ```
-terminalA ~ $  conty gamescope -h 1920 -H 1920
+terminalA ~ $ conty gamescope -h 1920 -H 1920
 terminalB ~ $ DISPLAY=:1 conty steam
 ```
 `DISPLAY=:1` can have another number - get it from the `terminalA` output:
