@@ -104,17 +104,6 @@ $ ./conty.sh /usr/bin/steam
 $ ./conty.sh mangohud glxgears
 $ WINEPREFIX=$HOME/wine-conty ./conty.sh gamescope -f -- wine ./game.exe
 ```
-If you start Steam such way (with Gamescope) - you will loose ability to make screenshots; solution: start Gamescope in another terminal and attach into it:
-
-```
-terminalA ~ $ conty gamescope -h 1920 -H 1920
-terminalB ~ $ DISPLAY=:1 conty steam
-```
-`DISPLAY=:1` can have another number - get it from the `terminalA` output:
-
-> wlserver: [xwayland/server.c:108] Starting Xwayland on :1
-
-Solution from https://www.reddit.com/r/linux_gaming/comments/1ds1ei3/steam_input_not_working_under_gamescope/lb10mmf/
 
 ### GUI
 
@@ -513,6 +502,16 @@ $ WINEFSYNC=1 ./conty.sh wine someapplication.exe
 * AppImages do not work under Conty. This is because bubblewrap, which is used in Conty, does not allow SUID bit (for security reasons), which is needed to mount AppImages. The solution is to extract an AppImage application before running it with Conty. Some AppImages support `--appimage-extract-and-run` argument, which you can also use.
 * Application may show errors (warnings) about locale, like "Unsupported locale setting" or "Locale not supported by C library". This happens because Conty has a limited set of generated locales inside it, and if your host system uses locale that is not available in Conty, applications may show such warnings. This is usually not a critical problem, most applications will continue to work without issues despite showing the errors. But if you want, you can [create](https://github.com/Kron4ek/Conty#how-to-create-your-own-conty-executables) a Conty executable and include any locales you need.
 * Conty may have problems interfacing with custom url protocols (such as `steam://` and `sgdb://`), apps that uses Native Host Messengers (such as browser extensions for Plasma Host Integration / KDE Connect, KeePassXC, and download managers), and login token exchange (such as trying to log-in a natively-installed GitHub Desktop app with a browser inside Conty) if there is packages that handle such protocols installed (for example, `plasma-browser-integration` for KDE Plasma extension inside browser).
+* Steam can't make screenshots when running directly under gamescope. The solution is to first run gamescope separately and then attach Steam client to it, like this:
+    ```
+    $ ./conty.sh gamescope -w 1920 -h 1080
+    $ DISPLAY=:1 ./conty.sh steam
+    ```
+    `DISPLAY=:1` can have another number - get it from the `gamescope` output:
+
+    > wlserver: [xwayland/server.c:108] Starting Xwayland on :1
+
+    Solution from https://www.reddit.com/r/linux_gaming/comments/1ds1ei3/steam_input_not_working_under_gamescope/lb10mmf/
 
 ## Main used projects
 
