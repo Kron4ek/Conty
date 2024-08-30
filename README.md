@@ -513,6 +513,8 @@ $ WINEFSYNC=1 ./conty.sh wine someapplication.exe
 
     Solution from https://www.reddit.com/r/linux_gaming/comments/1ds1ei3/steam_input_not_working_under_gamescope/lb10mmf/
 
+* The game is not starting or starting only when you disable your additional displays (for example Armies of Exigo): use Gamescope - see previous point.
+
 ## Main used projects
 
 * [bubblewrap](https://github.com/containers/bubblewrap)
