@@ -325,6 +325,10 @@ https://github.com/Kron4ek/Conty#known-issues
 
 ## Managing
 
+### Downloading
+
+[Torrent](https://rutracker.me/forum/dl.php?t=6568452) available from https://rutracker.me/forum/viewtopic.php?t=6568452
+
 ### Install Conty
 
 Much like an AppImage, there is no need to install Conty. However, many distribution includes `$HOME/.local/bin` as part of their `PATH` should the folder exists. You may put Conty there, so that it can be accessed from terminal using `conty.sh` without inputting the full path.
