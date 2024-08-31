@@ -69,6 +69,12 @@ if [ ! -f "${utils}" ] || [ "$(wc -c < "${utils}")" -lt 100000 ]; then
 
 	rm -f "${utils}"
 	curl -#LO "${utils_url}"
+
+	if [ ! -f "${utils}" ] || [ "$(wc -c < "${utils}")" -lt 100000 ]; then
+		rm -f "${utils}"
+		curl -#LO "https://gitlab.com/-/project/61149207/uploads/e92d40b6cebc80d1ea5018172b6d76db/utils.tar"
+  		tar -xf utils.tar
+	fi
 fi
 
 if [ ! -f conty-start.sh ]; then
