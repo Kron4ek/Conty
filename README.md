@@ -504,8 +504,8 @@ $ WINEFSYNC=1 ./conty.sh wine someapplication.exe
 * Conty may have problems interfacing with custom url protocols (such as `steam://` and `sgdb://`), apps that uses Native Host Messengers (such as browser extensions for Plasma Host Integration / KDE Connect, KeePassXC, and download managers), and login token exchange (such as trying to log-in a natively-installed GitHub Desktop app with a browser inside Conty) if there is packages that handle such protocols installed (for example, `plasma-browser-integration` for KDE Plasma extension inside browser).
 * Steam can't make screenshots when running directly under gamescope. The solution is to first run gamescope separately and then attach Steam client to it, like this:
     ```
-    $ ./conty.sh gamescope -w 1920 -h 1080
-    $ DISPLAY=:1 ./conty.sh steam
+    termA $ ./conty.sh gamescope -w 1920 -h 1080
+    termB $ DISPLAY=:1 ./conty.sh steam
     ```
     `DISPLAY=:1` can have another number - get it from the `gamescope` output:
 
