@@ -83,7 +83,7 @@ On Gentoo you can emerge [games-emulation/conty](https://github.com/gentoo/guru/
 
 ###  Requirements
 
-The only requirements are `fuse3` (or `fuse2`) and `coreutils`. And your `/tmp` directory should allow files execution (which it does by default on most distros).
+The only requirements are `fuse3` (or `fuse2`) and `coreutils` (or `busybox`). And your `/tmp` directory should allow files execution (which it does by default on most distros).
 
 Your Linux kernel must be at least version 4.4 and should support unprivileged user namespaces. On some Linux distros this feature is disabled by default and can be enabled with sysfs:
 
