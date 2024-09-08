@@ -2,7 +2,7 @@
 
 [![Conty CI](https://github.com/Kron4ek/Conty/actions/workflows/conty.yml/badge.svg)](https://github.com/Kron4ek/Conty/actions/workflows/conty.yml) [![Utils CI](https://github.com/Kron4ek/Conty/actions/workflows/utils.yml/badge.svg)](https://github.com/Kron4ek/Conty/actions/workflows/utils.yml)
 
-This is an easy to use compressed unprivileged Linux container packed into a single executable that works on most Linux distros. It is designed to be as simple and user-friendly as possible. You can use it to run any applications, including games (Vulkan and OpenGL).
+This is an easy to use compressed unprivileged Linux container packed into a single executable that works on most Linux distros. It is designed to be as simple and user-friendly as possible. You can use it to run any applications, including games ([Vulkan](https://en.wikipedia.org/wiki/Vulkan) and [OpenGL](https://en.wikipedia.org/wiki/OpenGL)).
 
 ## Features
 
@@ -10,13 +10,13 @@ This is an easy to use compressed unprivileged Linux container packed into a sin
 * Works on most Linux distros, even very old ones and even without glibc (such as Alpine or Void or Gentoo with musl).
 * Works on Steam Deck.
 * Root rights are **not required**.
-* Compressed (with squashfs or dwarfs), so it takes a lot less disk space than uncompressed containers and can provide faster filesystem access in some cases.
+* Compressed (with [squashfs](https://en.wikipedia.org/wiki/SquashFS) or dwarfs), so it takes a lot less disk space than uncompressed containers and can provide faster filesystem access in some cases.
 * Contains many packages and libraries, it can run almost everything, and you don't need to install anything on your main (host) system. **You can even run 32-bit applications on pure 64-bit systems**.
-* Based on Arch Linux, contains modern software (including fresh videodrivers).
+* Based on [Arch Linux](https://en.wikipedia.org/wiki/Arch_Linux), contains modern software (including fresh videodrivers).
 * Almost completely seamless experience. All applications that you run with Conty read and store their configs in your $HOME directory as if you weren't using the container at all.
 * No performance overhead. Since it's just a container, there is virtually no performance overhead, all applications will run at full speed. Regarding memory usage, Conty uses a bit more memory due to compression and because applications from the container can't share libraries with your system apps.
 * Supports Xorg, Wayland and XWayland.
-* Supports filesystem and X11 sandboxing (thanks to bubblewrap and xephyr).
+* Supports filesystem and X11 sandboxing (thanks to bubblewrap and [xephyr](https://en.wikipedia.org/wiki/Xephyr)).
 * Supports Chaotic-AUR and ALHP repositories. AUR is also supported.
 
 In its default release, it includes, among others, these apps:
