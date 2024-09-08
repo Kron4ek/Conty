@@ -48,8 +48,18 @@ fi
 script_name="$(basename "${script_literal}")"
 script="$(readlink -f "${script_literal}")"
 
+# Check if head supports -c argument
+
+unset HEAD_C_SUPPORTED
+head -c 0 /dev/null &>/dev/null && HEAD_C_SUPPORTED=1
+
 # MD5 of the first 4 MB and the last 1 MB of the script
-script_md5="$(head -c 4000000 "${script}" | md5sum | head -c 7)"_"$(tail -c 1000000 "${script}" | md5sum | head -c 7)"
+if [ "${HEAD_C_SUPPORTED}" = 1 ]; then
+	script_md5="$(head -c 4000000 "${script}" | md5sum | head -c 7)"_"$(tail -c 1000000 "${script}" | md5sum | head -c 7)"
+else
+	script_md5="$(dd if="${script}" bs=4000000 count=1 2>/dev/null | md5sum | cut -c1-7)"_"$(dd if="${script}" bs=1000000 skip=100 count=1 2>/dev/null | md5sum | cut -c1-7)"
+fi
+
 script_id="$$"
 
 # Working directory where the utils will be extracted
@@ -71,7 +81,12 @@ if [ "${USE_SYS_UTILS}" != 1 ] && [ "${busybox_size}" -gt 0 ]; then
 
 	if [ ! -f "${busybox_bin_dir}"/echo ]; then
 		mkdir -p "${busybox_bin_dir}"
-		tail -c +$((init_size+bash_size+script_size+1)) "${script}" | head -c "${busybox_size}" > "${busybox_path}"
+
+		if [ "${HEAD_C_SUPPORTED}" = 1 ]; then
+			tail -c +$((init_size+bash_size+script_size+1)) "${script}" | head -c "${busybox_size}" > "${busybox_path}"
+		else
+			dd if="${script}" of="${busybox_path}" bs=1 skip=$((init_size+bash_size+script_size)) count="${busybox_size}" 2>/dev/null
+		fi
 
 		chmod +x "${busybox_path}" 2>/dev/null
 		"${busybox_path}" --install -s "${busybox_bin_dir}" &>/dev/null
