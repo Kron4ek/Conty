@@ -81,7 +81,7 @@ Chmod only need to be executed once (per file). You can now [start using Conty](
 
 ###  Requirements
 
-The only requirements are `fuse3` (or `fuse2`) and `coreutils` (or `busybox`). And your `/tmp` directory should allow files execution (which it does by default on most distros).
+The only requirements are `fuse3` (or `fuse2`) and `coreutils` (or other POSIX compliant basic utilities). And your `/tmp` directory should allow files execution (which it does by default on most distros).
 
 Your Linux kernel must be at least version 4.4 and should support unprivileged user namespaces. On some Linux distros this feature is disabled by default and can be enabled with sysfs:
 
