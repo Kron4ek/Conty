@@ -416,6 +416,8 @@ nvidia_driver_handler () {
 
 			if [ -s /usr/lib/libGLX_nvidia.so."${nvidia_driver_version}" ] || \
 			   [ -s /usr/lib/libGL.so."${nvidia_driver_version}" ]; then
+				cp /usr/lib/tls/libnvidia-tls.so.* /usr/lib &>/dev/null
+				cp /usr/lib32/tls/libnvidia-tls.so.* /usr/lib32 &>/dev/null
 				echo "${nvidia_driver_version}" > "${nvidia_drivers_dir}"/current-nvidia-version
 				echo "The driver installed successfully"
 			else
