@@ -968,7 +968,7 @@ if [ "$(ls "${mount_point}" 2>/dev/null)" ] || launch_wrapper "${mount_command[@
 						line="${line} (Conty)"
 					elif [ "${line_function}" = "Exec" ]; then
 						line="Exec=${variables}\"${script}\" $@ $(echo "${line}" | tail -c +6)"
-					elif [ "${line_function}" = "TryE" ]; then
+					elif [ "${line_function}" = "TryE" ]; then  # pragma: codespell-ignore
 						continue
 					fi
 
