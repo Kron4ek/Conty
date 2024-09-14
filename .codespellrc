@@ -1,0 +1,7 @@
+[codespell]
+# Ref: https://github.com/codespell-project/codespell#using-a-config-file
+skip = .git*,.codespellrc
+check-hidden = true
+# Ignore lines with codespell-ignore
+ignore-regex = .*codespell-ignore.*|\.fo\b
+# ignore-words-list =
