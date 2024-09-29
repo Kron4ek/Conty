@@ -178,6 +178,13 @@ install_aur_packages () {
 	done
 }
 
+generate_pkg_licenses_file () {
+	for p in $(pacman -Q | cut -d' ' -f1); do
+		echo -n $(pacman -Qi "${p}" | grep -E 'Name|Licenses' | cut -d ":" -f 2) >>/pkglicenses.txt
+		echo >>/pkglicenses.txt
+	done
+}
+
 generate_localegen () {
 	cat <<EOF > locale.gen
 ar_EG.UTF-8 UTF-8
@@ -376,8 +383,14 @@ fi
 
 run_in_chroot locale-gen
 
+echo "Generating package info, please wait..."
+
 # Generate a list of installed packages
 run_in_chroot pacman -Q > "${bootstrap}"/pkglist.x86_64.txt
+
+# Generate a list of licenses of installed packages
+export -f generate_pkg_licenses_file
+run_in_chroot bash -c generate_pkg_licenses_file
 
 unmount_chroot
 
