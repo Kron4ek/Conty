@@ -42,7 +42,7 @@ export packagelist="${audio_pkgs} ${video_pkgs} ${wine_pkgs} ${devel_pkgs} \
 	lib32-wayland qt5-wayland retroarch xorg-server-xephyr openbox \
 	obs-studio gamehub minigalaxy legendary gamescope prismlauncher yt-dlp \
 	bottles playonlinux minizip retroarch-assets-ozone libretro-beetle-psx-hw \
-	libretro-blastem libretro-bsnes libretro-dolphin libretro-duckstation \
+	libretro-blastem libretro-bsnes libretro-dolphin duckstation \
 	libretro-gambatte libretro-melonds libretro-mgba libretro-nestopia \
 	libretro-parallel-n64 libretro-pcsx2 libretro-picodrive libretro-ppsspp \
 	libretro-retrodream libretro-yabause sunshine nautilus"
