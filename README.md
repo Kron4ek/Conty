@@ -32,7 +32,9 @@ In its default release, it includes, among others, these apps:
 [MangoHud](https://github.com/flightlessmango/MangoHud),
 [Gamescope](https://github.com/ValveSoftware/gamescope),
 [RetroArch](https://www.retroarch.com),
+[DuckStation](https://www.duckstation.org/),
 [Sunshine](https://github.com/LizardByte/Sunshine),
+[Genymotion](https://www.genymotion.com/),
 [OBS Studio](https://obsproject.com/),
 [OpenJDK](https://en.wikipedia.org/wiki/OpenJDK),
 [Firefox](https://en.wikipedia.org/wiki/Firefox)
