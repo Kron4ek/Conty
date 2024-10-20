@@ -39,6 +39,8 @@ In its default release, it includes, among others, these apps:
 [OpenJDK](https://en.wikipedia.org/wiki/OpenJDK),
 [Firefox](https://en.wikipedia.org/wiki/Firefox)
 
+![conty-a-few-software-lutris-bottles-steam](https://github.com/user-attachments/assets/a2614611-b0b7-4f65-a7d4-f69d4c1836d1)
+
 The full list can be read in the [latest release's pkg_list.txt](https://github.com/Kron4ek/Conty/releases/latest/download/pkg_list.txt).
 
 If these applications are not enough, you can install additional applications or run external binaries from, for example, your home directory.
