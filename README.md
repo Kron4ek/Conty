@@ -20,24 +20,32 @@ This is an easy to use compressed unprivileged Linux container packed into a sin
 * Supports Chaotic-AUR and ALHP repositories. AUR is also supported.
 
 In its default release, it includes, among others, these apps:
-[Wine-Proton](https://en.wikipedia.org/wiki/Proton_(software)),
-[Steam](https://en.wikipedia.org/wiki/Steam_(service)),
-[Lutris](https://en.wikipedia.org/wiki/Lutris),
-[PlayOnLinux](https://en.wikipedia.org/wiki/PlayOnLinux),
-[GameHub](https://github.com/tkashkin/GameHub),
-[Minigalaxy](https://sharkwouter.github.io/minigalaxy),
-[Legendary](https://github.com/derrod/legendary),
-[Bottles](https://usebottles.com),
-[PrismLauncher](https://prismlauncher.org),
-[MangoHud](https://github.com/flightlessmango/MangoHud),
-[Gamescope](https://github.com/ValveSoftware/gamescope),
-[RetroArch](https://www.retroarch.com),
-[DuckStation](https://www.duckstation.org/),
-[Sunshine](https://github.com/LizardByte/Sunshine),
-[Genymotion](https://www.genymotion.com/),
-[OBS Studio](https://obsproject.com/),
-[OpenJDK](https://en.wikipedia.org/wiki/OpenJDK),
-[Firefox](https://en.wikipedia.org/wiki/Firefox)
+
+[Wine-Proton](https://en.wikipedia.org/wiki/Proton_(software)) (fork of Wine from Valve),  
+[Steam](https://en.wikipedia.org/wiki/Steam_(service)) (popular game store),  
+[Minigalaxy](https://sharkwouter.github.io/minigalaxy) (A simple GOG client),  
+[Lutris](https://en.wikipedia.org/wiki/Lutris) (game manager, Wine manager - with ability to set settings for every game),  
+[PlayOnLinux](https://en.wikipedia.org/wiki/PlayOnLinux) (frontent for Wine, similar to Lutris),  
+[GameHub](https://github.com/tkashkin/GameHub) (store games from different platforms into one program),  
+[Legendary](https://github.com/derrod/legendary) (FOSS Epic Games Launcher),  
+[Bottles](https://usebottles.com) (manager of Wine prefixes, with ability to specify settings to each),  
+[MangoHud](https://github.com/flightlessmango/MangoHud) (A Vulkan and OpenGL overlay for monitoring FPS, temperatures, CPU/GPU load and more),  
+[Gamescope](https://github.com/ValveSoftware/gamescope) (SteamOS session compositing window manager - some games unable to run without it),  
+[RetroArch](https://www.retroarch.com) (frontend for emulators, game engines and media players),  
+[DuckStation](https://www.duckstation.org) (PlayStation emulator),  
+[Sunshine](https://github.com/LizardByte/Sunshine) (self-hosted game stream host for Moonlight),  
+[Genymotion](https://www.genymotion.com/) (proprietary software to run Android virtual machine),  
+[OBS Studio](https://obsproject.com) (for streaming and screen recording)
+
+Plus in non-lite version:
+
+[Firefox](https://en.wikipedia.org/wiki/Firefox) (the last independent browser, receiving most of their income from Google),  
+[OpenJDK](https://en.wikipedia.org/wiki/OpenJDK) (Java compiler),  
+[qBittorrent](https://en.wikipedia.org/wiki/QBittorrent) (torrent client),  
+[PrismLauncher](https://prismlauncher.org) (Minecraft launcher),  
+
+
+
 
 The full list can be read in the [latest release's pkg_list.txt](https://github.com/Kron4ek/Conty/releases/latest/download/pkg_list.txt).
 
