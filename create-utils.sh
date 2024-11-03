@@ -16,7 +16,7 @@ script_dir="$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")"
 build_dwarfs="${build_dwarfs:-false}"
 
 squashfuse_version="0.5.2"
-bwrap_version="0.10.0"
+bwrap_version="0.11.0"
 lz4_version="1.10.0"
 zstd_version="1.5.6"
 squashfs_tools_version="4.6.1"
