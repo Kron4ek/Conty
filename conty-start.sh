@@ -22,7 +22,7 @@ if (( EUID == 0 )) && [ -z "$ALLOW_ROOT" ]; then
 fi
 
 # Conty version
-script_version="1.26.2"
+script_version="1.26.3"
 
 # Important variables to manually adjust after modification!
 # Needed to avoid problems with mounting due to an incorrect offset.
@@ -832,6 +832,7 @@ run_bwrap () {
 			"${unshare_net[@]}" \
 			"${set_vars[@]}" \
 			--setenv PATH "${CUSTOM_PATH}" \
+   			--setenv XDG_DATA_DIRS "/usr/local/share:/usr/share:${XDG_DATA_DIRS}" \
 			"${command_line[@]}"
 }
 
