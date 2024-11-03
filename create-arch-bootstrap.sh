@@ -7,7 +7,10 @@
 
 # Package groups
 audio_pkgs="alsa-lib lib32-alsa-lib alsa-plugins lib32-alsa-plugins libpulse \
-	lib32-libpulse jack2 lib32-jack2 alsa-tools alsa-utils pipewire lib32-pipewire"
+	lib32-libpulse alsa-tools alsa-utils pipewire lib32-pipewire pipewire-pulse pipewire-jack lib32-pipewire-jack"
+
+core_pkgs="xorg-xwayland qt6-wayland wayland \
+	lib32-wayland qt5-wayland xorg-server-xephyr gamescope"
 
 video_pkgs="mesa lib32-mesa vulkan-radeon lib32-vulkan-radeon \
 	vulkan-intel lib32-vulkan-intel \
@@ -17,35 +20,46 @@ video_pkgs="mesa lib32-mesa vulkan-radeon lib32-vulkan-radeon \
 	mesa-utils vulkan-tools libva-utils lib32-mesa-utils"
 
 wine_pkgs="wine-staging winetricks-git wine-nine wineasio \
-	giflib lib32-giflib libpng lib32-libpng libldap lib32-libldap \
-	gnutls lib32-gnutls mpg123 lib32-mpg123 openal lib32-openal \
-	v4l-utils lib32-v4l-utils libpulse lib32-libpulse alsa-plugins \
-	lib32-alsa-plugins alsa-lib lib32-alsa-lib libjpeg-turbo \
-	lib32-libjpeg-turbo libxcomposite lib32-libxcomposite libxinerama \
-	lib32-libxinerama libxslt lib32-libxslt libva lib32-libva gtk3 \
-	lib32-gtk3 vulkan-icd-loader lib32-vulkan-icd-loader sdl2 lib32-sdl2 \
-	vkd3d lib32-vkd3d libgphoto2 ffmpeg gst-plugins-good gst-plugins-bad \
-	gst-plugins-ugly gst-plugins-base lib32-gst-plugins-good \
-	lib32-gst-plugins-base gst-libav wget gst-plugin-pipewire"
+	freetype2 lib32-freetype2 libxft lib32-libxft \
+	flex lib32-flex fluidsynth lib32-fluidsynth \
+	libxrandr lib32-libxrandr xorg-xrandr libldap lib32-libldap \
+	mpg123 lib32-mpg123 libxcomposite lib32-libxcomposite \
+	libxi lib32-libxi libxinerama lib32-libxinerama libxss lib32-libxss \
+	libxslt lib32-libxslt openal lib32-openal \
+	krb5 lib32-krb5 libpulse lib32-libpulse alsa-plugins \
+	lib32-alsa-plugins alsa-lib lib32-alsa-lib gnutls lib32-gnutls \
+	giflib lib32-giflib gst-libav gst-plugin-pipewire gst-plugins-ugly \
+	gst-plugins-bad gst-plugins-bad-libs \
+	gst-plugins-base-libs lib32-gst-plugins-base-libs gst-plugins-base lib32-gst-plugins-base \
+	gst-plugins-good lib32-gst-plugins-good gstreamer lib32-gstreamer \
+	libpng lib32-libpng v4l-utils lib32-v4l-utils \
+	libgpg-error lib32-libgpg-error libjpeg-turbo lib32-libjpeg-turbo \
+	libgcrypt lib32-libgcrypt ncurses lib32-ncurses ocl-icd lib32-ocl-icd 
+	libxcrypt-compat lib32-libxcrypt-compat libva lib32-libva sqlite lib32-sqlite \
+	gtk3 lib32-gtk3 vulkan-icd-loader lib32-vulkan-icd-loader \
+	sdl2 lib32-sdl2 vkd3d lib32-vkd3d libgphoto2 \
+	openssl-1.1 lib32-openssl-1.1 libnm lib32-libnm \
+	cabextract wget gamemode lib32-gamemode mangohud lib32-mangohud"
 
 devel_pkgs="base-devel git meson mingw-w64-gcc cmake"
+
+gaming_pkgs="lutris steam steam-native-runtime steamtinkerlaunch minigalaxy \
+	gamehub legendary prismlauncher bottles playonlinux obs-studio \
+	retroarch retroarch-assets-ozone libretro-beetle-psx-hw sunshine \
+	libretro-blastem libretro-bsnes libretro-dolphin duckstation \
+	libretro-gambatte libretro-melonds libretro-mgba libretro-nestopia \
+	libretro-parallel-n64 libretro-pcsx2 libretro-picodrive libretro-ppsspp \
+	libretro-retrodream libretro-yabause"
+
+extra_pkgs="nano ttf-dejavu ttf-liberation firefox mpv geany pcmanfm \
+	htop qbittorrent speedcrunch gpicview file-roller openbox lxterminal \
+	yt-dlp minizip nautilus genymotion"
 
 # Packages to install
 # You can add packages that you want and remove packages that you don't need
 # Apart from packages from the official Arch repos, you can also specify
 # packages from the Chaotic-AUR repo
-export packagelist="${audio_pkgs} ${video_pkgs} ${wine_pkgs} ${devel_pkgs} \
-	nano ttf-dejavu ttf-liberation lutris steam firefox mpv geany pcmanfm \
-	htop qbittorrent speedcrunch gpicview file-roller xorg-xwayland \
-	steam-native-runtime gamemode lib32-gamemode jre17-openjdk lxterminal \
-	steamtinkerlaunch mangohud lib32-mangohud qt6-wayland wayland \
-	lib32-wayland qt5-wayland retroarch xorg-server-xephyr openbox \
-	obs-studio gamehub minigalaxy legendary gamescope prismlauncher yt-dlp \
-	bottles playonlinux minizip retroarch-assets-ozone libretro-beetle-psx-hw \
-	libretro-blastem libretro-bsnes libretro-dolphin duckstation \
-	libretro-gambatte libretro-melonds libretro-mgba libretro-nestopia \
-	libretro-parallel-n64 libretro-pcsx2 libretro-picodrive libretro-ppsspp \
-	libretro-retrodream libretro-yabause sunshine nautilus genymotion"
+export packagelist="${audio_pkgs} ${core_pkgs} ${video_pkgs} ${wine_pkgs} ${devel_pkgs} ${gaming_pkgs} ${extra_pkgs}"
 
 # If you want to install AUR packages, specify them in this variable
 export aur_packagelist=""
