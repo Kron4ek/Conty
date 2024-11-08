@@ -28,6 +28,7 @@ In its default release, it includes, among others, these apps:
 [Minigalaxy](https://sharkwouter.github.io/minigalaxy),
 [Legendary](https://github.com/derrod/legendary),
 [Bottles](https://usebottles.com),
+[Faugus Launcher](https://github.com/Faugus/faugus-launcher),
 [PrismLauncher](https://prismlauncher.org),
 [MangoHud](https://github.com/flightlessmango/MangoHud),
 [Gamescope](https://github.com/ValveSoftware/gamescope),
