@@ -49,7 +49,7 @@ gaming_pkgs="lutris steam steam-native-runtime steamtinkerlaunch minigalaxy \
 	libretro-blastem libretro-bsnes libretro-dolphin duckstation \
 	libretro-gambatte libretro-melonds libretro-mgba libretro-nestopia \
 	libretro-parallel-n64 libretro-pcsx2 libretro-picodrive libretro-ppsspp \
-	libretro-retrodream libretro-yabause"
+	libretro-retrodream libretro-yabause pcsx2-avx-git"
 
 extra_pkgs="nano ttf-dejavu ttf-liberation firefox mpv geany pcmanfm \
 	htop qbittorrent speedcrunch gpicview file-roller openbox lxterminal \
