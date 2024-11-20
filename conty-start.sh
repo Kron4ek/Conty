@@ -393,7 +393,7 @@ nvidia_driver_handler () {
 	echo "Downloading the Nvidia driver ${nvidia_driver_version}..."
 
 	# Try to download the driver from the default Nvidia URL
-	driver_url="https://us.download.nvidia.com/XFree86/Linux-x86_64/${nvidia_driver_version}/NVIDIA-Linux-x86_64-${nvidia_driver_version}.run"
+	driver_url="https://download.nvidia.com/XFree86/Linux-x86_64/${nvidia_driver_version}/NVIDIA-Linux-x86_64-${nvidia_driver_version}.run"
 	curl -#Lo nvidia.run "${driver_url}"
 
 	# If the previous download failed, get the URL from FlatHub repo
