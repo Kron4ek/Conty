@@ -31,9 +31,9 @@ script_version="1.27"
 # size to 0
 init_size=50000
 bash_size=1752808
-script_size=38502
+script_size=42559
 busybox_size=1181592
-utils_size=4392469
+utils_size=4393102
 
 # Full path to the script
 if [ -n "${BASH_SOURCE[0]}" ]; then
@@ -75,7 +75,7 @@ else
 	export working_dir="${BASE_DIR}"/"${conty_dir_name}"
 fi
 
-if [ "${USE_SYS_UTILS}" != 1 ] && [ "${busybox_size}" -gt 0 ]; then
+if [ "${USE_SYS_UTILS}" != 1 ] && [[ "${busybox_size}" -gt 0 ]]; then
 	busybox_bin_dir="${working_dir}"/busybox_bins
 	busybox_path="${busybox_bin_dir}"/busybox
 
@@ -402,7 +402,7 @@ nvidia_driver_handler () {
 	curl -#Lo nvidia.run "${driver_url}"
 
 	# If the previous download failed, get the URL from FlatHub repo
-	if [ ! -s nvidia.run ] || [ "$(stat -c%s nvidia.run)" -lt 30000000 ]; then
+	if [ ! -s nvidia.run ] || [[ "$(stat -c%s nvidia.run)" -lt 30000000 ]]; then
 		rm -f nvidia.run
 		driver_url="https:$(curl -#Lo - "https://raw.githubusercontent.com/flathub/org.freedesktop.Platform.GL.nvidia/master/data/nvidia-${nvidia_driver_version}-x86_64.data" | cut -d ':' -f 6)"
 		curl -#Lo nvidia.run "${driver_url}"
@@ -489,17 +489,17 @@ if [ "${dwarfs_image}" = 1 ]; then
 	if getconf _PHYS_PAGES &>/dev/null && getconf PAGE_SIZE &>/dev/null; then
 		memory_size="$(($(getconf _PHYS_PAGES) * $(getconf PAGE_SIZE) / (1024 * 1024)))"
 
-		if [ "${memory_size}" -ge 45000 ]; then
+		if [[ "${memory_size}" -ge 45000 ]]; then
 			dwarfs_cache_size="4096M"
-		elif [ "${memory_size}" -ge 23000 ]; then
+		elif [[ "${memory_size}" -ge 23000 ]]; then
 			dwarfs_cache_size="2048M"
-		elif [ "${memory_size}" -ge 15000 ]; then
+		elif [[ "${memory_size}" -ge 15000 ]]; then
 			dwarfs_cache_size="1024M"
-		elif [ "${memory_size}" -ge 7000 ]; then
+		elif [[ "${memory_size}" -ge 7000 ]]; then
 			dwarfs_cache_size="512M"
-		elif [ "${memory_size}" -ge 3000 ]; then
+		elif [[ "${memory_size}" -ge 3000 ]]; then
 			dwarfs_cache_size="256M"
-		elif [ "${memory_size}" -ge 1500 ]; then
+		elif [[ "${memory_size}" -ge 1500 ]]; then
 			dwarfs_cache_size="128M"
 		else
 			dwarfs_cache_size="64M"
@@ -509,7 +509,7 @@ if [ "${dwarfs_image}" = 1 ]; then
 	if getconf _NPROCESSORS_ONLN &>/dev/null; then
 		dwarfs_num_workers="$(getconf _NPROCESSORS_ONLN)"
 
-		if [ "${dwarfs_num_workers}" -ge 8 ]; then
+		if [[ "${dwarfs_num_workers}" -ge 8 ]]; then
 			dwarfs_num_workers=8
 		fi
 	fi
@@ -518,7 +518,7 @@ fi
 # Extract utils.tar.gz
 mkdir -p "${working_dir}"
 
-if ([ "${USE_SYS_UTILS}" != 1 ] && [ "${utils_size}" -gt 0 ]) || [ "$1" = "-u" ]; then
+if ([ "${USE_SYS_UTILS}" != 1 ] && [[ "${utils_size}" -gt 0 ]]) || [ "$1" = "-u" ]; then
 	# Check if filesystem of the working_dir is mounted without noexec
 	if ! exec_test; then
 		if [ -z "${BASE_DIR}" ]; then
@@ -701,7 +701,7 @@ run_bwrap () {
 			sandbox_params+=(--dir "${HOME}")
 		fi
 
-		if [ -n "${SANDBOX_LEVEL}" ] && [ "${SANDBOX_LEVEL}" -ge 2 ]; then
+		if [ -n "${SANDBOX_LEVEL}" ] && [[ "${SANDBOX_LEVEL}" -ge 2 ]]; then
 			sandbox_level_msg="(level 2)"
 			sandbox_params+=(--dir "${XDG_RUNTIME_DIR}" \
                              --ro-bind-try "${XDG_RUNTIME_DIR}"/"${wayland_socket}" "${XDG_RUNTIME_DIR}"/"${wayland_socket}" \
@@ -716,7 +716,7 @@ run_bwrap () {
 							 --bind-try /run/dbus /run/dbus)
 		fi
 
-		if [ -n "${SANDBOX_LEVEL}" ] && [ "${SANDBOX_LEVEL}" -ge 3 ]; then
+		if [ -n "${SANDBOX_LEVEL}" ] && [[ "${SANDBOX_LEVEL}" -ge 3 ]]; then
 			sandbox_level_msg="(level 3)"
 			DISABLE_NET=1
 		fi
@@ -759,7 +759,7 @@ run_bwrap () {
 
 	if [ "${DISABLE_X11}" != 1 ]; then
 		if [ "$(ls /tmp/.X11-unix 2>/dev/null)" ]; then
-			if [ -n "${SANDBOX_LEVEL}" ] && [ "${SANDBOX_LEVEL}" -ge 3 ]; then
+			if [ -n "${SANDBOX_LEVEL}" ] && [[ "${SANDBOX_LEVEL}" -ge 3 ]]; then
 				xsockets+=(--ro-bind-try /tmp/.X11-unix/X"${xephyr_display}" /tmp/.X11-unix/X"${xephyr_display}" \
 						   --setenv "DISPLAY" :"${xephyr_display}")
 			else
@@ -782,7 +782,7 @@ run_bwrap () {
 		mount_opt=(--bind-try /opt /opt)
 	fi
 
-	if ([ "${NVIDIA_HANDLER}" -ge 1 ] || [ "${USE_OVERLAYFS}" = 1 ]) && \
+	if ([[ "${NVIDIA_HANDLER}" -ge 1 ]] || [ "${USE_OVERLAYFS}" = 1 ]) && \
 		[ "$(ls "${overlayfs_dir}"/merged 2>/dev/null)" ]; then
 		newroot_path="${overlayfs_dir}"/merged
 	else
@@ -1038,7 +1038,7 @@ if [ "$(ls "${mount_point}" 2>/dev/null)" ] || launch_wrapper "${mount_command[@
 				available_disk_space="$(df -P -B1 "${PWD}" | awk 'END {print $4}')"
 				required_disk_space="$((current_file_size*7))"
 
-				if [ "${available_disk_space}" -lt "${required_disk_space}" ]; then
+				if [[ "${available_disk_space}" -lt "${required_disk_space}" ]]; then
 					echo "Not enough free disk space"
 					echo "You need at least $((required_disk_space/1024/1024)) MB of free space"
 					exit 1
@@ -1084,7 +1084,7 @@ if [ "$(ls "${mount_point}" 2>/dev/null)" ] || launch_wrapper "${mount_command[@
 			echo "Creating an image..."
 			launch_wrapper "${compression_command[@]}"
 
-			if [ "${init_size}" -gt 0 ]; then
+			if [[ "${init_size}" -gt 0 ]]; then
 				tail -c +$((init_size+bash_size+1)) "${script}" | head -c "${script_size}" > conty-start.sh
 			else
 				head -c "${script_size}" "${script}" > conty-start.sh
@@ -1126,7 +1126,7 @@ if [ "$(ls "${mount_point}" 2>/dev/null)" ] || launch_wrapper "${mount_command[@
 		exit
 	fi
 
-	if [ "${NVIDIA_HANDLER}" -ge 1 ]; then
+	if [[ "${NVIDIA_HANDLER}" -ge 1 ]]; then
 		if [ -f /sys/module/nvidia/version ]; then
 			unset NVIDIA_SHARED
 
@@ -1294,7 +1294,7 @@ if [ "$(ls "${mount_point}" 2>/dev/null)" ] || launch_wrapper "${mount_command[@
 	fi
 
 	# If SANDBOX_LEVEL is 3, run Xephyr and openbox before running applications
-	if [ "${SANDBOX}" = 1 ] && [ -n "${SANDBOX_LEVEL}" ] && [ "${SANDBOX_LEVEL}" -ge 3 ]; then
+	if [ "${SANDBOX}" = 1 ] && [ -n "${SANDBOX_LEVEL}" ] && [[ "${SANDBOX_LEVEL}" -ge 3 ]]; then
 		if [ -f "${mount_point}"/usr/bin/Xephyr ]; then
 			if [ -z "${XEPHYR_SIZE}" ]; then
 				XEPHYR_SIZE="800x600"
