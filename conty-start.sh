@@ -8,6 +8,8 @@ unset LD_PRELOAD LD_LIBRARY_PATH
 LC_ALL_ORIG="${LC_ALL}"
 export LC_ALL=C
 
+export PATH="/usr/sbin:${PATH}"
+
 msg_root="
 Do not run this script as root!
 
