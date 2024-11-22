@@ -58,9 +58,8 @@ if [ "${build_dwarfs}" != "true" ]; then
 fi
 
 cd bubblewrap-"${bwrap_version}" || exit 1
-./autogen.sh
-./configure --disable-selinux --disable-man
-make -j"$(nproc)" DESTDIR="${script_dir}"/build-utils/bin install
+meson -Dselinux=disabled -Dman=disabled build
+DESTDIR="${script_dir}"/build-utils/bin meson install -C build
 
 cd ../unionfs-fuse-"${unionfs_fuse_version}" || exit 1
 mkdir build-fuse3
