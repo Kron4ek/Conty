@@ -22,7 +22,7 @@ if (( EUID == 0 )) && [ -z "$ALLOW_ROOT" ]; then
 fi
 
 # Conty version
-script_version="1.26.3"
+script_version="1.27"
 
 # Important variables to manually adjust after modification!
 # Needed to avoid problems with mounting due to an incorrect offset.
@@ -188,11 +188,19 @@ Environment variables:
                     directory from there.
 
   NVIDIA_HANDLER    Fixes issues with graphical applications on Nvidia
-                    GPUs with the proprietary driver. Enable this only
-                    if you are using an Nvidia GPU, the proprietary
-                    driver and encountering issues running graphical
-                    applications. At least 2 GB of free disk space is
-                    required. This function is enabled by default.
+                    GPUs with the proprietary driver. At least 2 GB of
+                    free disk space is required for this function.
+                    This function is enabled by default on systems with
+                    an Nvidia GPU.
+                    Available modes:
+                      1. In this mode Conty downloads the
+                         driver from the official Nvidia website and
+                         installs it inside the container.
+                      2. In this mode Conty copies Nvidia libraries from
+                         the host system into the container.
+                    The default is 1 if there is an internet
+                    connection and the Nvidia website is accessible,
+                    otherwise the default is 2.
 
   USE_SYS_UTILS     Tells the script to use squashfuse/dwarfs and bwrap
                     installed on the system instead of the builtin ones.
@@ -227,9 +235,6 @@ arguments, to remove add a minus sign (-) before their names.
   To remove: ${script_name} -u -pkgname1 -pkgname2 -pkgname3 ...
 In this case Conty will update all packages and additionally install
 and/or remove specified packages.
-
-If you are using an Nvidia GPU, please read the following:
-https://github.com/Kron4ek/Conty#known-issues
 "
 
 if [ -n "${CUSTOM_MNT}" ] && [ -d "${CUSTOM_MNT}" ]; then
@@ -420,6 +425,7 @@ nvidia_driver_handler () {
 				cp /usr/lib32/tls/libnvidia-tls.so.* /usr/lib32 &>/dev/null
 				echo "${nvidia_driver_version}" > "${nvidia_drivers_dir}"/current-nvidia-version
 				echo "The driver installed successfully"
+				nvidia_install_success=1
 			else
 				echo "Failed to install the driver"
 			fi
@@ -428,6 +434,10 @@ nvidia_driver_handler () {
 		fi
 	else
 		echo "Failed to download the driver"
+	fi
+
+	if [ "${nvidia_install_success}" != 1 ]; then
+		rm -f "${nvidia_drivers_dir}"/current-nvidia-version
 	fi
 
 	cd "${OLD_PWD}"
@@ -772,7 +782,7 @@ run_bwrap () {
 		mount_opt=(--bind-try /opt /opt)
 	fi
 
-	if ([ "${NVIDIA_HANDLER}" = 1 ] || [ "${USE_OVERLAYFS}" = 1 ]) && \
+	if ([ "${NVIDIA_HANDLER}" -ge 1 ] || [ "${USE_OVERLAYFS}" = 1 ]) && \
 		[ "$(ls "${overlayfs_dir}"/merged 2>/dev/null)" ]; then
 		newroot_path="${overlayfs_dir}"/merged
 	else
@@ -1116,7 +1126,7 @@ if [ "$(ls "${mount_point}" 2>/dev/null)" ] || launch_wrapper "${mount_command[@
 		exit
 	fi
 
-	if [ "${NVIDIA_HANDLER}" = 1 ]; then
+	if [ "${NVIDIA_HANDLER}" -ge 1 ]; then
 		if [ -f /sys/module/nvidia/version ]; then
 			unset NVIDIA_SHARED
 
@@ -1168,11 +1178,78 @@ if [ "$(ls "${mount_point}" 2>/dev/null)" ] || launch_wrapper "${mount_command[@
 					mkdir -p "${nvidia_drivers_dir}"
 					echo > "${nvidia_drivers_dir}"/lock
 
-					export nvidia_driver_version
-					export -f nvidia_driver_handler
-					DISABLE_NET=0 QUIET_MODE=1 RW_ROOT=1 run_bwrap --tmpfs /tmp --tmpfs /var --tmpfs /run \
-					--bind "${nvidia_drivers_dir}" "${nvidia_drivers_dir}" \
-					bash -c nvidia_driver_handler
+					if [ "${NVIDIA_HANDLER}" = 1 ]; then
+						export nvidia_driver_version
+						export -f nvidia_driver_handler
+						DISABLE_NET=0 QUIET_MODE=1 RW_ROOT=1 run_bwrap --tmpfs /tmp --tmpfs /var --tmpfs /run \
+						--bind "${nvidia_drivers_dir}" "${nvidia_drivers_dir}" \
+						bash -c nvidia_driver_handler
+					fi
+
+					if [ "${NVIDIA_HANDLER}" = 2 ] || [ ! -f "${nvidia_drivers_dir}"/current-nvidia-version ]; then
+						if [ -f "${nvidia_drivers_dir}"/host_nvidia_libs ]; then
+							for f in $(cat "${nvidia_drivers_dir}"/host_nvidia_libs); do
+								libname="$(basename "${f}")"
+								rm -f "${overlayfs_dir}"/merged/usr/lib/"${libname}" \
+								      "${overlayfs_dir}"/merged/usr/lib32/"${libname}"
+							done
+						fi
+
+						rm -f "${nvidia_drivers_dir}"/host_nvidia_libs \
+						      "${nvidia_drivers_dir}"/host_libs
+
+						ldconfig -p > "${nvidia_drivers_dir}"/host_libs
+
+						if [ -s "${nvidia_drivers_dir}"/host_libs ]; then
+							grep -Ei "nvidia|libcuda" "${nvidia_drivers_dir}"/host_libs | cut -d ">" -f 2 >> "${nvidia_drivers_dir}"/host_nvidia_libs
+
+							if [ -s "${nvidia_drivers_dir}"/host_nvidia_libs ]; then
+								echo "Copying Nvidia libraries from the host system, please wait..."
+
+								for f in $(grep "libnv" "${nvidia_drivers_dir}"/host_libs | cut -d ">" -f 2); do
+									if strings "${f}" | grep -qi -m 1 "nvidia" &>/dev/null; then
+										echo "${f}" >> "${nvidia_drivers_dir}"/host_nvidia_libs
+									fi
+								done
+
+								for f in $(cat "${nvidia_drivers_dir}"/host_nvidia_libs); do
+									libname="$(basename "${f}")"
+
+									if file "$(readlink -f "${f}")" | grep "32-bit" &>/dev/null; then
+										cp -L "${f}" "${overlayfs_dir}"/merged/usr/lib32/"${libname}"
+									else
+										cp -L "${f}" "${overlayfs_dir}"/merged/usr/lib/"${libname}"
+									fi
+								done
+
+								nvidia_other_files="/usr/share/vulkan/icd.d/nvidia_icd.json \
+								                    /usr/share/vulkan/implicit_layer.d/nvidia_layers.json \
+								                    /usr/lib/nvidia/wine/nvngx.dll \
+								                    /usr/lib/nvidia/wine/_nvngx.dll \
+								                    /usr/share/egl/egl_external_platform.d/20_nvidia_xcb.json \
+								                    /usr/share/glvnd/egl_vendor.d/10_nvidia.json \
+								                    /usr/share/nvidia/nvidia-application-profiles-${nvidia_driver_version}-rc"
+
+								for f in ${nvidia_other_files}; do
+									filedir="$(dirname "${f}")"
+
+									if [ -f "${f}" ]; then
+										filepath="${f}"
+									else
+										filepath="$(find /usr /run /nix -name "$(basename "${f}")" -type f -print -quit 2>/dev/null)"
+									fi
+
+									if [ -f "${filepath}" ]; then
+										mkdir -p "${overlayfs_dir}"/merged/"${filedir}"
+										cp -L "${filepath}" "${overlayfs_dir}"/merged/"${filedir}" &>/dev/null
+										cp -L "$(dirname "${filepath}")"/*nvidia* "${overlayfs_dir}"/merged/"${filedir}" &>/dev/null
+									fi
+								done
+
+								echo "${nvidia_driver_version}" > "${nvidia_drivers_dir}"/current-nvidia-version
+							fi
+						fi
+					fi
 
 					rm -f "${nvidia_drivers_dir}"/lock
 				fi
