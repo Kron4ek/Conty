@@ -422,7 +422,9 @@ nvidia_driver_handler () {
 			rm -rf "${nvidia_drivers_dir}"/nvidia.run "${nvidia_drivers_dir}"/nvidia-driver
 
 			if [ -s /usr/lib/libGLX_nvidia.so."${nvidia_driver_version}" ] || \
-			   [ -s /usr/lib/libGL.so."${nvidia_driver_version}" ]; then
+			   [ -s /usr/lib/libGL.so."${nvidia_driver_version}" ] || \
+                           [ -s /usr/lib/libnvidia-glcore.so."${nvidia_driver_version}" ] || \
+			   [ -s /usr/lib/libnvidia-eglcore.so."${nvidia_driver_version}" ]; then
 				cp /usr/lib/tls/libnvidia-tls.so.* /usr/lib &>/dev/null
 				cp /usr/lib32/tls/libnvidia-tls.so.* /usr/lib32 &>/dev/null
 				echo "${nvidia_driver_version}" > "${nvidia_drivers_dir}"/current-nvidia-version
@@ -1203,10 +1205,12 @@ if [ "$(ls "${mount_point}" 2>/dev/null)" ] || launch_wrapper "${mount_command[@
 						ldconfig -p > "${nvidia_drivers_dir}"/host_libs
 
 						if [ -s "${nvidia_drivers_dir}"/host_libs ]; then
-							grep -Ei "nvidia|libcuda" "${nvidia_drivers_dir}"/host_libs | cut -d ">" -f 2 >> "${nvidia_drivers_dir}"/host_nvidia_libs
+							grep -i "nvidia" "${nvidia_drivers_dir}"/host_libs | cut -d ">" -f 2 >> "${nvidia_drivers_dir}"/host_nvidia_libs
 
 							if [ -s "${nvidia_drivers_dir}"/host_nvidia_libs ]; then
 								echo "Copying Nvidia libraries from the host system, please wait..."
+
+ 								grep -i "libcuda" "${nvidia_drivers_dir}"/host_libs | cut -d ">" -f 2 >> "${nvidia_drivers_dir}"/host_nvidia_libs
 
 								for f in $(grep "libnv" "${nvidia_drivers_dir}"/host_libs | cut -d ">" -f 2); do
 									if strings "${f}" | grep -qi -m 1 "nvidia" &>/dev/null; then
@@ -1214,13 +1218,14 @@ if [ "$(ls "${mount_point}" 2>/dev/null)" ] || launch_wrapper "${mount_command[@
 									fi
 								done
 
+								nvidia_lib_copied=0
 								for f in $(cat "${nvidia_drivers_dir}"/host_nvidia_libs); do
 									libname="$(basename "${f}")"
 
 									if file "$(readlink -f "${f}")" | grep "32-bit" &>/dev/null; then
-										cp -L "${f}" "${overlayfs_dir}"/merged/usr/lib32/"${libname}"
+										cp -L "${f}" "${overlayfs_dir}"/merged/usr/lib32/"${libname}" 2>/dev/null
 									else
-										cp -L "${f}" "${overlayfs_dir}"/merged/usr/lib/"${libname}"
+										cp -L "${f}" "${overlayfs_dir}"/merged/usr/lib/"${libname}" 2>/dev/null && nvidia_lib_copied=1
 									fi
 								done
 
@@ -1248,8 +1253,14 @@ if [ "$(ls "${mount_point}" 2>/dev/null)" ] || launch_wrapper "${mount_command[@
 									fi
 								done
 
-								echo "${nvidia_driver_version}" > "${nvidia_drivers_dir}"/current-nvidia-version
-							fi
+								if [ "${nvidia_lib_copied}" = 1 ]; then
+									echo "${nvidia_driver_version}" > "${nvidia_drivers_dir}"/current-nvidia-version
+	 							else
+	 								echo "Failed to copy Nvidia libraries"
+	  							fi
+							else
+       								echo "Nvidia libraries not found on the host system"
+	       						fi
 						fi
 					fi
 
