@@ -111,18 +111,6 @@ echo
 echo "Creating Conty..."
 echo
 
-# Create the image
-if [ ! -f "${image_path}" ] || [ "${use_existing_image}" != "true" ]; then
-	if [ ! -d "${bootstrap}" ]; then
-		echo "Distro bootstrap is required!"
-		echo "Use the create-arch-bootstrap.sh script to get it"
-		exit 1
-	fi
-
-	rm -f "${image_path}"
-	launch_wrapper "${compressor_command[@]}"
-fi
-
 if command -v sed 1>/dev/null; then
 	utils_size="$(stat -c%s "${utils}")"
 	init_size=0
@@ -157,7 +145,7 @@ if command -v sed 1>/dev/null; then
 fi
 
 # Combine the files into a single executable using cat
-cat utils/init utils/bash conty-start.sh utils/busybox "${utils}" "${image_path}" > conty.sh
+cat utils/init utils/bash conty-start.sh utils/busybox "${utils}" > conty.sh
 chmod +x conty.sh
 
 clear

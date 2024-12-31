@@ -242,7 +242,7 @@ and/or remove specified packages.
 if [ -n "${CUSTOM_MNT}" ] && [ -d "${CUSTOM_MNT}" ]; then
 	mount_point="${CUSTOM_MNT}"
 else
-	mount_point="${working_dir}"/mnt
+	mount_point="/"
 fi
 
 export overlayfs_dir="${HOME}"/.local/share/Conty/overlayfs_"${script_md5}"
@@ -821,28 +821,9 @@ run_bwrap () {
 	launch_wrapper "${bwrap}" \
 			"${bind_root[@]}" \
 			--dev-bind /dev /dev \
-			--ro-bind /sys /sys \
-			--bind-try /tmp /tmp \
 			--proc /proc \
-			--bind-try /home /home \
-			--bind-try /mnt /mnt \
-			--bind-try /media /media \
-			--bind-try /run /run \
-			--bind-try /var /var \
-			--ro-bind-try /usr/share/steam/compatibilitytools.d /usr/share/steam/compatibilitytools.d \
-			--ro-bind-try /etc/resolv.conf /etc/resolv.conf \
-			--ro-bind-try /etc/hosts /etc/hosts \
-			--ro-bind-try /etc/nsswitch.conf /etc/nsswitch.conf \
-			--ro-bind-try /etc/passwd /etc/passwd \
-			--ro-bind-try /etc/group /etc/group \
-			--ro-bind-try /etc/machine-id /etc/machine-id \
-			--ro-bind-try /etc/asound.conf /etc/asound.conf \
-			--ro-bind-try /etc/localtime /etc/localtime \
-			"${non_standard_home[@]}" \
 			"${sandbox_params[@]}" \
 			"${custom_home[@]}" \
-			"${mount_opt[@]}" \
-			"${xsockets[@]}" \
 			"${unshare_net[@]}" \
 			"${set_vars[@]}" \
 			--setenv PATH "${CUSTOM_PATH}" \
@@ -859,11 +840,6 @@ exit_function () {
 		if [ -d "${overlayfs_dir}"/merged ]; then
 			fusermount"${fuse_version}" -uz "${overlayfs_dir}"/merged 2>/dev/null || \
 			umount --lazy "${overlayfs_dir}"/merged 2>/dev/null
-		fi
-
-		if [ -z "${CUSTOM_MNT}" ]; then
-			fusermount"${fuse_version}" -uz "${mount_point}" 2>/dev/null || \
-			umount --lazy "${mount_point}" 2>/dev/null
 		fi
 
 		if [ ! "$(ls "${mount_point}" 2>/dev/null)" ] || [ -n "${CUSTOM_MNT}" ]; then
