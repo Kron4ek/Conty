@@ -43,8 +43,8 @@ wine_pkgs="wine-staging winetricks-git wine-nine wineasio \
 
 devel_pkgs="base-devel git meson mingw-w64-gcc cmake"
 
-gaming_pkgs="lutris steam steam-native-runtime steamtinkerlaunch minigalaxy \
-	gamehub legendary prismlauncher bottles playonlinux obs-studio \
+gaming_pkgs="lutris python-protobuf steam steam-native-runtime steamtinkerlaunch \
+	minigalaxy gamehub legendary prismlauncher bottles playonlinux obs-studio \
 	retroarch retroarch-assets-ozone libretro-beetle-psx-hw sunshine \
 	libretro-blastem libretro-bsnes libretro-dolphin duckstation \
 	libretro-gambatte libretro-melonds libretro-mgba libretro-nestopia \
