@@ -24,7 +24,7 @@ if (( EUID == 0 )) && [ -z "$ALLOW_ROOT" ]; then
 fi
 
 # Conty version
-script_version="1.27"
+script_version="1.27.1"
 
 # Important variables to manually adjust after modification!
 # Needed to avoid problems with mounting due to an incorrect offset.
@@ -948,7 +948,7 @@ if [ "$(ls "${mount_point}" 2>/dev/null)" ] || launch_wrapper "${mount_command[@
 		fi
 
 		mkdir -p "${applications_dir}"
-		cp -r "${mount_point}"/usr/share/applications "${applications_dir}"_temp
+		cp -fr "${mount_point}"/usr/share/applications "${applications_dir}"_temp
 		cd "${applications_dir}"_temp || exit 1
 
 		unset variables
@@ -993,7 +993,7 @@ if [ "$(ls "${mount_point}" 2>/dev/null)" ] || launch_wrapper "${mount_command[@
 		done
 
 		mkdir -p "${HOME}"/.local/share
-		cp -nr "${mount_point}"/usr/share/icons "${HOME}"/.local/share 2>/dev/null
+		cp -fr "${mount_point}"/usr/share/icons "${HOME}"/.local/share 2>/dev/null
 		rm -rf "${applications_dir}"_temp
 
 		echo "Desktop files have been exported"
@@ -1223,9 +1223,9 @@ if [ "$(ls "${mount_point}" 2>/dev/null)" ] || launch_wrapper "${mount_command[@
 									libname="$(basename "${f}")"
 
 									if file "$(readlink -f "${f}")" | grep "32-bit" &>/dev/null; then
-										cp -L "${f}" "${overlayfs_dir}"/merged/usr/lib32/"${libname}" 2>/dev/null
+										cp -fL "${f}" "${overlayfs_dir}"/merged/usr/lib32/"${libname}" 2>/dev/null
 									else
-										cp -L "${f}" "${overlayfs_dir}"/merged/usr/lib/"${libname}" 2>/dev/null && nvidia_lib_copied=1
+										cp -fL "${f}" "${overlayfs_dir}"/merged/usr/lib/"${libname}" 2>/dev/null && nvidia_lib_copied=1
 									fi
 								done
 
@@ -1248,8 +1248,8 @@ if [ "$(ls "${mount_point}" 2>/dev/null)" ] || launch_wrapper "${mount_command[@
 
 									if [ -f "${filepath}" ]; then
 										mkdir -p "${overlayfs_dir}"/merged/"${filedir}"
-										cp -L "${filepath}" "${overlayfs_dir}"/merged/"${filedir}" &>/dev/null
-										cp -L "$(dirname "${filepath}")"/*nvidia* "${overlayfs_dir}"/merged/"${filedir}" &>/dev/null
+										cp -fL "${filepath}" "${overlayfs_dir}"/merged/"${filedir}" &>/dev/null
+										cp -fL "$(dirname "${filepath}")"/*nvidia* "${overlayfs_dir}"/merged/"${filedir}" &>/dev/null
 									fi
 								done
 
