@@ -18,11 +18,11 @@ build_dwarfs="${build_dwarfs:-false}"
 squashfuse_version="0.5.2"
 bwrap_version="0.11.0"
 lz4_version="1.10.0"
-zstd_version="1.5.6"
+zstd_version="1.5.7"
 squashfs_tools_version="4.6.1"
 unionfs_fuse_version="3.3"
 busybox_version="1.36.1"
-bash_version="5.2.32"
+bash_version="5.2.37"
 
 export CC=clang
 export CXX=clang++
