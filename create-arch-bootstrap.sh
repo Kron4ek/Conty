@@ -53,7 +53,7 @@ gaming_pkgs="lutris python-protobuf steam steam-native-runtime steamtinkerlaunch
 
 extra_pkgs="nano ttf-dejavu ttf-liberation firefox mpv geany pcmanfm \
 	htop qbittorrent speedcrunch gpicview file-roller openbox lxterminal \
-	yt-dlp minizip nautilus genymotion jre17-openjdk"
+	yt-dlp minizip nautilus genymotion jre17-openjdk gnome-themes-extra"
 
 # Packages to install
 # You can add packages that you want and remove packages that you don't need
