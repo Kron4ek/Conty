@@ -24,7 +24,7 @@ if (( EUID == 0 )) && [ -z "$ALLOW_ROOT" ]; then
 fi
 
 # Conty version
-script_version="1.27.1"
+script_version="1.27.2"
 
 # Important variables to manually adjust after modification!
 # Needed to avoid problems with mounting due to an incorrect offset.
@@ -692,6 +692,7 @@ run_bwrap () {
 	if [ "${SANDBOX}" = 1 ]; then
 		sandbox_params+=(--tmpfs /home \
 						 --tmpfs /mnt \
+						 --tmpfs /initrd \
 						 --tmpfs /media \
 						 --tmpfs /var \
 						 --tmpfs /run \
@@ -826,6 +827,7 @@ run_bwrap () {
 			--proc /proc \
 			--bind-try /home /home \
 			--bind-try /mnt /mnt \
+			--bind-try /initrd /initrd \
 			--bind-try /media /media \
 			--bind-try /run /run \
 			--bind-try /var /var \
