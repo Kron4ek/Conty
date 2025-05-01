@@ -170,29 +170,16 @@ if [ ! -s chaotic-keyring.pkg.tar.zst ] || [ ! -s chaotic-mirrorlist.pkg.tar.zst
 	exit 1
 fi
 
-bootstrap_urls=("arch.hu.fo" \
-		"mirror.cyberbits.eu" \
-		"mirror.osbeck.com" \
-		"mirror.lcarilla.de" \
-		"mirror.moson.org" \
-  		"mirror.f4st.host")
+for link in "${BOOTSTRAP_DOWNLOAD_URLS[@]}"; do
+	echo "Downloading Arch Linux bootstrap from $link"
+	curl -#LO "$link"
+	curl -#LO "$BOOTSTRAP_SHA256SUM_FILE_URL"
 
-echo "Downloading Arch Linux bootstrap"
-
-for link in "${bootstrap_urls[@]}"; do
-	curl -#LO "https://${link}/archlinux/iso/latest/archlinux-bootstrap-x86_64.tar.zst"
-	curl -#LO "https://${link}/archlinux/iso/latest/sha256sums.txt"
-
-	if [ -s sha256sums.txt ]; then
-		grep bootstrap-x86_64 sha256sums.txt > sha256.txt
-
-		echo "Verifying the integrity of the bootstrap"
-		if sha256sum -c sha256.txt &>/dev/null; then
-			bootstrap_is_good=1
-			break
-		fi
+	echo "Verifying the integrity of the bootstrap"
+	if sha256sum --ignore-missing -c sha256sums.txt &>/dev/null; then
+		bootstrap_is_good=1
+		break
 	fi
-
 	echo "Download failed, trying again with different mirror"
 done
 

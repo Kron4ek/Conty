@@ -94,6 +94,21 @@ DWARFS_COMPRESSOR_ARGUMENTS=(-l7 -C zstd:level=19 --metadata-compression null
 							 -S 21 -B 1 --order nilsimsa
 							 -W 12 -w 4 --no-create-timestamp)
 
+
+# List of links to arch bootstrap archive
+# Conty will try to download each one of them sequentially
+BOOTSTRAP_DOWNLOAD_URLS=(
+	'https://arch.hu.fo/archlinux/iso/latest/archlinux-bootstrap-x86_64.tar.zst'
+	'https://mirror.cyberbits.eu/archlinux/iso/latest/archlinux-bootstrap-x86_64.tar.zst'
+	'https://mirror.osbeck.com/archlinux/iso/latest/archlinux-bootstrap-x86_64.tar.zst'
+	'https://mirror.lcarilla.de/archlinux/iso/latest/archlinux-bootstrap-x86_64.tar.zst'
+	'https://mirror.moson.org/archlinux/iso/latest/archlinux-bootstrap-x86_64.tar.zst'
+	'https://mirror.f4st.host/archlinux/iso/latest/archlinux-bootstrap-x86_64.tar.zst'
+)
+
+# sha256sums.txt file to verify downloaded bootstrap archive with
+BOOTSTRAP_SHA256SUM_FILE_URL='https://archlinux.org/iso/latest/sha256sums.txt'
+
 # Set to any value to use an existing image if it exists
 # Otherwise the script will always create a new image
 USE_EXISTING_IMAGE=
