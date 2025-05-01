@@ -73,6 +73,50 @@ ENABLE_ALHP_REPO=
 # For level 3 you need a CPU with AVX2 instructions
 ALHP_FEATURE_LEVEL=2
 
+# Locales to configure in the image
+LOCALES=(
+	'ar_EG.UTF-8 UTF-8'
+	'en_US.UTF-8 UTF-8'
+	'en_GB.UTF-8 UTF-8'
+	'en_CA.UTF-8 UTF-8'
+	'en_SG.UTF-8 UTF-8'
+	'es_MX.UTF-8 UTF-8'
+	'zh_CN.UTF-8 UTF-8'
+	'fr_FR.UTF-8 UTF-8'
+	'ru_RU.UTF-8 UTF-8'
+	'ru_UA.UTF-8 UTF-8'
+	'es_ES.UTF-8 UTF-8'
+	'de_DE.UTF-8 UTF-8'
+	'pt_BR.UTF-8 UTF-8'
+	'it_IT.UTF-8 UTF-8'
+	'id_ID.UTF-8 UTF-8'
+	'ja_JP.UTF-8 UTF-8'
+	'bg_BG.UTF-8 UTF-8'
+	'pl_PL.UTF-8 UTF-8'
+	'da_DK.UTF-8 UTF-8'
+	'ko_KR.UTF-8 UTF-8'
+	'tr_TR.UTF-8 UTF-8'
+	'hu_HU.UTF-8 UTF-8'
+	'cs_CZ.UTF-8 UTF-8'
+	'bn_IN UTF-8'
+	'hi_IN UTF-8'
+)
+
+# Content of pacman mirrorrlist file before reflector is installed and used to fetch new one
+# shellcheck disable=2016
+MIRRORLIST='
+Server = https://mirror1.sl-chat.ru/archlinux/$repo/os/$arch
+Server = https://mirror3.sl-chat.ru/archlinux/$repo/os/$arch
+Server = https://us.mirrors.cicku.me/archlinux/$repo/os/$arch
+Server = https://mirror.osbeck.com/archlinux/$repo/os/$arch
+Server = https://md.mirrors.hacktegic.com/archlinux/$repo/os/$arch
+Server = https://geo.mirror.pkgbuild.com/$repo/os/$arch
+Server = https://mirror.qctronics.com/archlinux/$repo/os/$arch
+Server = https://arch.mirror.constant.com/$repo/os/$arch
+Server = https://america.mirror.pkgbuild.com/$repo/os/$arch
+Server = https://mirror.tmmworkshop.com/archlinux/$repo/os/$arch
+'
+
 # Enable this variable to use the system-wide mksquashfs/mkdwarfs instead
 # of those provided by the Conty project
 USE_SYS_UTILS=0
@@ -90,9 +134,11 @@ SQUASHFS_COMPRESSOR_ARGUMENTS=(-b 1M -comp "${SQUASHFS_COMPRESSOR}" -Xcompressio
 
 # Set to any value to Use DwarFS instead of SquashFS
 USE_DWARFS=
-DWARFS_COMPRESSOR_ARGUMENTS=(-l7 -C zstd:level=19 --metadata-compression null
-							 -S 21 -B 1 --order nilsimsa
-							 -W 12 -w 4 --no-create-timestamp)
+DWARFS_COMPRESSOR_ARGUMENTS=(
+	-l7 -C zstd:level=19 --metadata-compression null
+	-S 21 -B 1 --order nilsimsa
+	-W 12 -w 4 --no-create-timestamp
+)
 
 
 # List of links to arch bootstrap archive
