@@ -180,11 +180,10 @@ mv mirrorlist "${bootstrap}"/etc/pacman.d/mirrorlist
 } >> "${bootstrap}"/etc/pacman.conf
 
 run_in_chroot pacman-key --init
-echo "keyserver hkps://keyserver.ubuntu.com" >> "${bootstrap}"/etc/pacman.d/gnupg/gpg.conf
 run_in_chroot pacman-key --populate archlinux
 
 # Add Chaotic-AUR repo
-run_in_chroot pacman-key --recv-key 3056513887B78AEB
+run_in_chroot pacman-key --recv-key 3056513887B78AEB --keyserver keyserver.ubuntu.com
 run_in_chroot pacman-key --lsign-key 3056513887B78AEB
 
 mv chaotic-keyring.pkg.tar.zst chaotic-mirrorlist.pkg.tar.zst "${bootstrap}"/opt
