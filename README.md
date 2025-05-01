@@ -394,7 +394,7 @@ There are a few ways to update Conty and get the latest packages, use whichever 
 
 ### Manual
 
-1. Obtain Arch Linux bootstrap by using `create-arch-bootstrap.sh`. Before running it, you can edit the script if you want , for example, to include a different set of packages inside the container, or to include additional locales. Make sure you have enough free disk space, i recommend at least 10 GB of free space. Root rights are required for this step.
+1. Obtain Arch Linux bootstrap by using `create-arch-bootstrap.sh`. Before running it, you can edit variables in `settings.sh` if you want, for example, to include a different set of packages inside the container, or to include additional locales. Make sure you have enough free disk space, i recommend at least 10 GB of free space. Root rights are required for this step.
 
     ```
     # ./create-arch-bootstrap.sh
@@ -404,7 +404,7 @@ There are a few ways to update Conty and get the latest packages, use whichever 
     ```
     # ./enter-chroot.sh
     ```
-3. Now use `create-conty.sh` to create a SquashFS (or DwarFS) image and create a ready-to-use Conty executable. Root rights are not needed for this step. By default a SquashFS image with zstd compression (level 19) will be created, however, if you want, you can edit the script and enable DwarFS, select a different compression algorithm and/or compression level.
+3. Now use `create-conty.sh` to create a SquashFS (or DwarFS) image and create a ready-to-use Conty executable. Root rights are not needed for this step. By default a SquashFS image with zstd compression (level 19) will be created, however, if you want, you can edit variables in `settings.sh` and enable DwarFS, select a different compression algorithm and/or compression level.
 
     ```
     $ ./create-conty.sh
@@ -416,7 +416,7 @@ For the sake of convenience, there are pre-compiled binaries (utils.tar.gz) of b
 
 This repository has GitHub workflows that allows you to make GitHub automatically generate a new Conty binary of your specification, every week or at any time you want.
 
-To start, first fork this repository. Then, you may edit the `create-arch-bootstrap.sh` inside the new repository, to build the packages you want. Then go to the Actions tab.
+To start, first fork this repository. Then, you may edit the `settings.sh` inside the new repository, to build the packages you want & change compression settings. Then go to the Actions tab.
 
 In the Actions tab, go to the Conty CI section in the left-hand menu. Choose "Run Workflow". This will make GitHub make you a new Conty binary. [By default](https://github.com/Kron4ek/Conty/blob/master/.github/workflows/conty.yml#L5), it will also generate a new Conty binary every Friday (you can use a [cron time expression](https://crontab.cronhub.io/) to change the schedule).
 
