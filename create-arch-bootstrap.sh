@@ -2,89 +2,7 @@
 
 # Dependencies: curl tar gzip grep coreutils
 # Root rights are required
-
-########################################################################
-
-# Package groups
-audio_pkgs="alsa-lib lib32-alsa-lib alsa-plugins lib32-alsa-plugins libpulse \
-	lib32-libpulse alsa-tools alsa-utils pipewire lib32-pipewire pipewire-pulse pipewire-jack lib32-pipewire-jack"
-
-core_pkgs="xorg-xwayland qt6-wayland wayland \
-	lib32-wayland qt5-wayland xorg-server-xephyr gamescope"
-
-video_pkgs="mesa lib32-mesa vulkan-radeon lib32-vulkan-radeon \
-	vulkan-intel lib32-vulkan-intel \
-	vulkan-icd-loader lib32-vulkan-icd-loader vulkan-mesa-layers \
-	lib32-vulkan-mesa-layers libva-mesa-driver lib32-libva-mesa-driver \
-	libva-intel-driver lib32-libva-intel-driver intel-media-driver \
-	mesa-utils vulkan-tools libva-utils lib32-mesa-utils"
-
-wine_pkgs="wine-staging winetricks-git wine-nine wineasio \
-	freetype2 lib32-freetype2 libxft lib32-libxft \
-	flex lib32-flex fluidsynth lib32-fluidsynth \
-	libxrandr lib32-libxrandr xorg-xrandr libldap lib32-libldap \
-	mpg123 lib32-mpg123 libxcomposite lib32-libxcomposite \
-	libxi lib32-libxi libxinerama lib32-libxinerama libxss lib32-libxss \
-	libxslt lib32-libxslt openal lib32-openal \
-	krb5 lib32-krb5 libpulse lib32-libpulse alsa-plugins \
-	lib32-alsa-plugins alsa-lib lib32-alsa-lib gnutls lib32-gnutls \
-	giflib lib32-giflib gst-libav gst-plugin-pipewire gst-plugins-ugly \
-	gst-plugins-bad gst-plugins-bad-libs \
-	gst-plugins-base-libs lib32-gst-plugins-base-libs gst-plugins-base lib32-gst-plugins-base \
-	gst-plugins-good lib32-gst-plugins-good gstreamer lib32-gstreamer \
-	libpng lib32-libpng v4l-utils lib32-v4l-utils \
-	libgpg-error lib32-libgpg-error libjpeg-turbo lib32-libjpeg-turbo \
-	libgcrypt lib32-libgcrypt ncurses lib32-ncurses ocl-icd lib32-ocl-icd 
-	libxcrypt-compat lib32-libxcrypt-compat libva lib32-libva sqlite lib32-sqlite \
-	gtk3 lib32-gtk3 vulkan-icd-loader lib32-vulkan-icd-loader \
-	sdl2 lib32-sdl2 vkd3d lib32-vkd3d libgphoto2 \
-	openssl-1.1 lib32-openssl-1.1 libnm lib32-libnm \
-	cabextract wget gamemode lib32-gamemode mangohud lib32-mangohud"
-
-devel_pkgs="base-devel git meson mingw-w64-gcc cmake"
-
-gaming_pkgs="lutris python-protobuf steam steam-native-runtime steamtinkerlaunch \
-	minigalaxy gamehub legendary prismlauncher bottles playonlinux obs-studio \
-	retroarch retroarch-assets-ozone libretro-beetle-psx-hw sunshine \
-	libretro-blastem libretro-bsnes libretro-dolphin duckstation \
-	libretro-gambatte libretro-melonds libretro-mgba libretro-nestopia \
-	libretro-parallel-n64 libretro-pcsx2 libretro-picodrive libretro-ppsspp \
-	libretro-retrodream libretro-yabause pcsx2-avx-git"
-
-extra_pkgs="nano ttf-dejavu ttf-liberation firefox mpv geany pcmanfm \
-	htop qbittorrent speedcrunch gpicview file-roller openbox lxterminal \
-	yt-dlp minizip nautilus genymotion jre17-openjdk gnome-themes-extra"
-
-# Packages to install
-# You can add packages that you want and remove packages that you don't need
-# Apart from packages from the official Arch repos, you can also specify
-# packages from the Chaotic-AUR repo
-export packagelist="${audio_pkgs} ${core_pkgs} ${video_pkgs} ${wine_pkgs} ${devel_pkgs} ${gaming_pkgs} ${extra_pkgs}"
-
-# If you want to install AUR packages, specify them in this variable
-export aur_packagelist="faugus-launcher-git"
-
-# ALHP is a repository containing packages from the official Arch Linux
-# repos recompiled with -O3, LTO and optimizations for modern CPUs for
-# better performance
-#
-# When this repository is enabled, most of the packages from the official
-# Arch Linux repos will be replaced with their optimized versions from ALHP
-#
-# Set this variable to true, if you want to enable this repository
-enable_alhp_repo="false"
-
-# Feature levels for ALHP. Available feature levels are 2 and 3
-# For level 2 you need a CPU with SSE4.2 instructions
-# For level 3 you need a CPU with AVX2 instructions
-alhp_feature_level="2"
-
-########################################################################
-
-if [ $EUID != 0 ]; then
-	echo "Root rights are required!"
-	exit 1
-fi
+source settings.sh
 
 check_command_available() {
 	for cmd in "$@"; do
@@ -96,7 +14,13 @@ check_command_available() {
 }
 check_command_available curl gzip grep sha256sum
 
+if [ $EUID != 0 ]; then
+	echo "Root rights are required!"
+	exit 1
+fi
+
 script_dir="$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")"
+bootstrap="${script_dir}"/root.x86_64
 
 mount_chroot () {
 	# First unmount just in case
@@ -113,6 +37,7 @@ mount_chroot () {
 
 	rm -f "${bootstrap}"/etc/resolv.conf
 	cp /etc/resolv.conf "${bootstrap}"/etc/resolv.conf
+	cp "${script_dir}"/settings.sh "${bootstrap}"/conty_settings.sh
 
 	mkdir -p "${bootstrap}"/run/shm
 }
@@ -135,8 +60,9 @@ run_in_chroot () {
 }
 
 install_packages () {
+	source /conty_settings.sh
 	echo "Checking if packages are present in the repos, please wait..."
-	for p in ${packagelist}; do
+	for p in "${PACKAGES[@]}"; do
 		if pacman -Sp "${p}" &>/dev/null; then
 			good_pkglist="${good_pkglist} ${p}"
 		else
@@ -235,8 +161,6 @@ EOF
 
 cd "${script_dir}" || exit 1
 
-bootstrap="${script_dir}"/root.x86_64
-
 curl -#LO 'https://cdn-mirror.chaotic.cx/chaotic-aur/chaotic-keyring.pkg.tar.zst'
 curl -#LO 'https://cdn-mirror.chaotic.cx/chaotic-aur/chaotic-mirrorlist.pkg.tar.zst'
 
@@ -333,8 +257,8 @@ sed -i 's/#NoExtract   =/NoExtract   = usr\/lib\/firmware\/nvidia\/\* usr\/share
 run_in_chroot pacman -Sy archlinux-keyring --noconfirm
 run_in_chroot pacman -Su --noconfirm
 
-if [ "${enable_alhp_repo}" = "true" ]; then
-	if [ "${alhp_feature_level}" -gt 2 ]; then
+if [ -n "$ENABLE_ALHP_REPO" ]; then
+	if [ "${ALHP_FEATURE_LEVEL}" -gt 2 ]; then
 		alhp_feature_level=3
 	else
 		alhp_feature_level=2
@@ -368,12 +292,12 @@ if [ -f "${bootstrap}"/opt/pacman_failed.txt ]; then
 	exit 1
 fi
 
-if [ -n "${aur_packagelist}" ]; then
+if [ "${#AUR_PACKAGES[@]}" -ne 0 ]; then
 	run_in_chroot pacman --noconfirm --needed -S base-devel yay
 	run_in_chroot useradd -m -G wheel aur
 	echo "%wheel ALL=(ALL:ALL) NOPASSWD: ALL" >> "${bootstrap}"/etc/sudoers
 
-	for p in ${aur_packagelist}; do
+	for p in "${AUR_PACKAGES[@]}"; do
 		aur_pkgs="${aur_pkgs} aur/${p}"
 	done
 	export aur_pkgs
