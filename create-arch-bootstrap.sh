@@ -83,29 +83,18 @@ alhp_feature_level="2"
 
 if [ $EUID != 0 ]; then
 	echo "Root rights are required!"
-
 	exit 1
 fi
 
-if ! command -v curl 1>/dev/null; then
-	echo "curl is required!"
-	exit 1
-fi
-
-if ! command -v gzip 1>/dev/null; then
-	echo "gzip is required!"
-	exit 1
-fi
-
-if ! command -v grep 1>/dev/null; then
-	echo "grep is required!"
-	exit 1
-fi
-
-if ! command -v sha256sum 1>/dev/null; then
-	echo "sha256sum is required!"
-	exit 1
-fi
+check_command_available() {
+	for cmd in "$@"; do
+		if ! command -v "$cmd" >&-; then
+			echo "$cmd is required!"
+			exit 1
+		fi
+	done
+}
+check_command_available curl gzip grep sha256sum
 
 script_dir="$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")"
 
