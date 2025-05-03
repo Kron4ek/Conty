@@ -1,302 +1,234 @@
 #!/usr/bin/env bash
 
-# Dependencies: curl tar gzip grep coreutils
-# Root rights are required
-source settings.sh
+set -e
+
+bold='\033[1m'
+blue_bold="\033[1;34m"
+clear='\033[0m'
+
+stage() {
+	if [ -n "$NESTING_LEVEL" ] && [ "$NESTING_LEVEL" -gt 0 ]; then
+		printf "$blue_bold:%.0s$clear" $(seq "$NESTING_LEVEL")
+	fi
+	printf "$bold> %s$clear\n" "$@"
+}
+info() { NESTING_LEVEL=$((NESTING_LEVEL + 1)) stage "$@"; }
 
 check_command_available() {
-	for cmd in "$@"; do
-		if ! command -v "$cmd" >&-; then
-			echo "$cmd is required!"
-			exit 1
-		fi
-	done
-}
-check_command_available curl gzip grep sha256sum
-
-if [ $EUID != 0 ]; then
-	echo "Root rights are required!"
-	exit 1
-fi
-
-script_dir="$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")"
-bootstrap="${script_dir}"/root.x86_64
-
-mount_chroot () {
-	# First unmount just in case
-	umount -Rl "${bootstrap}"
-
-	mount --bind "${bootstrap}" "${bootstrap}"
-	mount -t proc /proc "${bootstrap}"/proc
-	mount --bind /sys "${bootstrap}"/sys
-	mount --make-rslave "${bootstrap}"/sys
-	mount --bind /dev "${bootstrap}"/dev
-	mount --bind /dev/pts "${bootstrap}"/dev/pts
-	mount --bind /dev/shm "${bootstrap}"/dev/shm
-	mount --make-rslave "${bootstrap}"/dev
-
-	rm -f "${bootstrap}"/etc/resolv.conf
-	cp /etc/resolv.conf "${bootstrap}"/etc/resolv.conf
-	cp "${script_dir}"/settings.sh "${bootstrap}"/conty_settings.sh
-
-	mkdir -p "${bootstrap}"/run/shm
-}
-
-unmount_chroot () {
-	umount -l "${bootstrap}"
-	umount "${bootstrap}"/proc
-	umount "${bootstrap}"/sys
-	umount "${bootstrap}"/dev/pts
-	umount "${bootstrap}"/dev/shm
-	umount "${bootstrap}"/dev
-}
-
-run_in_chroot () {
-	if [ -n "${CHROOT_AUR}" ]; then
-		chroot --userspec=aur:aur "${bootstrap}" /usr/bin/env LANG=en_US.UTF-8 TERM=xterm PATH="/bin:/sbin:/usr/bin:/usr/sbin" "$@"
-	else
-		chroot "${bootstrap}" /usr/bin/env LANG=en_US.UTF-8 TERM=xterm PATH="/bin:/sbin:/usr/bin:/usr/sbin" "$@"
+	for cmd in "$@"; do ! command -v "$cmd" >&- && missing_executables+=("$cmd"); done
+	if [ "${#missing_executables[@]}" -ne 0 ]; then
+		info "Following commands are required: ${missing_executables[*]}"
+		exit 1
 	fi
 }
 
-install_packages () {
-	source /conty_settings.sh
-	echo "Checking if packages are present in the repos, please wait..."
-	for p in "${PACKAGES[@]}"; do
-		if pacman -Sp "${p}" &>/dev/null; then
-			good_pkglist="${good_pkglist} ${p}"
-		else
-			bad_pkglist="${bad_pkglist} ${p}"
-		fi
-	done
+# Script is reexecuted from within chroot with INSIDE_BOOTSTRAP set to perform bootstrap
+if [ -z "$INSIDE_BOOTSTRAP" ]; then
+	source settings.sh
+	NESTING_LEVEL=0
+	stage "Preparing bootstrap"
 
-	if [ -n "${bad_pkglist}" ]; then
-		echo ${bad_pkglist} > /opt/bad_pkglist.txt
-	fi
+	check_command_available curl tar unshare
 
-	for i in {1..10}; do
-		if pacman --noconfirm --needed -S ${good_pkglist}; then
-			good_install=1
-			break
-		fi
-	done
+	script_dir="$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")"
+	bootstrap="$script_dir/root.x86_64"
 
-	if [ -z "${good_install}" ]; then
-		echo > /opt/pacman_failed.txt
-	fi
-}
 
-install_aur_packages () {
-	cd /home/aur
-
-	echo "Checking if packages are present in the AUR, please wait..."
-	for p in ${aur_pkgs}; do
-		if ! yay -a -G "${p}" &>/dev/null; then
-			bad_aur_pkglist="${bad_aur_pkglist} ${p}"
-		fi
-	done
-
-	if [ -n "${bad_aur_pkglist}" ]; then
-		echo ${bad_aur_pkglist} > /home/aur/bad_aur_pkglist.txt
-	fi
-
-	for i in {1..10}; do
-		if yes | yay --needed --removemake --builddir /home/aur -a -S ${aur_pkgs}; then
-			break
-		fi
-	done
-}
-
-generate_pkg_licenses_file () {
-	for p in $(pacman -Q | cut -d' ' -f1); do
-		echo -n $(pacman -Qi "${p}" | grep -E 'Name|Licenses' | cut -d ":" -f 2) >>/pkglicenses.txt
-		echo >>/pkglicenses.txt
-	done
-}
-
-generate_localegen () {
-	printf '%s\n' "${LOCALES[@]}" > locale.gen
-}
-
-generate_mirrorlist () {
-	printf '%s\n' "$MIRRORLIST" > mirrorlist
-}
-
-cd "${script_dir}" || exit 1
-
-curl -#LO 'https://cdn-mirror.chaotic.cx/chaotic-aur/chaotic-keyring.pkg.tar.zst'
-curl -#LO 'https://cdn-mirror.chaotic.cx/chaotic-aur/chaotic-mirrorlist.pkg.tar.zst'
-
-if [ ! -s chaotic-keyring.pkg.tar.zst ] || [ ! -s chaotic-mirrorlist.pkg.tar.zst ]; then
-	echo "Seems like Chaotic-AUR keyring or mirrorlist is currently unavailable"
-	echo "Please try again later"
-	exit 1
-fi
-
-for link in "${BOOTSTRAP_DOWNLOAD_URLS[@]}"; do
-	echo "Downloading Arch Linux bootstrap from $link"
-	curl -#LO "$link"
+	info "Downloading Arch Linux bootstrap sha256sum from $BOOTSTRAP_SHA256SUM_FILE_URL"
 	curl -#LO "$BOOTSTRAP_SHA256SUM_FILE_URL"
+	for link in "${BOOTSTRAP_DOWNLOAD_URLS[@]}"; do
+		info "Downloading Arch Linux archive bootstrap from $link"
+		curl -#LO "$link"
 
-	echo "Verifying the integrity of the bootstrap"
-	if sha256sum --ignore-missing -c sha256sums.txt &>/dev/null; then
-		bootstrap_is_good=1
-		break
+		info "Verifying the integrity of the bootstrap"
+		if sha256sum --ignore-missing -c sha256sums.txt &>/dev/null; then
+			bootstrap_is_good=1
+			break 1
+		fi
+		info "Download failed, trying again with different mirror"
+	done
+	if [ -z "$bootstrap_is_good" ]; then
+		info "Bootstrap download failed or its checksum is incorrect"
+		exit 1
 	fi
-	echo "Download failed, trying again with different mirror"
-done
 
-if [ -z "${bootstrap_is_good}" ]; then
-	echo "Bootstrap download failed or its checksum is incorrect"
-	exit 1
+	run_unshared() {
+		unshare --uts --ipc --user --mount --map-auto --map-root-user --pid --fork -- "$@"
+	}
+
+	info "Removing previous bootstrap"
+	run_unshared rm -rf "$bootstrap"
+	info "Extracting bootstrap from archive"
+	run_unshared tar xf archlinux-bootstrap-x86_64.tar.zst
+
+	# shellcheck disable=2317
+	prepare_bootstrap() {
+		mount --bind "$bootstrap"/ "$bootstrap"/
+		mount -t proc proc "$bootstrap"/proc
+		mount --rbind /dev "$bootstrap"/dev
+		mount none -t devpts "$bootstrap"/dev/pts
+		mount none -t tmpfs "$bootstrap"/dev/shm
+		rm -f "$bootstrap"/etc/resolv.conf
+		cp /etc/resolv.conf "$bootstrap"/etc/resolv.conf
+		# Default machine-id is unitialized and systemd-tmpfiles throws some warnings
+		# about it so initialize it to a value here
+		rm -r "$bootstrap"/etc/machine-id
+		tr -d '-' < /proc/sys/kernel/random/uuid \
+			| install -Dm0444 /dev/fd/0 "$bootstrap"/etc/machine-id
+		mkdir -p "$bootstrap"/opt/conty
+		install -Dm755 -t "$bootstrap"/opt/conty -- "$script_dir"/*.sh
+	}
+	# shellcheck disable=2317
+	run_bootstrap() {
+		chroot "$bootstrap" /usr/bin/env -i \
+			   USER='root' HOME='/root' NESTING_LEVEL=2 INSIDE_BOOTSTRAP=1 \
+			   /opt/conty/create-arch-bootstrap.sh
+	}
+
+	export bootstrap script_dir
+	export -f prepare_bootstrap run_bootstrap
+	info "Entering bootstrap namespace"
+	if run_unshared bash -c "prepare_bootstrap; run_bootstrap"; then
+		info "Done!"
+		exit
+	else
+		info "Error occured while building bootstrap"
+		exit 1
+	fi
 fi
+# From here on we are running inside bootstrap
+# Populate PATH and LANG environment variables with defaults
+source /etc/profile
 
-rm -rf "${bootstrap}"
-tar xf archlinux-bootstrap-x86_64.tar.zst
-rm archlinux-bootstrap-x86_64.tar.zst sha256sums.txt sha256.txt
+# shellcheck source=settings.sh
+source /opt/conty/settings.sh
 
-mount_chroot
+stage "Generating locales"
+printf '%s\n' "${LOCALES[@]}" > /etc/locale.gen
+locale-gen
 
-generate_localegen
+stage "Setting up default mirrorlist"
+printf '%s\n' "$MIRRORLIST" > /etc/pacman.d/mirrorlist
 
-if command -v reflector 1>/dev/null; then
-	echo "Generating mirrorlist..."
-	reflector --connection-timeout 10 --download-timeout 10 --protocol https --score 10 --sort rate --save mirrorlist
-	reflector_used=1
-else
-	generate_mirrorlist
-fi
+stage "Setting up pacman config"
+info "Disabling extraction of nvidia firmware and man pages"
+sed -i 's/#NoExtract   =/NoExtract   = usr\/lib\/firmware\/nvidia\/\* usr\/share\/man\/\*/' /etc/pacman.conf
+info "Enabling multilib repository"
+echo '
+[multilib]
+Include = /etc/pacman.d/mirrorlist' >> /etc/pacman.conf
+pacman --noconfirm -Sy
 
-rm "${bootstrap}"/etc/locale.gen
-mv locale.gen "${bootstrap}"/etc/locale.gen
+stage "Setting up pacman keyring"
+pacman-key --init
+pacman-key --populate archlinux
+pacman --noconfirm -Sy archlinux-keyring
 
-rm "${bootstrap}"/etc/pacman.d/mirrorlist
-mv mirrorlist "${bootstrap}"/etc/pacman.d/mirrorlist
-
-{
-	echo
-	echo "[multilib]"
-	echo "Include = /etc/pacman.d/mirrorlist"
-} >> "${bootstrap}"/etc/pacman.conf
-
-run_in_chroot pacman-key --init
-run_in_chroot pacman-key --populate archlinux
-
-# Add Chaotic-AUR repo
-run_in_chroot pacman-key --recv-key 3056513887B78AEB --keyserver keyserver.ubuntu.com
-run_in_chroot pacman-key --lsign-key 3056513887B78AEB
-
-mv chaotic-keyring.pkg.tar.zst chaotic-mirrorlist.pkg.tar.zst "${bootstrap}"/opt
-run_in_chroot pacman --noconfirm -U /opt/chaotic-keyring.pkg.tar.zst /opt/chaotic-mirrorlist.pkg.tar.zst
-rm "${bootstrap}"/opt/chaotic-keyring.pkg.tar.zst "${bootstrap}"/opt/chaotic-mirrorlist.pkg.tar.zst
-
-{
-	echo
-	echo "[chaotic-aur]"
-	echo "Include = /etc/pacman.d/chaotic-mirrorlist"
-} >> "${bootstrap}"/etc/pacman.conf
-
-# Do not install unneeded files (man pages and Nvidia firmwares)
-sed -i 's/#NoExtract   =/NoExtract   = usr\/lib\/firmware\/nvidia\/\* usr\/share\/man\/\*/' "${bootstrap}"/etc/pacman.conf
-
-run_in_chroot pacman -Sy archlinux-keyring --noconfirm
-run_in_chroot pacman -Su --noconfirm
+stage "Setting up Chaotic-AUR"
+chaotic_aur_key='3056513887B78AEB'
+pacman-key --recv-key "$chaotic_aur_key" --keyserver keyserver.ubuntu.com
+pacman-key --lsign-key "$chaotic_aur_key"
+pacman --noconfirm -U 'https://cdn-mirror.chaotic.cx/chaotic-aur/chaotic-keyring.pkg.tar.zst' 'https://cdn-mirror.chaotic.cx/chaotic-aur/chaotic-mirrorlist.pkg.tar.zst'
+echo '
+[chaotic-aur]
+Include = /etc/pacman.d/chaotic-mirrorlist' >> /etc/pacman.conf
+pacman --noconfirm -Sy
 
 if [ -n "$ENABLE_ALHP_REPO" ]; then
-	if [ "${ALHP_FEATURE_LEVEL}" -gt 2 ]; then
-		alhp_feature_level=3
-	else
-		alhp_feature_level=2
+	stage "Setting up ALHP"
+	pacman --noconfirm --needed -Sy alhp-keyring alhp-mirrorlist
+	sed -i "s/#\[multilib\]/#/" /etc/pacman.conf
+	sed -i "s/\[core\]/\[core-x86-64-v$ALHP_FEATURE_LEVEL\]\nInclude = \/etc\/pacman.d\/alhp-mirrorlist\n\n\[extra-x86-64-v$ALHP_FEATURE_LEVEL\]\nInclude = \/etc\/pacman.d\/alhp-mirrorlist\n\n\[core\]/" /etc/pacman.conf
+	sed -i "s/\[multilib\]/\[multilib-x86-64-v$ALHP_FEATURE_LEVEL\]\nInclude = \/etc\/pacman.d\/alhp-mirrorlist\n\n\[multilib\]/" /etc/pacman.conf
+	pacman --noconfirm -Sy
+fi
+
+stage "Upgrading base system"
+pacman --noconfirm -Syu
+
+stage "Installing base packages"
+pacman --noconfirm --needed -S base reflector squashfs-tools fakeroot
+
+stage "Generating mirrorlist using reflector"
+reflector --connection-timeout 10 --download-timeout 10 --protocol https --score 10 --sort rate --save /etc/pacman.d/mirrorlist
+
+if [ "${#PACKAGES[@]}" -ne 0 ]; then
+	stage "Installing packages defined in settings.sh"
+	info "Checking if packages are present in the repos"
+	declare -a missing_packages
+	mapfile -t missing_packages < <(comm -23 \
+										 <(printf '%s\n' "${PACKAGES[@]}" | sort -u) \
+										 <(pacman -Slq | sort -u))
+	if [ "${#missing_packages[@]}" -ne 0 ]; then
+		info "Following packages are not available in repository:" "${missing_packages[@]}"
+		exit 1
 	fi
-
-	run_in_chroot pacman --noconfirm --needed -S alhp-keyring alhp-mirrorlist
-	sed -i "s/#\[multilib\]/#/" "${bootstrap}"/etc/pacman.conf
-	sed -i "s/\[core\]/\[core-x86-64-v${alhp_feature_level}\]\nInclude = \/etc\/pacman.d\/alhp-mirrorlist\n\n\[extra-x86-64-v${alhp_feature_level}\]\nInclude = \/etc\/pacman.d\/alhp-mirrorlist\n\n\[core\]/" "${bootstrap}"/etc/pacman.conf
-	sed -i "s/\[multilib\]/\[multilib-x86-64-v${alhp_feature_level}\]\nInclude = \/etc\/pacman.d\/alhp-mirrorlist\n\n\[multilib\]/" "${bootstrap}"/etc/pacman.conf
-	run_in_chroot pacman -Syu --noconfirm
-fi
-
-date -u +"%d-%m-%Y %H:%M (DMY UTC)" > "${bootstrap}"/version
-
-# These packages are required for the self-update feature to work properly
-run_in_chroot pacman --noconfirm --needed -S base reflector squashfs-tools fakeroot
-
-# Regenerate the mirrorlist with reflector if reflector was not used before
-if [ -z "${reflector_used}" ]; then
-	echo "Generating mirrorlist..."
-	run_in_chroot reflector --connection-timeout 10 --download-timeout 10 --protocol https --score 10 --sort rate --save /etc/pacman.d/mirrorlist
- 	run_in_chroot pacman -Syu --noconfirm
-fi
-
-export -f install_packages
-run_in_chroot bash -c install_packages
-
-if [ -f "${bootstrap}"/opt/pacman_failed.txt ]; then
-	unmount_chroot
-	echo "Pacman failed to install some packages"
-	exit 1
+	for _ in {1..10}; do
+		pacman --noconfirm --needed -S "${PACKAGES[@]}"
+		exit_code="$?"
+		[ "$exit_code" -eq 0 ] && break
+		# Received interrupt signal
+		[ "$exit_code" -gt 128 ] && exit "$exit_code"
+	done
 fi
 
 if [ "${#AUR_PACKAGES[@]}" -ne 0 ]; then
-	run_in_chroot pacman --noconfirm --needed -S base-devel yay
-	run_in_chroot useradd -m -G wheel aur
-	echo "%wheel ALL=(ALL:ALL) NOPASSWD: ALL" >> "${bootstrap}"/etc/sudoers
-
-	for p in "${AUR_PACKAGES[@]}"; do
-		aur_pkgs="${aur_pkgs} aur/${p}"
+	stage "Installing AUR packages defined in settings.sh"
+	# Parsing json with grep is ugly it but saves us from installing devel packages unnecesarily
+	info "Checking if packages are present in AUR"
+	declare -a grep_arguments
+	for pkg in $(printf '%s\n' "${AUR_PACKAGES[@]}" | sort -u); do
+		grep_arguments+=(-e "\"Name\":\"$pkg\"")
 	done
-	export aur_pkgs
+	declare -a missing_packages
+	mapfile -t missing_packages < <(comm -23 \
+										 <(printf '%s\n' "${AUR_PACKAGES[@]}" | sort -u) \
+										 <(curl -s 'https://aur.archlinux.org/packages-meta-v1.json.gz' | gunzip |
+											   grep -o "${grep_arguments[@]}" | sed 's/".*":"\(.*\)"/\1/g' | sort -u))
+	if [ "${#missing_packages[@]}" -ne 0 ]; then
+		info "Following packages are not available in AUR:" "${missing_packages[@]}"
+		exit 1
+	fi
 
-	export -f install_aur_packages
-	CHROOT_AUR=1 HOME=/home/aur run_in_chroot bash -c install_aur_packages
-	mv "${bootstrap}"/home/aur/bad_aur_pkglist.txt "${bootstrap}"/opt
-	rm -rf "${bootstrap}"/home/aur
+	info "Installing base-devel and yay"
+	pacman --noconfirm --needed -S base-devel yay
+	useradd -m aurbuilder
+	echo 'aurbuilder ALL=(ALL) NOPASSWD: /usr/bin/pacman' \
+		| install -Dm0440 /dev/fd/0 /etc/sudoers.d/aurbuilder
+	pushd /home/aurbuilder >/dev/null
+	for p in "${AUR_PACKAGES[@]}"; do
+		info "Building and installing $p"
+		sudo -u aurbuilder -- yay --needed --removemake --noconfirm -S "$p"
+	done
+	info "Cleaning up"
+	userdel -r aurbuilder 2>/dev/null
+	rm /etc/sudoers.d/aurbuilder
+	popd >/dev/null
 fi
 
-run_in_chroot locale-gen
+stage "Clearing pacman cache"
+yes y | pacman -Scc &>/dev/null
 
-echo "Generating package info, please wait..."
+stage "Enabling font hinting"
+mkdir -p /etc/fonts/conf.d
+rm -f /etc/fonts/conf.d/10-hinting-slight.conf
+ln -s /usr/share/fontconfig/conf.avail/10-hinting-full.conf /etc/fonts/conf.d
 
-# Generate a list of installed packages
-run_in_chroot pacman -Q > "${bootstrap}"/pkglist.x86_64.txt
-
-# Generate a list of licenses of installed packages
-export -f generate_pkg_licenses_file
-run_in_chroot bash -c generate_pkg_licenses_file
-
-unmount_chroot
-
-# Clear pacman package cache
-rm -f "${bootstrap}"/var/cache/pacman/pkg/*
-
+stage "Creating files and directories for application compatibility"
 # Create some empty files and directories
 # This is needed for bubblewrap to be able to bind real files/dirs to them
 # later in the conty-start.sh script
-mkdir "${bootstrap}"/media
-mkdir "${bootstrap}"/initrd
-mkdir -p "${bootstrap}"/usr/share/steam/compatibilitytools.d
-touch "${bootstrap}"/etc/asound.conf
-touch "${bootstrap}"/etc/localtime
-chmod 755 "${bootstrap}"/root
+mkdir /media
+mkdir /initrd
+mkdir -p /usr/share/steam/compatibilitytools.d
+touch /etc/asound.conf
+touch /etc/localtime
+chmod 755 /root
 
-# Enable full font hinting
-rm -f "${bootstrap}"/etc/fonts/conf.d/10-hinting-slight.conf
-ln -s /usr/share/fontconfig/conf.avail/10-hinting-full.conf "${bootstrap}"/etc/fonts/conf.d
-
-clear
-echo "Done"
-
-if [ -f "${bootstrap}"/opt/bad_pkglist.txt ]; then
-	echo
-	echo "These packages are not in the repos and have not been installed:"
-	cat "${bootstrap}"/opt/bad_pkglist.txt
-	rm "${bootstrap}"/opt/bad_pkglist.txt
-fi
-
-if [ -f "${bootstrap}"/opt/bad_aur_pkglist.txt ]; then
-	echo
-	echo "These packages are either not in the AUR or yay failed to download their"
-	echo "PKGBUILDs:"
-	cat "${bootstrap}"/opt/bad_aur_pkglist.txt
-	rm "${bootstrap}"/opt/bad_aur_pkglist.txt
-fi
+stage "Generating install info"
+info "Writing list of all installed packages to /pkglist.x86_64.txt"
+pacman -Q > /pkglist.x86_64.txt
+info "Writing list of licenses for installed packages to /pkglicenses.txt"
+pacman -Qi | grep -E '^Name|Licenses' |  cut -d ":" -f 2 | paste -d ' ' - - > /pkglicenses.txt
+info "Writing build date to /version"
+date -u +"%d-%m-%Y %H:%M (DMY UTC)" > /version
