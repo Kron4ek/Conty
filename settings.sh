@@ -116,13 +116,11 @@ USE_SYS_UTILS=0
 # Supported compression algorithms: lz4, zstd, gzip, xz, lzo
 # These are the algorithms supported by the integrated squashfuse
 # However, your squashfs-tools (mksquashfs) may not support some of them
-SQUASHFS_COMPRESSOR="zstd"
-SQUASHFS_COMPRESSOR_ARGUMENTS=(-b 1M -comp "${SQUASHFS_COMPRESSOR}" -Xcompression-level 19)
+SQUASHFS_COMPRESSOR_ARGUMENTS=(-b 1M -comp zstd -Xcompression-level 19)
 
 # Uncomment these variables if your mksquashfs does not support zstd or
 # if you want faster compression/decompression (at the cost of compression ratio)
-#SQUASHFS_COMPRESSOR="lz4"
-#SQUASHFS_COMPRESSOR_ARGUMENTS=(-b 256K -comp "${SQUASHFS_COMPRESSOR}" -Xhc)
+#SQUASHFS_COMPRESSOR_ARGUMENTS=(-b 256K -comp lz4 -Xhc)
 
 # Set to any value to Use DwarFS instead of SquashFS
 USE_DWARFS=
@@ -147,3 +145,6 @@ BOOTSTRAP_SHA256SUM_FILE_URL='https://archlinux.org/iso/latest/sha256sums.txt'
 # Set to any value to use an existing image if it exists
 # Otherwise the script will always create a new image
 USE_EXISTING_IMAGE=
+
+# Directory where image will be built relative to script directory
+BUILD_DIR="build"

@@ -31,8 +31,10 @@ if [ -z "$INSIDE_BOOTSTRAP" ]; then
 	check_command_available curl tar unshare
 
 	script_dir="$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")"
-	bootstrap="$script_dir/root.x86_64"
-
+	build_dir="$script_dir/$BUILD_DIR"
+	bootstrap="$build_dir"/root.x86_64
+	mkdir -p "$build_dir"
+	cd "$build_dir"
 
 	info "Downloading Arch Linux bootstrap sha256sum from $BOOTSTRAP_SHA256SUM_FILE_URL"
 	curl -#LO "$BOOTSTRAP_SHA256SUM_FILE_URL"
@@ -229,6 +231,6 @@ stage "Generating install info"
 info "Writing list of all installed packages to /pkglist.x86_64.txt"
 pacman -Q > /pkglist.x86_64.txt
 info "Writing list of licenses for installed packages to /pkglicenses.txt"
-pacman -Qi | grep -E '^Name|Licenses' |  cut -d ":" -f 2 | paste -d ' ' - - > /pkglicenses.txt
+pacman -Qi | grep -E '^Name|Licenses' | cut -d ":" -f 2 | paste -d ' ' - - > /pkglicenses.txt
 info "Writing build date to /version"
 date -u +"%d-%m-%Y %H:%M (DMY UTC)" > /version
