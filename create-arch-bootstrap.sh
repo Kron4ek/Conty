@@ -196,10 +196,6 @@ rm "${bootstrap}"/opt/chaotic-keyring.pkg.tar.zst "${bootstrap}"/opt/chaotic-mir
 	echo "Include = /etc/pacman.d/chaotic-mirrorlist"
 } >> "${bootstrap}"/etc/pacman.conf
 
-# The ParallelDownloads feature of pacman
-# Speeds up packages installation, especially when there are many small packages to install
-sed -i 's/#ParallelDownloads = 5/ParallelDownloads = 3/g' "${bootstrap}"/etc/pacman.conf
-
 # Do not install unneeded files (man pages and Nvidia firmwares)
 sed -i 's/#NoExtract   =/NoExtract   = usr\/lib\/firmware\/nvidia\/\* usr\/share\/man\/\*/' "${bootstrap}"/etc/pacman.conf
 
