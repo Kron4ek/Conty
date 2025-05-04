@@ -24,7 +24,7 @@ if (( EUID == 0 )) && [ -z "$ALLOW_ROOT" ]; then
 fi
 
 # Conty version
-script_version="1.27.2"
+script_version="1.28"
 
 # Important variables to manually adjust after modification!
 # Needed to avoid problems with mounting due to an incorrect offset.
@@ -129,12 +129,6 @@ Arguments:
 
   -o    Show the image offset
 
-  -u    Update all packages inside the container
-        This requires a rebuild of the image, which may take quite
-        a lot of time, depending on your hardware and internet speed.
-        Additional disk space (about 6x the size of the current file)
-        is needed during the update process.
-
   -v    Display version of this script
 
   -V    Display version of the image
@@ -229,14 +223,6 @@ automatically run wine during launch.
 Running Conty without any arguments from a graphical interface (for
 example, from a file manager) will automatically launch the Conty's
 graphical interface.
-
-Besides updating all packages, you can also install and remove packages
-using the same -u argument. To install packages add them as additional
-arguments, to remove add a minus sign (-) before their names.
-  To install: ${script_name} -u pkgname1 pkgname2 pkgname3 ...
-  To remove: ${script_name} -u -pkgname1 -pkgname2 -pkgname3 ...
-In this case Conty will update all packages and additionally install
-and/or remove specified packages.
 "
 
 if [ -n "${CUSTOM_MNT}" ] && [ -d "${CUSTOM_MNT}" ]; then
@@ -258,12 +244,6 @@ offset=$((init_size+bash_size+script_size+busybox_size+utils_size))
 if [ "$(tail -c +$((offset+1)) "${script}" | head -c 6)" = "DWARFS" ]; then
 	dwarfs_image=1
 fi
-
-# These arguments are used to rebuild the image when using the self-update function
-squashfs_comp_arguments=(-b 1M -comp zstd -Xcompression-level 19)
-dwarfs_comp_arguments=(-l7 -C zstd:level=19 --metadata-compression null \
-                            -S 21 -B 1 --order nilsimsa \
-                            -W 12 -w 4 --no-create-timestamp)
 
 # Enable NVIDIA_HANDLER by default
 NVIDIA_HANDLER="${NVIDIA_HANDLER:-1}"
@@ -522,7 +502,7 @@ fi
 # Extract utils.tar.gz
 mkdir -p "${working_dir}"
 
-if ([ "${USE_SYS_UTILS}" != 1 ] && [[ "${utils_size}" -gt 0 ]]) || [ "$1" = "-u" ]; then
+if [ "${USE_SYS_UTILS}" != 1 ] && [[ "${utils_size}" -gt 0 ]]; then
 	# Check if filesystem of the working_dir is mounted without noexec
 	if ! exec_test; then
 		if [ -z "${BASE_DIR}" ]; then
@@ -1011,124 +991,6 @@ if [ "$(ls "${mount_point}" 2>/dev/null)" ] || launch_wrapper "${mount_command[@
 
 	if [ "$1" = "-l" ] && [ -z "${script_is_symlink}" ]; then
 		run_bwrap --ro-bind "${mount_point}"/var /var pacman -Q
-		exit
-	fi
-
-	if [ "$1" = "-u" ] && [ -z "${script_is_symlink}" ] && [ -z "${CUSTOM_MNT}" ]; then
-		export overlayfs_dir="${HOME}"/.local/share/Conty/update_overlayfs_"${script_md5}"
-		rm -rf "${overlayfs_dir}"
-
-		if mount_overlayfs; then
-			USE_OVERLAYFS=1
-			QUIET_MODE=1
-			RW_ROOT=1
-			unset DISABLE_NET
-			unset HOME_DIR
-			unset SANDBOX_LEVEL
-			unset SANDBOX
-			unset DISABLE_X11
-
-			if ! touch test_rw 2>/dev/null; then
-				cd "${HOME}" || exit 1
-			fi
-			rm -f test_rw
-
-			OLD_PWD="${PWD}"
-
-			conty_update_temp_dir="${PWD}"/conty_update_temp_"${script_md5}"
-			mkdir "${conty_update_temp_dir}"
-			cd "${conty_update_temp_dir}" || exit 1
-
-			if command -v awk 1>/dev/null; then
-				current_file_size="$(stat -c "%s" "${script}")"
-				available_disk_space="$(df -P -B1 "${PWD}" | awk 'END {print $4}')"
-				required_disk_space="$((current_file_size*7))"
-
-				if [[ "${available_disk_space}" -lt "${required_disk_space}" ]]; then
-					echo "Not enough free disk space"
-					echo "You need at least $((required_disk_space/1024/1024)) MB of free space"
-					exit 1
-				fi
-			fi
-
-			# Check if there are additional arguments passed
-			shift
-			if [ -n "$1" ]; then
-				packagelist=("$@")
-
-				# Check which packages to install and which ones to remove
-				for i in "${packagelist[@]}"; do
-					if [ "$(echo "${i}" | head -c 1)" = "-" ]; then
-						pkgsremove+=" ${i:1}"
-					else
-						pkgsinstall+=" ${i}"
-					fi
-				done
-
-				export pkgsremove
-				export pkgsinstall
-			fi
-
-			clear
-			echo "Updating and installing packages..."
-			cp -r "${mount_point}"/etc/pacman.d/gnupg "${overlayfs_dir}"/gnupg
-			export -f update_conty
-			run_bwrap \
-			    --bind "${overlayfs_dir}"/gnupg /etc/pacman.d/gnupg \
-				--bind "${overlayfs_dir}"/merged/var /var \
-				--bind-try /var/cache/pacman/pkg /var/cache/pacman/pkg_host \
-				--tmpfs /run \
-				bash -c update_conty
-
-			if [ "${dwarfs_image}" = 1 ]; then
-				compression_command=("${compression_tool}" -i "${overlayfs_dir}"/merged -o image "${dwarfs_comp_arguments[@]}")
-			else
-				compression_command=("${compression_tool}" "${overlayfs_dir}"/merged image "${squashfs_comp_arguments[@]}")
-			fi
-
-			clear
-			echo "Creating an image..."
-			launch_wrapper "${compression_command[@]}"
-
-			if [[ "${init_size}" -gt 0 ]]; then
-				tail -c +$((init_size+bash_size+1)) "${script}" | head -c "${script_size}" > conty-start.sh
-			else
-				head -c "${script_size}" "${script}" > conty-start.sh
-			fi
-
-			tail -c +$((init_size+bash_size+script_size+busybox_size+1)) "${script}" | head -c "${utils_size}" > utils.tar.gz
-
-			# Combine into a single executable
-			clear
-			echo "Combining everything into a single executable..."
-			cat "${working_dir}"/utils/init "${working_dir}"/utils/bash \
-				conty-start.sh "${working_dir}"/utils/busybox utils.tar.gz \
-				image > conty_updated.sh
-			chmod +x conty_updated.sh
-
-			mv -f "${script}" "${script}".old."${script_md5}" 2>/dev/null
-			mv -f conty_updated.sh "${script}" 2>/dev/null || move_failed=1
-
-			fusermount"${fuse_version}" -uz "${overlayfs_dir}"/merged 2>/dev/null || \
-			umount --lazy "${overlayfs_dir}"/merged 2>/dev/null
-			chmod -R 700 "${overlayfs_dir}"
-			rm -rf "${overlayfs_dir}" "${conty_update_temp_dir}"
-
-			clear
-			echo "Conty has been updated!"
-
-			if [ "${move_failed}" = 1 ]; then
-				echo
-				echo "Replacing ${script} with the new one failed!"
-				echo
-				echo "You can find conty_updated.sh in the current working"
-				echo "directory or in your HOME."
-			fi
-		else
-			echo "Failed to mount unionfs"
-			echo "Cannot update Conty"
-		fi
-
 		exit
 	fi
 
