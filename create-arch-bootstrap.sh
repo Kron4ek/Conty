@@ -108,7 +108,7 @@ printf '%s\n' "${LOCALES[@]}" > /etc/locale.gen
 locale-gen
 
 stage "Setting up default mirrorlist"
-printf '%s\n' "$MIRRORLIST" > /etc/pacman.d/mirrorlist
+printf 'Server = %s\n' "${DEFAULT_MIRRORS[@]}" > /etc/pacman.d/mirrorlist
 
 stage "Setting up pacman config"
 info "Disabling extraction of nvidia firmware and man pages"

@@ -101,20 +101,13 @@ LOCALES=(
 	'hi_IN UTF-8'
 )
 
-# Content of pacman mirrorrlist file before reflector is installed and used to fetch new one
+# Pacman mirrors to use before reflector is installed and used to fetch new one
 # shellcheck disable=2016
-MIRRORLIST='
-Server = https://mirror1.sl-chat.ru/archlinux/$repo/os/$arch
-Server = https://mirror3.sl-chat.ru/archlinux/$repo/os/$arch
-Server = https://us.mirrors.cicku.me/archlinux/$repo/os/$arch
-Server = https://mirror.osbeck.com/archlinux/$repo/os/$arch
-Server = https://md.mirrors.hacktegic.com/archlinux/$repo/os/$arch
-Server = https://geo.mirror.pkgbuild.com/$repo/os/$arch
-Server = https://mirror.qctronics.com/archlinux/$repo/os/$arch
-Server = https://arch.mirror.constant.com/$repo/os/$arch
-Server = https://america.mirror.pkgbuild.com/$repo/os/$arch
-Server = https://mirror.tmmworkshop.com/archlinux/$repo/os/$arch
-'
+DEFAULT_MIRRORS=(
+	'https://geo.mirror.pkgbuild.com/$repo/os/$arch'
+	'https://ftpmirror.infania.net/mirror/archlinux/$repo/os/$arch'
+	'https://mirror.rackspace.com/archlinux/$repo/os/$arch'
+)
 
 # Enable this variable to use the system-wide mksquashfs/mkdwarfs instead
 # of those provided by the Conty project
@@ -143,12 +136,9 @@ DWARFS_COMPRESSOR_ARGUMENTS=(
 # List of links to arch bootstrap archive
 # Conty will try to download each one of them sequentially
 BOOTSTRAP_DOWNLOAD_URLS=(
-	'https://arch.hu.fo/archlinux/iso/latest/archlinux-bootstrap-x86_64.tar.zst'
-	'https://mirror.cyberbits.eu/archlinux/iso/latest/archlinux-bootstrap-x86_64.tar.zst'
-	'https://mirror.osbeck.com/archlinux/iso/latest/archlinux-bootstrap-x86_64.tar.zst'
-	'https://mirror.lcarilla.de/archlinux/iso/latest/archlinux-bootstrap-x86_64.tar.zst'
-	'https://mirror.moson.org/archlinux/iso/latest/archlinux-bootstrap-x86_64.tar.zst'
-	'https://mirror.f4st.host/archlinux/iso/latest/archlinux-bootstrap-x86_64.tar.zst'
+	'https://geo.mirror.pkgbuild.com/iso/latest/archlinux-bootstrap-x86_64.tar.zst'
+	'https://ftpmirror.infania.net/mirror/archlinux/iso/latest/archlinux-bootstrap-x86_64.tar.zst'
+	'https://mirror.rackspace.com/archlinux/iso/latest/archlinux-bootstrap-x86_64.tar.zst'
 )
 
 # sha256sums.txt file to verify downloaded bootstrap archive with
