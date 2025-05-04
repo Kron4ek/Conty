@@ -15,7 +15,9 @@ stage() {
 info() { NESTING_LEVEL=$((NESTING_LEVEL + 1)) stage "$@"; }
 
 check_command_available() {
-	for cmd in "$@"; do ! command -v "$cmd" >&- && missing_executables+=("$cmd"); done
+	for cmd in "$@"; do
+		! command -v "$cmd" &>/dev/null && missing_executables+=("$cmd");
+	done
 	if [ "${#missing_executables[@]}" -ne 0 ]; then
 		info "Following commands are required: ${missing_executables[*]}"
 		exit 1
@@ -65,9 +67,10 @@ if [ -z "$INSIDE_BOOTSTRAP" ]; then
 
 	# shellcheck disable=2317
 	prepare_bootstrap() {
+		set -e
 		mount --bind "$bootstrap"/ "$bootstrap"/
 		mount -t proc proc "$bootstrap"/proc
-		mount --rbind /dev "$bootstrap"/dev
+		mount -o ro --rbind /dev "$bootstrap"/dev
 		mount none -t devpts "$bootstrap"/dev/pts
 		mount none -t tmpfs "$bootstrap"/dev/shm
 		rm -f "$bootstrap"/etc/resolv.conf
@@ -82,7 +85,7 @@ if [ -z "$INSIDE_BOOTSTRAP" ]; then
 	}
 	# shellcheck disable=2317
 	run_bootstrap() {
-		chroot "$bootstrap" /usr/bin/env -i \
+		exec chroot "$bootstrap" /usr/bin/env -i \
 			   USER='root' HOME='/root' NESTING_LEVEL=2 INSIDE_BOOTSTRAP=1 \
 			   /opt/conty/create-arch-bootstrap.sh
 	}
@@ -105,6 +108,40 @@ source /etc/profile
 # shellcheck source=settings.sh
 source /opt/conty/settings.sh
 
+install_aur_packages() {
+	useradd -m aurbuilder
+	echo 'aurbuilder ALL=(ALL) NOPASSWD: /usr/bin/pacman' \
+		| install -Dm0440 /dev/fd/0 /etc/sudoers.d/aurbuilder
+
+	pushd /home/aurbuilder &>/dev/null
+	if ! pacman -Q yay-bin &>/dev/null; then
+		if [ -n "$ENABLE_CHAOTIC_AUR" ]; then
+			info "Installing base-devel and yay"
+			pacman --noconfirm --needed -S base-devel yay
+		else
+			info "Installing base-devel"
+			pacman --noconfirm --needed -S base-devel
+			info "Building yay-bin"
+			sudo -u aurbuilder -- curl -LO 'https://aur.archlinux.org/cgit/aur.git/snapshot/yay-bin.tar.gz'
+			sudo -u aurbuilder -- tar -xf yay-bin.tar.gz
+			pushd yay-bin &>/dev/null
+			sudo -u aurbuilder -- makepkg --noconfirm -sri
+			popd &>/dev/null
+		fi
+	fi
+	for p in "$@"; do
+		info "Building and installing $p"
+		sudo -u aurbuilder -- yay --needed --removemake --noconfirm -S "$p"
+	done
+
+	info "Cleaning up"
+	popd &>/dev/null
+	# GPG leaves hanging processes when package with signing keys is installed
+	pkill -SIGKILL -u aurbuilder || true
+	userdel -r aurbuilder &>/dev/null
+	rm /etc/sudoers.d/aurbuilder
+}
+
 stage "Generating locales"
 printf '%s\n' "${LOCALES[@]}" > /etc/locale.gen
 locale-gen
@@ -113,6 +150,10 @@ stage "Setting up default mirrorlist"
 printf 'Server = %s\n' "${DEFAULT_MIRRORS[@]}" > /etc/pacman.d/mirrorlist
 
 stage "Setting up pacman config"
+if [ "${#AUR_PACKAGES[@]}" -ne 0 ]; then
+	info "Disabling debug option in makepkg"
+	sed -i 's/\(OPTIONS=(.*\)\(debug.*)\)/\1!\2/' /etc/makepkg.conf
+fi
 info "Disabling extraction of nvidia firmware and man pages"
 sed -i 's/#NoExtract   =/NoExtract   = usr\/lib\/firmware\/nvidia\/\* usr\/share\/man\/\*/' /etc/pacman.conf
 info "Enabling multilib repository"
@@ -126,19 +167,25 @@ pacman-key --init
 pacman-key --populate archlinux
 pacman --noconfirm -Sy archlinux-keyring
 
-stage "Setting up Chaotic-AUR"
-chaotic_aur_key='3056513887B78AEB'
-pacman-key --recv-key "$chaotic_aur_key" --keyserver keyserver.ubuntu.com
-pacman-key --lsign-key "$chaotic_aur_key"
-pacman --noconfirm -U 'https://cdn-mirror.chaotic.cx/chaotic-aur/chaotic-keyring.pkg.tar.zst' 'https://cdn-mirror.chaotic.cx/chaotic-aur/chaotic-mirrorlist.pkg.tar.zst'
-echo '
+if [ -n "$ENABLE_CHAOTIC_AUR" ]; then
+	stage "Setting up Chaotic-AUR"
+	chaotic_aur_key='3056513887B78AEB'
+	pacman-key --recv-key "$chaotic_aur_key" --keyserver keyserver.ubuntu.com
+	pacman-key --lsign-key "$chaotic_aur_key"
+	pacman --noconfirm -U 'https://cdn-mirror.chaotic.cx/chaotic-aur/chaotic-keyring.pkg.tar.zst' 'https://cdn-mirror.chaotic.cx/chaotic-aur/chaotic-mirrorlist.pkg.tar.zst'
+	echo '
 [chaotic-aur]
 Include = /etc/pacman.d/chaotic-mirrorlist' >> /etc/pacman.conf
-pacman --noconfirm -Sy
+	pacman --noconfirm -Sy
+fi
 
 if [ -n "$ENABLE_ALHP_REPO" ]; then
 	stage "Setting up ALHP"
-	pacman --noconfirm --needed -Sy alhp-keyring alhp-mirrorlist
+	if [ -n "$ENABLE_CHAOTIC_AUR" ]; then
+		pacman --noconfirm --needed -Sy alhp-keyring alhp-mirrorlist
+	else
+		install_aur_packages alhp-keyring alhp-mirrorlist
+	fi
 	sed -i "s/#\[multilib\]/#/" /etc/pacman.conf
 	sed -i "s/\[core\]/\[core-x86-64-v$ALHP_FEATURE_LEVEL\]\nInclude = \/etc\/pacman.d\/alhp-mirrorlist\n\n\[extra-x86-64-v$ALHP_FEATURE_LEVEL\]\nInclude = \/etc\/pacman.d\/alhp-mirrorlist\n\n\[core\]/" /etc/pacman.conf
 	sed -i "s/\[multilib\]/\[multilib-x86-64-v$ALHP_FEATURE_LEVEL\]\nInclude = \/etc\/pacman.d\/alhp-mirrorlist\n\n\[multilib\]/" /etc/pacman.conf
@@ -191,21 +238,7 @@ if [ "${#AUR_PACKAGES[@]}" -ne 0 ]; then
 		info "Following packages are not available in AUR:" "${missing_packages[@]}"
 		exit 1
 	fi
-
-	info "Installing base-devel and yay"
-	pacman --noconfirm --needed -S base-devel yay
-	useradd -m aurbuilder
-	echo 'aurbuilder ALL=(ALL) NOPASSWD: /usr/bin/pacman' \
-		| install -Dm0440 /dev/fd/0 /etc/sudoers.d/aurbuilder
-	pushd /home/aurbuilder >/dev/null
-	for p in "${AUR_PACKAGES[@]}"; do
-		info "Building and installing $p"
-		sudo -u aurbuilder -- yay --needed --removemake --noconfirm -S "$p"
-	done
-	info "Cleaning up"
-	userdel -r aurbuilder 2>/dev/null
-	rm /etc/sudoers.d/aurbuilder
-	popd >/dev/null
+	install_aur_packages "${AUR_PACKAGES[@]}"
 fi
 
 stage "Clearing pacman cache"

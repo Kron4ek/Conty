@@ -3,7 +3,7 @@
 # Packages to install
 # You can add packages that you want and remove packages that you don't need
 # Apart from packages from the official Arch repos, you can also specify
-# packages from the Chaotic-AUR repo
+# packages from the Chaotic-AUR repo if you set ENABLE_CHAOTIC_AUR
 PACKAGES=(
 	# audio
 	alsa-lib lib32-alsa-lib alsa-plugins lib32-alsa-plugins libpulse
@@ -56,6 +56,10 @@ PACKAGES=(
 
 # If you want to install AUR packages, specify them in this variable
 AUR_PACKAGES=(faugus-launcher-git)
+
+# Chaotic-AUR is a repository containing precompiled packages from AUR
+# Set this variable to any value if you want to enable id
+ENABLE_CHAOTIC_AUR=1
 
 # ALHP is a repository containing packages from the official Arch Linux
 # repos recompiled with -O3, LTO and optimizations for modern CPUs for
