@@ -2,7 +2,7 @@
 
 [![Conty CI](https://github.com/Kron4ek/Conty/actions/workflows/conty.yml/badge.svg)](https://github.com/Kron4ek/Conty/actions/workflows/conty.yml) [![Utils CI](https://github.com/Kron4ek/Conty/actions/workflows/utils.yml/badge.svg)](https://github.com/Kron4ek/Conty/actions/workflows/utils.yml)
 
-This is an easy to use compressed unprivileged Linux container packed into a single executable that works on most Linux distros. It is designed to be as simple and user-friendly as possible. You can use it to run any applications, including games ([Vulkan](https://en.wikipedia.org/wiki/Vulkan) and [OpenGL](https://en.wikipedia.org/wiki/OpenGL)).
+This is an easy to use compressed unprivileged Linux container packed into a single executable that works on most Linux distros. You can use it to run any applications, including games ([Vulkan](https://en.wikipedia.org/wiki/Vulkan) and [OpenGL](https://en.wikipedia.org/wiki/OpenGL)).
 
 ## Features
 
