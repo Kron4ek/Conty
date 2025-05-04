@@ -427,32 +427,6 @@ nvidia_driver_handler () {
 	cd "${OLD_PWD}"
 }
 
-update_conty () {
-	if [ "$(ls /var/cache/pacman/pkg_host 2>/dev/null)" ]; then
-		mkdir -p /var/cache/pacman/pkg
-		ln -s /var/cache/pacman/pkg_host/* /var/cache/pacman/pkg 2>/dev/null
-	fi
-
-	reflector --protocol https --score 5 --sort rate --save /etc/pacman.d/mirrorlist
-	fakeroot -- pacman -Syy 2>/dev/null
-	date -u +"%d-%m-%Y %H:%M (DMY UTC)" > /version
-	fakeroot -- pacman --noconfirm -S archlinux-keyring 2>/dev/null
-	fakeroot -- pacman --noconfirm -S chaotic-keyring 2>/dev/null
-	rm -rf /etc/pacman.d/gnupg/*
-	fakeroot -- pacman-key --init
-	echo "keyserver hkps://keyserver.ubuntu.com" >> /etc/pacman.d/gnupg/gpg.conf
-	fakeroot -- pacman-key --populate archlinux
-	fakeroot -- pacman-key --populate chaotic
-	fakeroot -- pacman --noconfirm --overwrite "*" --ignore fakeroot -Su 2>/dev/null
-	fakeroot -- pacman --noconfirm -Runs ${pkgsremove} 2>/dev/null
-	fakeroot -- pacman --noconfirm -S ${pkgsinstall} 2>/dev/null
-	ldconfig -C /etc/ld.so.cache
-	rm -f /var/cache/pacman/pkg/*
-	pacman -Q > /pkglist.x86_64.txt
-	update-ca-trust
-	locale-gen
-}
-
 # Check if FUSE is installed
 if ! command -v fusermount3 1>/dev/null && ! command -v fusermount 1>/dev/null; then
 	echo "Please install fuse2 or fuse3 and run the script again."
