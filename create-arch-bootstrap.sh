@@ -105,10 +105,7 @@ install_aur_packages () {
 }
 
 generate_pkg_licenses_file () {
-	for p in $(pacman -Q | cut -d' ' -f1); do
-		echo -n $(pacman -Qi "${p}" | grep -E 'Name|Licenses' | cut -d ":" -f 2) >>/pkglicenses.txt
-		echo >>/pkglicenses.txt
-	done
+	pacman -Qi | grep -E '^Name|Licenses' |  cut -d ":" -f 2 | paste -d ' ' - - > /pkglicenses.txt
 }
 
 generate_localegen () {
