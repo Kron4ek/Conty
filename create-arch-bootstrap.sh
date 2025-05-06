@@ -130,10 +130,10 @@ if [ ! -s chaotic-keyring.pkg.tar.zst ] || [ ! -s chaotic-mirrorlist.pkg.tar.zst
 	exit 1
 fi
 
+curl -#LO "$BOOTSTRAP_SHA256SUM_FILE_URL"
 for link in "${BOOTSTRAP_DOWNLOAD_URLS[@]}"; do
 	echo "Downloading Arch Linux bootstrap from $link"
 	curl -#LO "$link"
-	curl -#LO "$BOOTSTRAP_SHA256SUM_FILE_URL"
 
 	echo "Verifying the integrity of the bootstrap"
 	if sha256sum --ignore-missing -c sha256sums.txt &>/dev/null; then
@@ -153,7 +153,7 @@ unmount_chroot
 
 rm -rf "${bootstrap}"
 tar xf archlinux-bootstrap-x86_64.tar.zst
-rm archlinux-bootstrap-x86_64.tar.zst sha256sums.txt sha256.txt
+rm archlinux-bootstrap-x86_64.tar.zst sha256sums.txt
 
 mount_chroot
 
