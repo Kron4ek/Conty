@@ -121,14 +121,6 @@ generate_mirrorlist () {
 
 cd "${script_dir}" || exit 1
 
-curl -#LO 'https://cdn-mirror.chaotic.cx/chaotic-aur/chaotic-keyring.pkg.tar.zst'
-curl -#LO 'https://cdn-mirror.chaotic.cx/chaotic-aur/chaotic-mirrorlist.pkg.tar.zst'
-
-if [ ! -s chaotic-keyring.pkg.tar.zst ] || [ ! -s chaotic-mirrorlist.pkg.tar.zst ]; then
-	echo "Seems like Chaotic-AUR keyring or mirrorlist is currently unavailable"
-	echo "Please try again later"
-	exit 1
-fi
 
 curl -#LO "$BOOTSTRAP_SHA256SUM_FILE_URL"
 for link in "${BOOTSTRAP_DOWNLOAD_URLS[@]}"; do
@@ -186,9 +178,13 @@ run_in_chroot pacman-key --populate archlinux
 run_in_chroot pacman-key --recv-key 3056513887B78AEB --keyserver keyserver.ubuntu.com
 run_in_chroot pacman-key --lsign-key 3056513887B78AEB
 
-mv chaotic-keyring.pkg.tar.zst chaotic-mirrorlist.pkg.tar.zst "${bootstrap}"/opt
-run_in_chroot pacman --noconfirm -U /opt/chaotic-keyring.pkg.tar.zst /opt/chaotic-mirrorlist.pkg.tar.zst
-rm "${bootstrap}"/opt/chaotic-keyring.pkg.tar.zst "${bootstrap}"/opt/chaotic-mirrorlist.pkg.tar.zst
+if ! run_in_chroot pacman --noconfirm -U \
+	 'https://cdn-mirror.chaotic.cx/chaotic-aur/chaotic-keyring.pkg.tar.zst' \
+	 'https://cdn-mirror.chaotic.cx/chaotic-aur/chaotic-mirrorlist.pkg.tar.zst'; then
+	echo "Seems like Chaotic-AUR keyring or mirrorlist is currently unavailable"
+	echo "Please try again later"
+	exit 1
+fi
 
 {
 	echo
