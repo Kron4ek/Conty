@@ -199,16 +199,10 @@ run_in_chroot pacman -Sy archlinux-keyring --noconfirm
 run_in_chroot pacman -Su --noconfirm
 
 if [ -n "$ENABLE_ALHP_REPO" ]; then
-	if [ "${ALHP_FEATURE_LEVEL}" -gt 2 ]; then
-		alhp_feature_level=3
-	else
-		alhp_feature_level=2
-	fi
-
 	run_in_chroot pacman --noconfirm --needed -S alhp-keyring alhp-mirrorlist
 	sed -i "s/#\[multilib\]/#/" "${bootstrap}"/etc/pacman.conf
-	sed -i "s/\[core\]/\[core-x86-64-v${alhp_feature_level}\]\nInclude = \/etc\/pacman.d\/alhp-mirrorlist\n\n\[extra-x86-64-v${alhp_feature_level}\]\nInclude = \/etc\/pacman.d\/alhp-mirrorlist\n\n\[core\]/" "${bootstrap}"/etc/pacman.conf
-	sed -i "s/\[multilib\]/\[multilib-x86-64-v${alhp_feature_level}\]\nInclude = \/etc\/pacman.d\/alhp-mirrorlist\n\n\[multilib\]/" "${bootstrap}"/etc/pacman.conf
+	sed -i "s/\[core\]/\[core-x86-64-v${ALHP_FEATURE_LEVEL}\]\nInclude = \/etc\/pacman.d\/alhp-mirrorlist\n\n\[extra-x86-64-v${ALHP_FEATURE_LEVEL}\]\nInclude = \/etc\/pacman.d\/alhp-mirrorlist\n\n\[core\]/" "${bootstrap}"/etc/pacman.conf
+	sed -i "s/\[multilib\]/\[multilib-x86-64-v${ALHP_FEATURE_LEVEL}\]\nInclude = \/etc\/pacman.d\/alhp-mirrorlist\n\n\[multilib\]/" "${bootstrap}"/etc/pacman.conf
 	run_in_chroot pacman -Syu --noconfirm
 fi
 
