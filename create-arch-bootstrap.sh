@@ -23,9 +23,6 @@ script_dir="$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")"
 bootstrap="${script_dir}"/root.x86_64
 
 mount_chroot () {
-	# First unmount just in case
-	umount -Rl "${bootstrap}"
-
 	mount --bind "${bootstrap}" "${bootstrap}"
 	mount -t proc /proc "${bootstrap}"/proc
 	mount --bind /sys "${bootstrap}"/sys
@@ -150,6 +147,9 @@ if [ -z "${bootstrap_is_good}" ]; then
 	echo "Bootstrap download failed or its checksum is incorrect"
 	exit 1
 fi
+
+# Unmount first just in case
+unmount_chroot
 
 rm -rf "${bootstrap}"
 tar xf archlinux-bootstrap-x86_64.tar.zst
