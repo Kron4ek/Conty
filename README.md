@@ -393,17 +393,17 @@ There are a few ways to update Conty and get the latest packages, use whichever 
 
 ### Manual
 
-1. Obtain Arch Linux bootstrap by using `create-arch-bootstrap.sh`. Before running it, you can edit variables in `settings.sh` if you want, for example, to include a different set of packages inside the container, or to include additional locales. Make sure you have enough free disk space, i recommend at least 10 GB of free space. Root rights are required for this step.
+1. Obtain Arch Linux bootstrap by using `create-arch-bootstrap.sh`. Before running it, you can edit variables in `settings.sh` if you want, for example, to include a different set of packages inside the container, or to include additional locales. Make sure you have enough free disk space, i recommend at least 10 GB of free space. Root rights are required if your kernel does not support user namespaces
 
     ```
     # ./create-arch-bootstrap.sh
     ```
-2. After that you can use `enter-chroot.sh` to chroot into the bootstrap and do some manual modifications (for instance, modify some files, install/remove packages, etc.). Root rights are needed for this step too. This is an optional step, which you can skip if you wish.
+2. After that you can use `enter-chroot.sh` to chroot into the bootstrap and do some manual modifications (for instance, modify some files, install/remove packages, etc.). This is an optional step, which you can skip if you wish. Root rights are required if your kernel does not support user namespaces
 
     ```
     # ./enter-chroot.sh
     ```
-3. Now use `create-conty.sh` to create a SquashFS (or DwarFS) image and create a ready-to-use Conty executable. Root rights are not needed for this step. By default a SquashFS image with zstd compression (level 19) will be created, however, if you want, you can edit variables in `settings.sh` and enable DwarFS, select a different compression algorithm and/or compression level.
+3. Now use `create-conty.sh` to create a SquashFS (or DwarFS) image and create a ready-to-use Conty executable. By default a SquashFS image with zstd compression (level 19) will be created, however, if you want, you can edit variables in `settings.sh` and enable DwarFS, select a different compression algorithm and/or compression level.
 
     ```
     $ ./create-conty.sh
