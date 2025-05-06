@@ -59,28 +59,22 @@ run_in_chroot () {
 install_packages () {
 	source /conty_settings.sh
 	echo "Checking if packages are present in the repos, please wait..."
-	for p in "${PACKAGES[@]}"; do
-		if pacman -Sp "${p}" &>/dev/null; then
-			good_pkglist="${good_pkglist} ${p}"
-		else
-			bad_pkglist="${bad_pkglist} ${p}"
-		fi
-	done
 
-	if [ -n "${bad_pkglist}" ]; then
-		echo ${bad_pkglist} > /opt/bad_pkglist.txt
+	declare -a bad_pkglist
+	mapfile -t bad_pkglist < <(comm -23 \
+									<(printf '%s\n' "${PACKAGES[@]}" | sort -u) \
+									<(pacman -Slq | sort -u))
+	if [ "${#bad_pkglist[@]}" -gt 0 ]; then
+		echo "These packages are not available in arch repositories: " "${bad_pkglist[@]}"
+		exit 1
 	fi
 
 	for i in {1..10}; do
-		if pacman --noconfirm --needed -S ${good_pkglist}; then
-			good_install=1
+		if pacman --noconfirm --needed -S "${PACKAGES[@]}" || [ "$?" -gt 127 ]; then
 			break
 		fi
 	done
 
-	if [ -z "${good_install}" ]; then
-		echo > /opt/pacman_failed.txt
-	fi
 }
 
 install_aur_packages () {
@@ -216,11 +210,8 @@ if [ -z "${reflector_used}" ]; then
 fi
 
 export -f install_packages
-run_in_chroot bash -c install_packages
-
-if [ -f "${bootstrap}"/opt/pacman_failed.txt ]; then
+if ! run_in_chroot bash -c install_packages; then
 	unmount_chroot
-	echo "Pacman failed to install some packages"
 	exit 1
 fi
 
@@ -272,13 +263,6 @@ ln -s /usr/share/fontconfig/conf.avail/10-hinting-full.conf "${bootstrap}"/etc/f
 
 clear
 echo "Done"
-
-if [ -f "${bootstrap}"/opt/bad_pkglist.txt ]; then
-	echo
-	echo "These packages are not in the repos and have not been installed:"
-	cat "${bootstrap}"/opt/bad_pkglist.txt
-	rm "${bootstrap}"/opt/bad_pkglist.txt
-fi
 
 if [ -f "${bootstrap}"/opt/bad_aur_pkglist.txt ]; then
 	echo
