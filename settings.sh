@@ -14,9 +14,8 @@ PACKAGES=(
 	mesa lib32-mesa vulkan-radeon lib32-vulkan-radeon
 	vulkan-intel lib32-vulkan-intel
 	vulkan-icd-loader lib32-vulkan-icd-loader vulkan-mesa-layers
-	lib32-vulkan-mesa-layers libva-mesa-driver lib32-libva-mesa-driver
-	libva-intel-driver lib32-libva-intel-driver intel-media-driver
-	mesa-utils vulkan-tools libva-utils lib32-mesa-utils
+	lib32-vulkan-mesa-layers libva-intel-driver lib32-libva-intel-driver
+	intel-media-driver mesa-utils vulkan-tools libva-utils lib32-mesa-utils
 	# wine
 	wine-staging winetricks-git wine-nine wineasio
 	freetype2 lib32-freetype2 libxft lib32-libxft
@@ -36,7 +35,7 @@ PACKAGES=(
 	libgcrypt lib32-libgcrypt ncurses lib32-ncurses ocl-icd lib32-ocl-icd
 	libxcrypt-compat lib32-libxcrypt-compat libva lib32-libva sqlite lib32-sqlite
 	gtk3 lib32-gtk3 vulkan-icd-loader lib32-vulkan-icd-loader
-	sdl2 lib32-sdl2 vkd3d lib32-vkd3d libgphoto2
+	sdl2-compat lib32-sdl2-compat vkd3d lib32-vkd3d libgphoto2
 	openssl-1.1 lib32-openssl-1.1 libnm lib32-libnm
 	cabextract wget gamemode lib32-gamemode mangohud lib32-mangohud
 	# development
@@ -47,7 +46,7 @@ PACKAGES=(
 	retroarch retroarch-assets-ozone libretro-beetle-psx-hw sunshine
 	libretro-blastem libretro-bsnes libretro-dolphin duckstation
 	libretro-gambatte libretro-melonds libretro-mgba libretro-nestopia
-	libretro-parallel-n64 libretro-pcsx2 libretro-picodrive libretro-ppsspp
+	libretro-parallel-n64 libretro-picodrive libretro-ppsspp
 	libretro-retrodream libretro-yabause pcsx2-avx-git
 	# extra
 	nano ttf-dejavu ttf-liberation firefox mpv geany pcmanfm

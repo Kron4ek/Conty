@@ -23,9 +23,6 @@ script_dir="$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")"
 bootstrap="${script_dir}"/root.x86_64
 
 mount_chroot () {
-	# First unmount just in case
-	umount -Rl "${bootstrap}"
-
 	mount --bind "${bootstrap}" "${bootstrap}"
 	mount -t proc /proc "${bootstrap}"/proc
 	mount --bind /sys "${bootstrap}"/sys
@@ -62,28 +59,22 @@ run_in_chroot () {
 install_packages () {
 	source /conty_settings.sh
 	echo "Checking if packages are present in the repos, please wait..."
-	for p in "${PACKAGES[@]}"; do
-		if pacman -Sp "${p}" &>/dev/null; then
-			good_pkglist="${good_pkglist} ${p}"
-		else
-			bad_pkglist="${bad_pkglist} ${p}"
-		fi
-	done
 
-	if [ -n "${bad_pkglist}" ]; then
-		echo ${bad_pkglist} > /opt/bad_pkglist.txt
+	declare -a bad_pkglist
+	mapfile -t bad_pkglist < <(comm -23 \
+									<(printf '%s\n' "${PACKAGES[@]}" | sort -u) \
+									<(pacman -Slq | sort -u))
+	if [ "${#bad_pkglist[@]}" -gt 0 ]; then
+		echo "These packages are not available in arch repositories: " "${bad_pkglist[@]}"
+		exit 1
 	fi
 
 	for i in {1..10}; do
-		if pacman --noconfirm --needed -S ${good_pkglist}; then
-			good_install=1
+		if pacman --noconfirm --needed -S "${PACKAGES[@]}" || [ "$?" -gt 127 ]; then
 			break
 		fi
 	done
 
-	if [ -z "${good_install}" ]; then
-		echo > /opt/pacman_failed.txt
-	fi
 }
 
 install_aur_packages () {
@@ -108,10 +99,7 @@ install_aur_packages () {
 }
 
 generate_pkg_licenses_file () {
-	for p in $(pacman -Q | cut -d' ' -f1); do
-		echo -n $(pacman -Qi "${p}" | grep -E 'Name|Licenses' | cut -d ":" -f 2) >>/pkglicenses.txt
-		echo >>/pkglicenses.txt
-	done
+	pacman -Qi | grep -E '^Name|Licenses' |  cut -d ":" -f 2 | paste -d ' ' - - > /pkglicenses.txt
 }
 
 generate_localegen () {
@@ -124,19 +112,11 @@ generate_mirrorlist () {
 
 cd "${script_dir}" || exit 1
 
-curl -#LO 'https://cdn-mirror.chaotic.cx/chaotic-aur/chaotic-keyring.pkg.tar.zst'
-curl -#LO 'https://cdn-mirror.chaotic.cx/chaotic-aur/chaotic-mirrorlist.pkg.tar.zst'
 
-if [ ! -s chaotic-keyring.pkg.tar.zst ] || [ ! -s chaotic-mirrorlist.pkg.tar.zst ]; then
-	echo "Seems like Chaotic-AUR keyring or mirrorlist is currently unavailable"
-	echo "Please try again later"
-	exit 1
-fi
-
+curl -#LO "$BOOTSTRAP_SHA256SUM_FILE_URL"
 for link in "${BOOTSTRAP_DOWNLOAD_URLS[@]}"; do
 	echo "Downloading Arch Linux bootstrap from $link"
 	curl -#LO "$link"
-	curl -#LO "$BOOTSTRAP_SHA256SUM_FILE_URL"
 
 	echo "Verifying the integrity of the bootstrap"
 	if sha256sum --ignore-missing -c sha256sums.txt &>/dev/null; then
@@ -151,9 +131,12 @@ if [ -z "${bootstrap_is_good}" ]; then
 	exit 1
 fi
 
+# Unmount first just in case
+unmount_chroot
+
 rm -rf "${bootstrap}"
 tar xf archlinux-bootstrap-x86_64.tar.zst
-rm archlinux-bootstrap-x86_64.tar.zst sha256sums.txt sha256.txt
+rm archlinux-bootstrap-x86_64.tar.zst sha256sums.txt
 
 mount_chroot
 
@@ -186,9 +169,13 @@ run_in_chroot pacman-key --populate archlinux
 run_in_chroot pacman-key --recv-key 3056513887B78AEB --keyserver keyserver.ubuntu.com
 run_in_chroot pacman-key --lsign-key 3056513887B78AEB
 
-mv chaotic-keyring.pkg.tar.zst chaotic-mirrorlist.pkg.tar.zst "${bootstrap}"/opt
-run_in_chroot pacman --noconfirm -U /opt/chaotic-keyring.pkg.tar.zst /opt/chaotic-mirrorlist.pkg.tar.zst
-rm "${bootstrap}"/opt/chaotic-keyring.pkg.tar.zst "${bootstrap}"/opt/chaotic-mirrorlist.pkg.tar.zst
+if ! run_in_chroot pacman --noconfirm -U \
+	 'https://cdn-mirror.chaotic.cx/chaotic-aur/chaotic-keyring.pkg.tar.zst' \
+	 'https://cdn-mirror.chaotic.cx/chaotic-aur/chaotic-mirrorlist.pkg.tar.zst'; then
+	echo "Seems like Chaotic-AUR keyring or mirrorlist is currently unavailable"
+	echo "Please try again later"
+	exit 1
+fi
 
 {
 	echo
@@ -203,16 +190,10 @@ run_in_chroot pacman -Sy archlinux-keyring --noconfirm
 run_in_chroot pacman -Su --noconfirm
 
 if [ -n "$ENABLE_ALHP_REPO" ]; then
-	if [ "${ALHP_FEATURE_LEVEL}" -gt 2 ]; then
-		alhp_feature_level=3
-	else
-		alhp_feature_level=2
-	fi
-
 	run_in_chroot pacman --noconfirm --needed -S alhp-keyring alhp-mirrorlist
 	sed -i "s/#\[multilib\]/#/" "${bootstrap}"/etc/pacman.conf
-	sed -i "s/\[core\]/\[core-x86-64-v${alhp_feature_level}\]\nInclude = \/etc\/pacman.d\/alhp-mirrorlist\n\n\[extra-x86-64-v${alhp_feature_level}\]\nInclude = \/etc\/pacman.d\/alhp-mirrorlist\n\n\[core\]/" "${bootstrap}"/etc/pacman.conf
-	sed -i "s/\[multilib\]/\[multilib-x86-64-v${alhp_feature_level}\]\nInclude = \/etc\/pacman.d\/alhp-mirrorlist\n\n\[multilib\]/" "${bootstrap}"/etc/pacman.conf
+	sed -i "s/\[core\]/\[core-x86-64-v${ALHP_FEATURE_LEVEL}\]\nInclude = \/etc\/pacman.d\/alhp-mirrorlist\n\n\[extra-x86-64-v${ALHP_FEATURE_LEVEL}\]\nInclude = \/etc\/pacman.d\/alhp-mirrorlist\n\n\[core\]/" "${bootstrap}"/etc/pacman.conf
+	sed -i "s/\[multilib\]/\[multilib-x86-64-v${ALHP_FEATURE_LEVEL}\]\nInclude = \/etc\/pacman.d\/alhp-mirrorlist\n\n\[multilib\]/" "${bootstrap}"/etc/pacman.conf
 	run_in_chroot pacman -Syu --noconfirm
 fi
 
@@ -229,11 +210,8 @@ if [ -z "${reflector_used}" ]; then
 fi
 
 export -f install_packages
-run_in_chroot bash -c install_packages
-
-if [ -f "${bootstrap}"/opt/pacman_failed.txt ]; then
+if ! run_in_chroot bash -c install_packages; then
 	unmount_chroot
-	echo "Pacman failed to install some packages"
 	exit 1
 fi
 
@@ -285,13 +263,6 @@ ln -s /usr/share/fontconfig/conf.avail/10-hinting-full.conf "${bootstrap}"/etc/f
 
 clear
 echo "Done"
-
-if [ -f "${bootstrap}"/opt/bad_pkglist.txt ]; then
-	echo
-	echo "These packages are not in the repos and have not been installed:"
-	cat "${bootstrap}"/opt/bad_pkglist.txt
-	rm "${bootstrap}"/opt/bad_pkglist.txt
-fi
 
 if [ -f "${bootstrap}"/opt/bad_aur_pkglist.txt ]; then
 	echo
