@@ -86,10 +86,10 @@ make CC=musl-gcc -j"$(nproc)"
 cd ../bash-${bash_version}
 curl -#Lo bash.patch "https://raw.githubusercontent.com/robxu9/bash-static/master/custom/bash-musl-strtoimax-debian-1023053.patch"
 patch -Np1 < ./bash.patch
-CFLAGS="${CFLAGS} -Wno-error=implicit-function-declaration -static" CC=musl-gcc ./configure --without-bash-malloc
+CFLAGS="${CFLAGS} -std=gnu17 -Wno-error=implicit-function-declaration -static" CC=musl-gcc ./configure --without-bash-malloc
 autoconf -f
-CFLAGS="${CFLAGS} -Wno-error=implicit-function-declaration -static" CC=musl-gcc ./configure --without-bash-malloc
-CFLAGS="${CFLAGS} -Wno-error=implicit-function-declaration -static" CC=musl-gcc make -j"$(nproc)"
+CFLAGS="${CFLAGS} -std=gnu17 -Wno-error=implicit-function-declaration -static" CC=musl-gcc ./configure --without-bash-malloc
+CFLAGS="${CFLAGS} -std=gnu17 -Wno-error=implicit-function-declaration -static" CC=musl-gcc make -j"$(nproc)"
 
 if [ "${build_dwarfs}" != "true" ]; then
 	cd ../squashfuse-"${squashfuse_version}" || exit 1
