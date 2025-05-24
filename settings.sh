@@ -135,8 +135,8 @@ SQUASHFS_COMPRESSOR_ARGUMENTS=(-b 1M -comp "${SQUASHFS_COMPRESSOR}" -Xcompressio
 USE_DWARFS=
 DWARFS_COMPRESSOR_ARGUMENTS=(
 	-l7 -C zstd:level=19 --metadata-compression null
-	-S 21 -B 1 --order nilsimsa
-	-W 12 -w 4 --no-create-timestamp
+	-S 22 -B 1 --order nilsimsa
+	-W 12 -w 4 --no-history-timestamps --no-create-timestamp
 )
 
 
