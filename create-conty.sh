@@ -6,10 +6,10 @@ script_dir="$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")"
 image_path="${script_dir}"/image
 bootstrap="${script_dir}"/root.x86_64
 
-source "${bootstrap}"/settings.sh
+source "${script_dir}"/settings.sh
 
 launch_wrapper () {
-	if [ -n "${USE_SYS_UTILS}" ]; then
+	if [ "${USE_SYS_UTILS}" = 1 ]; then
 		if ! command -v "${1}" 1>/dev/null; then
 			echo "Please install $(echo "${1}" | tail -c +3) and run the script again"
 			exit 1
@@ -67,7 +67,7 @@ if [ $? != 0 ]; then
 fi
 
 # Check if selected compression algorithm is supported by mksquashfs
-if [ -n "${USE_SYS_UTILS}" ] && [ -z "$USE_DWARFS" ] && command -v grep 1>/dev/null; then
+if [ "${USE_SYS_UTILS}" = 1 ] && [ -z "$USE_DWARFS" ] && command -v grep 1>/dev/null; then
 	if ! mksquashfs 2>&1 | grep -q "${SQUASHFS_COMPRESSOR}"; then
 		echo "Seems like your mksquashfs doesn't support the selected"
 		echo "compression algorithm (${SQUASHFS_COMPRESSOR})."
