@@ -101,6 +101,12 @@ On Ubuntu 24.04+ (and maybe some other distros with apparmor enabled) it is need
 # sysctl kernel.apparmor_restrict_unprivileged_userns=0
 ```
 
+On Ubuntu 25.04+, if you see `fusermount3: mount failed: Permission denied` error when running Conty, you need to disable AppArmor and reboot your system:
+
+```
+# systemctl disable apparmor
+```
+
 Even if unprivileged user namespaces are not supported by your kernel, you can still use Conty if you have bubblewrap with the SUID bit installed on your system, in this case just tell Conty to use system-wide utils instead of the builtin ones.
 
 ```
