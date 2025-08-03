@@ -51,7 +51,8 @@ PACKAGES=(
 	# extra
 	nano ttf-dejavu ttf-liberation firefox mpv geany pcmanfm
 	htop qbittorrent speedcrunch gpicview file-roller openbox lxterminal
-	yt-dlp minizip nautilus genymotion jre17-openjdk gnome-themes-extra ffmpegthumbnailer
+	yt-dlp minizip nautilus genymotion jre17-openjdk gnome-themes-extra
+ 	ffmpegthumbnailer tmux
 )
 
 # If you want to install AUR packages, specify them in this variable
