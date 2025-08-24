@@ -113,7 +113,7 @@ generate_mirrorlist () {
 cd "${script_dir}" || exit 1
 
 
-curl -#LO "$BOOTSTRAP_SHA256SUM_FILE_URL"
+curl -#LO "$BOOTSTRAP_SHA256SUM_FILE_URL" || (echo "Failed to download sha256sums.txt file"; exit 1)
 for link in "${BOOTSTRAP_DOWNLOAD_URLS[@]}"; do
 	echo "Downloading Arch Linux bootstrap from $link"
 	curl -#LO "$link"
