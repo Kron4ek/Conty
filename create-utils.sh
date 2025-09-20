@@ -139,8 +139,8 @@ if [ "${build_dwarfs}" = "true" ]; then
 	make DESTDIR="${script_dir}"/build-utils/bin install
 
 	cd "${script_dir}"/build-utils || exit 1
-	mv bin/usr/local/sbin/dwarfs2 utils/dwarfs
-	mv bin/usr/local/sbin/dwarfs utils/dwarfs3
+	mv bin/usr/local/bin/dwarfs2 utils/dwarfs
+	mv bin/usr/local/bin/dwarfs utils/dwarfs3
 	mv bin/usr/local/bin/mkdwarfs utils
 	mv bin/usr/local/bin/dwarfsextract utils
 fi
