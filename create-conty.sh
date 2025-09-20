@@ -48,7 +48,7 @@ if [ ! -f "${utils}" ] || [ "$(wc -c < "${utils}")" -lt 100000 ]; then
 
 	if [ ! -f "${utils}" ] || [ "$(wc -c < "${utils}")" -lt 100000 ]; then
 		rm -f "${utils}"
-		curl -#LO "https://gitlab.com/-/project/61149207/uploads/ec7cdd4e77318f13c5f67d229f390c66/utils.tar"
+		curl -#LO "https://gitlab.com/-/project/61149207/uploads/1ff27b6750e246ebd181260695bc95f3/utils.tar"
   		tar -xf utils.tar
 	fi
 fi
