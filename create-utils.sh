@@ -157,6 +157,10 @@ if [ ! -f utils/ld-linux-x86-64.so.2 ]; then
     cp -L /lib64/ld-linux-x86-64.so.2 utils
 fi
 
+if [ ! -f utils/libgcc_s.so.1 ]; then
+    cp -L /usr/lib/libgcc_s.so.1 utils
+fi
+
 find utils -type f -exec strip --strip-unneeded {} \; 2>/dev/null
 
 init_program_size=50000
