@@ -41,7 +41,7 @@ PACKAGES=(
 	# development
 	base-devel git meson mingw-w64-gcc cmake
 	# gaming
-	lutris python-protobuf steam steam-native-runtime steamtinkerlaunch
+	lutris python-protobuf steam steamtinkerlaunch
 	minigalaxy gamehub legendary prismlauncher bottles playonlinux obs-studio
 	retroarch retroarch-assets-ozone libretro-beetle-psx-hw
 	libretro-blastem libretro-bsnes libretro-dolphin duckstation-gpl
