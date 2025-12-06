@@ -64,6 +64,7 @@ If these applications are not enough, you can install additional applications or
   * [Useful Tips](#useful-tips)
     + [Sandbox](#sandbox)
     + [About Wine](#about-wine)
+    + [LSFG-VK](#LSFG-VK)
   * [Known issues](#known-issues)
   * [Main used projects](#main-used-projects)
 
@@ -514,6 +515,10 @@ If you have new enough Linux kernel (5.16 or newer), it's a good idea to enable 
 ```
 $ WINEFSYNC=1 ./conty.sh wine someapplication.exe
 ```
+
+### LSFG-VK
+
+Lsfg-vk is included in Conty, but is disabled by default. You can enable it by using `ENABLE_LSFG=1` environment variable, you also need Lossless.dll for it to work.
 
 ## Known issues
 
