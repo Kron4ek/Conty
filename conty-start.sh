@@ -1171,6 +1171,14 @@ if [ "$(ls "${mount_point}" 2>/dev/null)" ] || launch_wrapper "${mount_command[@
 		fi
 	fi
 
+	# Disable lsfg-vk by default
+
+	if [ -z "${ENABLE_LSFG}" ] || [ "${ENABLE_LSFG}" = 0 ]; then
+		export DISABLE_LSFG=1
+	else
+		unset DISABLE_LSFG
+	fi
+
 	if [ -n "${script_is_symlink}" ] && [ -f "${mount_point}"/usr/bin/"${script_name}" ]; then
 		export CUSTOM_PATH="/bin:/sbin:/usr/bin:/usr/sbin:/usr/lib/jvm/default/bin"
 
