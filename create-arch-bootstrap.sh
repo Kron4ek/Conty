@@ -153,8 +153,10 @@ fi
 rm "${bootstrap}"/etc/locale.gen
 mv locale.gen "${bootstrap}"/etc/locale.gen
 
-rm "${bootstrap}"/etc/pacman.d/mirrorlist
-mv mirrorlist "${bootstrap}"/etc/pacman.d/mirrorlist
+if [ -f mirrorlist ]; then
+	rm "${bootstrap}"/etc/pacman.d/mirrorlist
+	mv mirrorlist "${bootstrap}"/etc/pacman.d/mirrorlist
+fi
 
 {
 	echo
