@@ -152,7 +152,7 @@ BOOTSTRAP_DOWNLOAD_URLS=(
 )
 
 # sha256sums.txt file to verify downloaded bootstrap archive with
-BOOTSTRAP_SHA256SUM_FILE_URL='https://archlinux.org/iso/latest/sha256sums.txt'
+BOOTSTRAP_SHA256SUM_FILE_URL='https://umea.mirror.pkgbuild.com/iso/latest/sha256sums.txt'
 
 # Set to any value to use an existing image if it exists
 # Otherwise the script will always create a new image
