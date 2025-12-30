@@ -153,6 +153,11 @@ fi
 rm "${bootstrap}"/etc/locale.gen
 mv locale.gen "${bootstrap}"/etc/locale.gen
 
+if [ ! -f mirrorlist ]; then
+	generate_mirrorlist
+	reflector_used=0
+fi
+
 if [ -f mirrorlist ]; then
 	rm "${bootstrap}"/etc/pacman.d/mirrorlist
 	mv mirrorlist "${bootstrap}"/etc/pacman.d/mirrorlist
