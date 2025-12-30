@@ -105,16 +105,22 @@ LOCALES=(
 # Content of pacman mirrorrlist file before reflector is installed and used to fetch new one
 # shellcheck disable=2016
 MIRRORLIST='
-Server = https://mirror1.sl-chat.ru/archlinux/$repo/os/$arch
-Server = https://mirror3.sl-chat.ru/archlinux/$repo/os/$arch
-Server = https://us.mirrors.cicku.me/archlinux/$repo/os/$arch
 Server = https://mirror.osbeck.com/archlinux/$repo/os/$arch
-Server = https://md.mirrors.hacktegic.com/archlinux/$repo/os/$arch
-Server = https://geo.mirror.pkgbuild.com/$repo/os/$arch
-Server = https://mirror.qctronics.com/archlinux/$repo/os/$arch
-Server = https://arch.mirror.constant.com/$repo/os/$arch
-Server = https://america.mirror.pkgbuild.com/$repo/os/$arch
-Server = https://mirror.tmmworkshop.com/archlinux/$repo/os/$arch
+Server = https://london.mirror.pkgbuild.com/$repo/os/$arch
+Server = https://mirror.trap.moe/archlinux/$repo/os/$arch
+Server = https://archlinux.thaller.ws/$repo/os/$arch
+Server = https://de.arch.mirror.kescher.at/$repo/os/$arch
+Server = https://mirror.cyberbits.eu/archlinux/$repo/os/$arch
+Server = https://arch.jensgutermuth.de/$repo/os/$arch
+Server = https://fastly.mirror.pkgbuild.com/$repo/os/$arch
+Server = https://mirror.lcarilla.de/archlinux/$repo/os/$arch
+Server = https://mirror.moson.org/arch/$repo/os/$arch
+Server = https://arch.phinau.de/$repo/os/$arch
+Server = https://mirrors.atviras.lt/archlinux/$repo/os/$arch
+Server = https://ro.arch.niranjan.co/$repo/os/$arch
+Server = https://ams.nl.mirrors.bjg.at/arch/$repo/os/$arch
+Server = https://mirror.ubrco.de/archlinux/$repo/os/$arch
+Server = https://archlinux.uk.mirror.allworldit.com/archlinux/$repo/os/$arch
 '
 
 # Enable this variable to use the system-wide mksquashfs/mkdwarfs instead
