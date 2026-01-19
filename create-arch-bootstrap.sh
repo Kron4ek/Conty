@@ -163,6 +163,8 @@ if [ -f mirrorlist ]; then
 	mv mirrorlist "${bootstrap}"/etc/pacman.d/mirrorlist
 fi
 
+sed -i 's/#DisableSandboxSyscalls/#DisableSandboxSyscalls\nDisableSandbox/' "${bootstrap}"/etc/pacman.conf
+
 {
 	echo
 	echo "[multilib]"
