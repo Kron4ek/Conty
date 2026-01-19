@@ -204,6 +204,9 @@ Environment variables:
   XEPHYR_SIZE       Sets the size of the Xephyr window. The default is
                     800x600.
 
+  XEPHYR_ARGS       Adds arguments specified in this environment
+                    variable to the Xephyr launch command.
+
   CUSTOM_MNT        Sets a custom mount point for the Conty. This allows
                     Conty to be used with already mounted filesystems.
                     Conty will not mount its image on this mount point,
@@ -1159,7 +1162,7 @@ if [ "$(ls "${mount_point}" 2>/dev/null)" ] || launch_wrapper "${mount_command[@
 
 			QUIET_MODE=1 DISABLE_NET=1 SANDBOX_LEVEL=2 run_bwrap \
 			--bind-try /tmp/.X11-unix /tmp/.X11-unix \
-			Xephyr -noreset -ac -br -screen "${XEPHYR_SIZE}" :"${xephyr_display}" &>/dev/null & sleep 1
+			Xephyr -noreset -ac -br ${XEPHYR_ARGS} -screen "${XEPHYR_SIZE}" :"${xephyr_display}" &>/dev/null & sleep 1
 			xephyr_pid=$!
 
 			QUIET_MODE=1 run_bwrap openbox & sleep 1
