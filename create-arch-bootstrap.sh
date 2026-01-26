@@ -251,6 +251,8 @@ run_in_chroot pacman -Q > "${bootstrap}"/pkglist.x86_64.txt
 export -f generate_pkg_licenses_file
 run_in_chroot bash -c generate_pkg_licenses_file
 
+sed -i 's/DownloadUser = alpm/#DownloadUser = alpm/' "${bootstrap}"/etc/pacman.conf
+
 unmount_chroot
 
 # Clear pacman package cache
