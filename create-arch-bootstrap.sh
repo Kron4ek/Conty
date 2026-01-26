@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# Dependencies: curl tar gzip grep coreutils
+# Dependencies: curl tar gzip grep coreutils zstd
 # Root rights are required
 source settings.sh
 
@@ -12,7 +12,7 @@ check_command_available() {
 		fi
 	done
 }
-check_command_available curl gzip grep sha256sum
+check_command_available curl gzip grep sha256sum tar zstd
 
 if [ $EUID != 0 ]; then
 	echo "Root rights are required!"
