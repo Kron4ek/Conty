@@ -37,7 +37,7 @@ PACKAGES=(
 	libxcrypt-compat lib32-libxcrypt-compat libva lib32-libva sqlite lib32-sqlite
 	gtk3 lib32-gtk3 vulkan-icd-loader lib32-vulkan-icd-loader
 	sdl2-compat lib32-sdl2-compat vkd3d lib32-vkd3d libgphoto2
-	openssl-1.1 lib32-openssl-1.1 libnm lib32-libnm
+	libnm lib32-libnm
 	cabextract wget gamemode lib32-gamemode mangohud lib32-mangohud
 	# development
 	base-devel git meson mingw-w64-gcc cmake
