@@ -20,17 +20,19 @@ This is an easy to use compressed unprivileged Linux container packed into a sin
 * Supports Chaotic-AUR and ALHP repositories. AUR is also supported.
 
 In its default release, it includes, among others, these apps:
-[Wine-Proton](https://en.wikipedia.org/wiki/Proton_(software)),
+[Wine-Proton-GE](https://github.com/GloriousEggroll/proton-ge-custom),
 [Steam](https://en.wikipedia.org/wiki/Steam_(service)),
 [Lutris](https://en.wikipedia.org/wiki/Lutris),
 [PlayOnLinux](https://en.wikipedia.org/wiki/PlayOnLinux),
 [GameHub](https://github.com/tkashkin/GameHub),
 [Minigalaxy](https://sharkwouter.github.io/minigalaxy),
-[Legendary](https://github.com/derrod/legendary),
 [Bottles](https://usebottles.com),
 [Faugus Launcher](https://github.com/Faugus/faugus-launcher),
+[UMU Launcher](https://github.com/Open-Wine-Components/umu-launcher),
+[ProtonPlus](https://github.com/Vysp3r/ProtonPlus),
 [PrismLauncher](https://prismlauncher.org),
 [MangoHud](https://github.com/flightlessmango/MangoHud),
+[LSFG-VK](https://github.com/PancakeTAS/lsfg-vk),
 [Gamescope](https://github.com/ValveSoftware/gamescope),
 [RetroArch](https://www.retroarch.com),
 [DuckStation](https://www.duckstation.org/),
@@ -39,7 +41,7 @@ In its default release, it includes, among others, these apps:
 [Genymotion](https://www.genymotion.com/),
 [OBS Studio](https://obsproject.com/),
 [OpenJDK](https://en.wikipedia.org/wiki/OpenJDK),
-[Firefox](https://en.wikipedia.org/wiki/Firefox)
+[Firefox](https://en.wikipedia.org/wiki/Firefox),
 
 The full list can be read in the [latest release's pkg_list.txt](https://github.com/Kron4ek/Conty/releases/latest/download/pkg_list.txt).
 
