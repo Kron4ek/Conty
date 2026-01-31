@@ -1177,9 +1177,9 @@ if [ "$(ls "${mount_point}" 2>/dev/null)" ] || launch_wrapper "${mount_command[@
 	# Disable lsfg-vk by default
 
 	if [ -z "${ENABLE_LSFG}" ] || [ "${ENABLE_LSFG}" = 0 ]; then
-		export DISABLE_LSFG=1
+		export DISABLE_LSFGVK=1
 	else
-		unset DISABLE_LSFG
+		unset DISABLE_LSFGVK
 	fi
 
 	if [ -n "${script_is_symlink}" ] && [ -f "${mount_point}"/usr/bin/"${script_name}" ]; then
