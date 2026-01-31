@@ -41,7 +41,7 @@ In its default release, it includes, among others, these apps:
 [Genymotion](https://www.genymotion.com/),
 [OBS Studio](https://obsproject.com/),
 [OpenJDK](https://en.wikipedia.org/wiki/OpenJDK),
-[Firefox](https://en.wikipedia.org/wiki/Firefox),
+[Firefox](https://en.wikipedia.org/wiki/Firefox)
 
 The full list can be read in the [latest release's pkg_list.txt](https://github.com/Kron4ek/Conty/releases/latest/download/pkg_list.txt).
 
