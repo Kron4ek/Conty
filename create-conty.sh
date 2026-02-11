@@ -26,6 +26,11 @@ if ! command -v sed 1>/dev/null; then
 	exit 1
 fi
 
+unset proxy
+if [ -n "${DOWNLOAD_PROXY}" ]; then
+	proxy=(-x "${DOWNLOAD_PROXY}")
+fi
+
 cd "${script_dir}" || exit 1
 
 if [ -n "$USE_DWARFS" ]; then
@@ -44,11 +49,11 @@ if [ ! -f "${utils}" ] || [ "$(wc -c < "${utils}")" -lt 100000 ]; then
    	fi
 
 	rm -f "${utils}"
-	curl -#LO "${utils_url}"
+	curl ${proxy[@]} -#LO "${utils_url}"
 
 	if [ ! -f "${utils}" ] || [ "$(wc -c < "${utils}")" -lt 100000 ]; then
 		rm -f "${utils}"
-		curl -#LO "https://gitlab.com/-/project/61149207/uploads/1ff27b6750e246ebd181260695bc95f3/utils.tar"
+		curl ${proxy[@]} -#LO "https://gitlab.com/-/project/61149207/uploads/1ff27b6750e246ebd181260695bc95f3/utils.tar"
   		tar -xf utils.tar
 	fi
 fi

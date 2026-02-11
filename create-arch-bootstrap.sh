@@ -110,13 +110,17 @@ generate_mirrorlist () {
 	printf '%s\n' "$MIRRORLIST" > mirrorlist
 }
 
+unset proxy
+if [ -n "${DOWNLOAD_PROXY}" ]; then
+	proxy=(-x "${DOWNLOAD_PROXY}")
+fi
+
 cd "${script_dir}" || exit 1
 
-
-curl -#LO "$BOOTSTRAP_SHA256SUM_FILE_URL" || (echo "Failed to download sha256sums.txt file"; exit 1)
+curl ${proxy[@]} -#LO "$BOOTSTRAP_SHA256SUM_FILE_URL" || (echo "Failed to download sha256sums.txt file"; exit 1)
 for link in "${BOOTSTRAP_DOWNLOAD_URLS[@]}"; do
 	echo "Downloading Arch Linux bootstrap from $link"
-	curl -#LO "$link"
+	curl ${proxy[@]} -#LO "$link"
 
 	echo "Verifying the integrity of the bootstrap"
 	if sha256sum --ignore-missing -c sha256sums.txt &>/dev/null; then
@@ -161,6 +165,10 @@ fi
 if [ -f mirrorlist ]; then
 	rm "${bootstrap}"/etc/pacman.d/mirrorlist
 	mv mirrorlist "${bootstrap}"/etc/pacman.d/mirrorlist
+fi
+
+if [ -n "${DOWNLOAD_PROXY}" ]; then
+	sed -i "s,#XferCommand = /usr/bin/curl -L -C - -f -o %o %u,XferCommand = /usr/bin/curl ${proxy[0]} ${proxy[1]} -L -C - -f -o %o %u," "${bootstrap}"/etc/pacman.conf
 fi
 
 sed -i 's/#DisableSandboxSyscalls/#DisableSandboxSyscalls\nDisableSandbox/' "${bootstrap}"/etc/pacman.conf

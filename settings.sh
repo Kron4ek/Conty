@@ -147,6 +147,9 @@ DWARFS_COMPRESSOR_ARGUMENTS=(
 	-W 12 -w 4 --no-history-timestamps --no-create-timestamp
 )
 
+# Specify the proxy server that you want to use to download files and packages
+# This can be specified like protocol://address (for example, socks5://127.0.0.1)
+DOWNLOAD_PROXY=
 
 # List of links to arch bootstrap archive
 # Conty will try to download each one of them sequentially
