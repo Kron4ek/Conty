@@ -113,6 +113,11 @@ generate_mirrorlist () {
 unset proxy
 if [ -n "${DOWNLOAD_PROXY}" ]; then
 	proxy=(-x "${DOWNLOAD_PROXY}")
+
+	export http_proxy="${DOWNLOAD_PROXY}"
+	export https_proxy="${DOWNLOAD_PROXY}"
+	export HTTP_PROXY="${DOWNLOAD_PROXY}"
+	export HTTPS_PROXY="${DOWNLOAD_PROXY}"
 fi
 
 cd "${script_dir}" || exit 1
@@ -167,9 +172,9 @@ if [ -f mirrorlist ]; then
 	mv mirrorlist "${bootstrap}"/etc/pacman.d/mirrorlist
 fi
 
-if [ -n "${DOWNLOAD_PROXY}" ]; then
-	sed -i "s,#XferCommand = /usr/bin/curl -L -C - -f -o %o %u,XferCommand = /usr/bin/curl ${proxy[0]} ${proxy[1]} -L -C - -f -o %o %u," "${bootstrap}"/etc/pacman.conf
-fi
+#if [ -n "${DOWNLOAD_PROXY}" ]; then
+#	sed -i "s,#XferCommand = /usr/bin/curl -L -C - -f -o %o %u,XferCommand = /usr/bin/curl ${proxy[0]} ${proxy[1]} -L -C - -f -o %o %u," "${bootstrap}"/etc/pacman.conf
+#fi
 
 sed -i 's/#DisableSandboxSyscalls/#DisableSandboxSyscalls\nDisableSandbox/' "${bootstrap}"/etc/pacman.conf
 

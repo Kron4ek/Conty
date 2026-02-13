@@ -29,6 +29,11 @@ fi
 unset proxy
 if [ -n "${DOWNLOAD_PROXY}" ]; then
 	proxy=(-x "${DOWNLOAD_PROXY}")
+
+	export http_proxy="${DOWNLOAD_PROXY}"
+	export https_proxy="${DOWNLOAD_PROXY}"
+	export HTTP_PROXY="${DOWNLOAD_PROXY}"
+	export HTTPS_PROXY="${DOWNLOAD_PROXY}"
 fi
 
 cd "${script_dir}" || exit 1
