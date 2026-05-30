@@ -188,7 +188,15 @@ run_in_chroot pacman-key --init
 run_in_chroot pacman-key --populate archlinux
 
 # Add Chaotic-AUR repo
-run_in_chroot pacman-key --recv-key 3056513887B78AEB --keyserver keyserver.ubuntu.com
+if ! run_in_chroot pacman-key --recv-key 3056513887B78AEB --keyserver keyserver.ubuntu.com; then
+	chaotic_keyring_extract_dir="${bootstrap}/tmp/chaotic-keyring"
+	mkdir -p "${chaotic_keyring_extract_dir}"
+	curl -L --retry 3 -o "${chaotic_keyring_extract_dir}/chaotic-keyring.pkg.tar.zst" "https://cdn-mirror.chaotic.cx/chaotic-aur/chaotic-keyring.pkg.tar.zst"
+	tar -xf "${chaotic_keyring_extract_dir}/chaotic-keyring.pkg.tar.zst" -C "${chaotic_keyring_extract_dir}"
+	run_in_chroot pacman-key --add /tmp/chaotic-keyring/usr/share/pacman/keyrings/chaotic.gpg
+	rm -rf "${chaotic_keyring_extract_dir}"
+fi
+
 run_in_chroot pacman-key --lsign-key 3056513887B78AEB
 
 if ! run_in_chroot pacman --noconfirm -U \
