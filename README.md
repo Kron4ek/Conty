@@ -24,7 +24,6 @@ In its default release, it includes, among others, these apps:
 [Steam](https://en.wikipedia.org/wiki/Steam_(service)),
 [Lutris](https://en.wikipedia.org/wiki/Lutris),
 [PlayOnLinux](https://en.wikipedia.org/wiki/PlayOnLinux),
-[GameHub](https://github.com/tkashkin/GameHub),
 [Minigalaxy](https://sharkwouter.github.io/minigalaxy),
 [Bottles](https://usebottles.com),
 [Faugus Launcher](https://github.com/Faugus/faugus-launcher),
