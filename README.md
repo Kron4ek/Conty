@@ -394,7 +394,7 @@ If `$XDG_DATA_HOME/applications/Conty` already exists, `conty.sh -d` will instea
 
 There are a few ways to update Conty and get the latest packages, use whichever works best for you.
 
-* First of all, you can simply download latest release from the [releases page](https://github.com/Kron4ek/Conty/releases), i usually upload a new release about every month.
+* First of all, you can simply download latest release from the [releases page](https://github.com/Kron4ek/Conty/releases), i usually upload a new release about every two months.
 * You can manually create a Conty executable with latest packages inside, read the [How to create your own Conty executables](#how-to-create-your-own-conty-executables) section below.
 * You can clone the repository and [use GitHub Actions](#automated-github-actions) to get new Conty file according your specifications, every week (see Automated section below).
 
