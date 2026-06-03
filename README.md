@@ -539,6 +539,7 @@ Lsfg-vk is included in Conty, but is disabled by default. You can enable it by u
     Solution from https://www.reddit.com/r/linux_gaming/comments/1ds1ei3/steam_input_not_working_under_gamescope/lb10mmf/
 
 * The game is not starting or starting only when you disable your additional displays (for example Armies of Exigo): use Gamescope - see previous point.
+* Some features in new versions of Mesa (25.3 and newer) require at least Linux kernel 6.0. If you're using Conty on a system with an older Linux kernel and encountering problems (such as games crashing or not launching at all), upgrade your Linux kernel to 6.0 or newer, or use Conty 1.28.3, which includes an old enough Mesa version. [Related bug report](https://gitlab.freedesktop.org/mesa/mesa/-/work_items/15219).
 
 ## Main used projects
 
