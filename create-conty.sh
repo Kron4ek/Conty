@@ -69,7 +69,7 @@ if [ ! -f conty-start.sh ]; then
 fi
 
 rm -rf utils
-tar -zxf "${utils}"
+gzip -dc "${utils}" | tar -xf -
 
 if [ $? != 0 ]; then
 	echo "Something is wrong with ${utils}"
