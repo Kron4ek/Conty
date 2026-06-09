@@ -23,14 +23,13 @@ script_dir="$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")"
 bootstrap="${script_dir}"/root.x86_64
 
 mount_chroot () {
-	mount --bind "${bootstrap}" "${bootstrap}"
+	mount -o bind "${bootstrap}" "${bootstrap}"
 	mount -t proc /proc "${bootstrap}"/proc
-	mount --bind /sys "${bootstrap}"/sys
-	mount --make-rslave "${bootstrap}"/sys
-	mount --bind /dev "${bootstrap}"/dev
-	mount --bind /dev/pts "${bootstrap}"/dev/pts
-	mount --bind /dev/shm "${bootstrap}"/dev/shm
-	mount --make-rslave "${bootstrap}"/dev
+	mount -t sysfs sys "${bootstrap}"/sys
+	mount -o bind /dev "${bootstrap}"/dev
+	mount -o bind /dev/pts "${bootstrap}"/dev/pts
+	mount -o bind /dev/shm "${bootstrap}"/dev/shm
+	mount -o bind "${bootstrap}"/dev
 
 	rm -f "${bootstrap}"/etc/resolv.conf
 	cp /etc/resolv.conf "${bootstrap}"/etc/resolv.conf
