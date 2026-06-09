@@ -23,14 +23,13 @@ script_dir="$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")"
 bootstrap="${script_dir}"/root.x86_64
 
 mount_chroot () {
-	mount --bind "${bootstrap}" "${bootstrap}"
+	mount -o bind "${bootstrap}" "${bootstrap}"
 	mount -t proc /proc "${bootstrap}"/proc
-	mount --bind /sys "${bootstrap}"/sys
-	mount --make-rslave "${bootstrap}"/sys
-	mount --bind /dev "${bootstrap}"/dev
-	mount --bind /dev/pts "${bootstrap}"/dev/pts
-	mount --bind /dev/shm "${bootstrap}"/dev/shm
-	mount --make-rslave "${bootstrap}"/dev
+	mount -t sysfs sys "${bootstrap}"/sys
+	mount -o bind /dev "${bootstrap}"/dev
+	mount -o bind /dev/pts "${bootstrap}"/dev/pts
+	mount -o bind /dev/shm "${bootstrap}"/dev/shm
+	mount -o bind "${bootstrap}"/dev
 
 	rm -f "${bootstrap}"/etc/resolv.conf
 	cp /etc/resolv.conf "${bootstrap}"/etc/resolv.conf
@@ -123,12 +122,16 @@ fi
 cd "${script_dir}" || exit 1
 
 curl ${proxy[@]} -#LO "$BOOTSTRAP_SHA256SUM_FILE_URL" || (echo "Failed to download sha256sums.txt file"; exit 1)
+
+grep archlinux-bootstrap-x86_64.tar.zst sha256sums.txt > _
+mv -f _ sha256sums.txt
+
 for link in "${BOOTSTRAP_DOWNLOAD_URLS[@]}"; do
 	echo "Downloading Arch Linux bootstrap from $link"
 	curl ${proxy[@]} -#LO "$link"
 
 	echo "Verifying the integrity of the bootstrap"
-	if sha256sum --ignore-missing -c sha256sums.txt &>/dev/null; then
+	if sha256sum -c sha256sums.txt &>/dev/null; then
 		bootstrap_is_good=1
 		break
 	fi
@@ -144,7 +147,7 @@ fi
 unmount_chroot
 
 rm -rf "${bootstrap}"
-tar xf archlinux-bootstrap-x86_64.tar.zst
+zstd -dc archlinux-bootstrap-x86_64.tar.zst | tar -xf -
 rm archlinux-bootstrap-x86_64.tar.zst sha256sums.txt
 
 mount_chroot
@@ -176,7 +179,8 @@ fi
 #	sed -i "s,#XferCommand = /usr/bin/curl -L -C - -f -o %o %u,XferCommand = /usr/bin/curl ${proxy[0]} ${proxy[1]} -L -C - -f -o %o %u," "${bootstrap}"/etc/pacman.conf
 #fi
 
-sed -i 's/#DisableSandboxSyscalls/#DisableSandboxSyscalls\nDisableSandbox/' "${bootstrap}"/etc/pacman.conf
+sed 's/#DisableSandboxSyscalls/#DisableSandboxSyscalls\nDisableSandbox/' "${bootstrap}"/etc/pacman.conf > _
+mv -f _ "${bootstrap}"/etc/pacman.conf
 
 {
 	echo
@@ -214,16 +218,20 @@ fi
 } >> "${bootstrap}"/etc/pacman.conf
 
 # Do not install unneeded files (man pages and Nvidia firmwares)
-sed -i 's/#NoExtract   =/NoExtract   = usr\/lib\/firmware\/nvidia\/\* usr\/share\/man\/\*/' "${bootstrap}"/etc/pacman.conf
+sed 's/#NoExtract   =/NoExtract   = usr\/lib\/firmware\/nvidia\/\* usr\/share\/man\/\*/' "${bootstrap}"/etc/pacman.conf > _
+mv -f _ "${bootstrap}"/etc/pacman.conf
 
 run_in_chroot pacman -Sy archlinux-keyring --noconfirm
 run_in_chroot pacman -Su --noconfirm
 
 if [ -n "$ENABLE_ALHP_REPO" ]; then
 	run_in_chroot pacman --noconfirm --needed -S alhp-keyring alhp-mirrorlist
-	sed -i "s/#\[multilib\]/#/" "${bootstrap}"/etc/pacman.conf
-	sed -i "s/\[core\]/\[core-x86-64-v${ALHP_FEATURE_LEVEL}\]\nInclude = \/etc\/pacman.d\/alhp-mirrorlist\n\n\[extra-x86-64-v${ALHP_FEATURE_LEVEL}\]\nInclude = \/etc\/pacman.d\/alhp-mirrorlist\n\n\[core\]/" "${bootstrap}"/etc/pacman.conf
-	sed -i "s/\[multilib\]/\[multilib-x86-64-v${ALHP_FEATURE_LEVEL}\]\nInclude = \/etc\/pacman.d\/alhp-mirrorlist\n\n\[multilib\]/" "${bootstrap}"/etc/pacman.conf
+	sed "s/#\[multilib\]/#/" "${bootstrap}"/etc/pacman.conf > _
+	mv -f _ "${bootstrap}"/etc/pacman.conf
+	sed "s/\[core\]/\[core-x86-64-v${ALHP_FEATURE_LEVEL}\]\nInclude = \/etc\/pacman.d\/alhp-mirrorlist\n\n\[extra-x86-64-v${ALHP_FEATURE_LEVEL}\]\nInclude = \/etc\/pacman.d\/alhp-mirrorlist\n\n\[core\]/" "${bootstrap}"/etc/pacman.conf > _
+	mv -f _ "${bootstrap}"/etc/pacman.conf
+	sed "s/\[multilib\]/\[multilib-x86-64-v${ALHP_FEATURE_LEVEL}\]\nInclude = \/etc\/pacman.d\/alhp-mirrorlist\n\n\[multilib\]/" "${bootstrap}"/etc/pacman.conf > _
+	mv -f _ "${bootstrap}"/etc/pacman.conf
 	run_in_chroot pacman -Syu --noconfirm
 fi
 
@@ -272,7 +280,9 @@ run_in_chroot pacman -Q > "${bootstrap}"/pkglist.x86_64.txt
 export -f generate_pkg_licenses_file
 run_in_chroot bash -c generate_pkg_licenses_file
 
-sed -i 's/DownloadUser = alpm/#DownloadUser = alpm/' "${bootstrap}"/etc/pacman.conf
+sed 's/DownloadUser = alpm/#DownloadUser = alpm/' "${bootstrap}"/etc/pacman.conf > _
+mv -f _ "${bootstrap}"/etc/pacman.conf
+
 
 unmount_chroot
 
