@@ -128,13 +128,20 @@ if command -v sed 1>/dev/null; then
 		rm -f utils/init utils/bash
 	fi
 
-	sed -i "s/init_size=.*/init_size=${init_size}/" conty-start.sh
-	sed -i "s/bash_size=.*/bash_size=${bash_size}/" conty-start.sh
-	sed -i "s/busybox_size=.*/busybox_size=${busybox_size}/" conty-start.sh
-	sed -i "s/utils_size=.*/utils_size=${utils_size}/" conty-start.sh
+	sed "s/init_size=.*/init_size=${init_size}/" conty-start.sh > _
+	mv -f _ conty-start.sh
+	sed "s/bash_size=.*/bash_size=${bash_size}/" conty-start.sh > _
+	mv -f _ conty-start.sh
+	sed "s/busybox_size=.*/busybox_size=${busybox_size}/" conty-start.sh > _
+	mv -f _ conty-start.sh
+	sed "s/utils_size=.*/utils_size=${utils_size}/" conty-start.sh > _
+	mv -f _ conty-start.sh
 
-	sed -i "s/script_size=.*/script_size=$(stat -c%s conty-start.sh)/" conty-start.sh
-	sed -i "s/script_size=.*/script_size=$(stat -c%s conty-start.sh)/" conty-start.sh
+	sed "s/script_size=.*/script_size=$(stat -c%s conty-start.sh)/" conty-start.sh > _
+	mv -f _ conty-start.sh
+	sed "s/script_size=.*/script_size=$(stat -c%s conty-start.sh)/" conty-start.sh > _
+	mv -f _ conty-start.sh
+	chmod +x conty-start.sh
 fi
 
 # Combine the files into a single executable using cat

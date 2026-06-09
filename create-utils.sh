@@ -80,7 +80,8 @@ ZSTD_LEGACY_SUPPORT=0 HAVE_ZLIB=0 HAVE_LZMA=0 HAVE_LZ4=0 BACKTRACE=0 make -j"$(n
 
 cd ../busybox-${busybox_version} || exit 1
 make defconfig
-sed -i 's/# CONFIG_STATIC is not set/CONFIG_STATIC=y/g' .config
+sed 's/# CONFIG_STATIC is not set/CONFIG_STATIC=y/g' .config > _
+mv -f _ .config
 make CC=musl-gcc -j"$(nproc)"
 
 cd ../bash-${bash_version}
@@ -167,9 +168,12 @@ init_program_size=50000
 conty_script_size="$(($(stat -c%s "${script_dir}"/conty-start.sh)+5000))"
 bash_size="$(stat -c%s utils/bash)"
 
-sed -i "s/#define SCRIPT_SIZE 0/#define SCRIPT_SIZE ${conty_script_size}/g" init.c
-sed -i "s/#define BASH_SIZE 0/#define BASH_SIZE ${bash_size}/g" init.c
-sed -i "s/#define PROGRAM_SIZE 0/#define PROGRAM_SIZE ${init_program_size}/g" init.c
+sed "s/#define SCRIPT_SIZE 0/#define SCRIPT_SIZE ${conty_script_size}/g" init.c > _
+mv -f _ init.c
+sed "s/#define BASH_SIZE 0/#define BASH_SIZE ${bash_size}/g" init.c > _
+mv -f _ init.c
+sed "s/#define PROGRAM_SIZE 0/#define PROGRAM_SIZE ${init_program_size}/g" init.c > _
+mv -f _ init.c
 
 musl-gcc -o init -static init.c
 strip --strip-unneeded init

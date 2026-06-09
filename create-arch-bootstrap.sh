@@ -179,7 +179,8 @@ if [ -f mirrorlist ]; then
 fi
 
 #if [ -n "${DOWNLOAD_PROXY}" ]; then
-#	sed -i "s,#XferCommand = /usr/bin/curl -L -C - -f -o %o %u,XferCommand = /usr/bin/curl ${proxy[0]} ${proxy[1]} -L -C - -f -o %o %u," "${bootstrap}"/etc/pacman.conf
+#	sed "s,#XferCommand = /usr/bin/curl -L -C - -f -o %o %u,XferCommand = /usr/bin/curl ${proxy[0]} ${proxy[1]} -L -C - -f -o %o %u," "${bootstrap}"/etc/pacman.conf > _
+#	mv -f _ "${bootstrap}"/etc/pacman.conf
 #fi
 
 sed 's/#DisableSandboxSyscalls/#DisableSandboxSyscalls\nDisableSandbox/' "${bootstrap}"/etc/pacman.conf > _
