@@ -147,7 +147,7 @@ fi
 unmount_chroot
 
 rm -rf "${bootstrap}"
-tar xf archlinux-bootstrap-x86_64.tar.zst
+zstd -dc archlinux-bootstrap-x86_64.tar.zst | tar -xf -
 rm archlinux-bootstrap-x86_64.tar.zst sha256sums.txt
 
 mount_chroot
