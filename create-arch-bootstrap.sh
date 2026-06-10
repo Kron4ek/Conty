@@ -81,8 +81,10 @@ install_aur_packages () {
 
 	echo "Checking if packages are present in the AUR, please wait..."
 	for p in ${aur_pkgs}; do
-		if ! yay -a -G "${p}" &>/dev/null; then
+		if ! paru --clonedir /home/aur -a -G "${p}" &>/dev/null; then
 			bad_aur_pkglist="${bad_aur_pkglist} ${p}"
+		else
+			good_aur_pkglist="${good_aur_pkglist} ${p}"
 		fi
 	done
 
@@ -91,7 +93,7 @@ install_aur_packages () {
 	fi
 
 	for i in {1..10}; do
-		if yes | yay --needed --removemake --builddir /home/aur -a -S ${aur_pkgs}; then
+		if paru --noconfirm --sync --removemake --skipreview --useask --clonedir /home/aur --builddir /home/aur -a ${good_aur_pkglist}; then
 			break
 		fi
 	done
@@ -254,7 +256,7 @@ if ! run_in_chroot bash -c install_packages; then
 fi
 
 if [ "${#AUR_PACKAGES[@]}" -ne 0 ]; then
-	run_in_chroot pacman --noconfirm --needed -S base-devel yay
+	run_in_chroot pacman --noconfirm --needed -S base-devel paru
 	run_in_chroot useradd -m -G wheel aur
 	echo "%wheel ALL=(ALL:ALL) NOPASSWD: ALL" >> "${bootstrap}"/etc/sudoers
 
