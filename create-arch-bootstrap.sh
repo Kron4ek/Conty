@@ -123,26 +123,29 @@ fi
 
 cd "${script_dir}" || exit 1
 
-curl ${proxy[@]} -#LO "$BOOTSTRAP_SHA256SUM_FILE_URL" || (echo "Failed to download sha256sums.txt file"; exit 1)
+if [ ! -f sha256sums.txt ] || [ ! -f archlinux-bootstrap-x86_64.tar.zst ]; then
+	curl ${proxy[@]} -#LO "$BOOTSTRAP_SHA256SUM_FILE_URL" || (echo "Failed to download sha256sums.txt file"; exit 1)
 
-grep archlinux-bootstrap-x86_64.tar.zst sha256sums.txt > _
-mv -f _ sha256sums.txt
+	grep archlinux-bootstrap-x86_64.tar.zst sha256sums.txt > _
+	mv -f _ sha256sums.txt
 
-for link in "${BOOTSTRAP_DOWNLOAD_URLS[@]}"; do
-	echo "Downloading Arch Linux bootstrap from $link"
-	curl ${proxy[@]} -#LO "$link"
+	for link in "${BOOTSTRAP_DOWNLOAD_URLS[@]}"; do
+		echo "Downloading Arch Linux bootstrap from $link"
+		curl ${proxy[@]} -#LO "$link"
 
-	echo "Verifying the integrity of the bootstrap"
-	if sha256sum -c sha256sums.txt &>/dev/null; then
-		bootstrap_is_good=1
-		break
+		echo "Verifying the integrity of the bootstrap"
+		if sha256sum -c sha256sums.txt &>/dev/null; then
+			bootstrap_is_good=1
+			break
+		fi
+		echo "Download failed, trying again with different mirror"
+	done
+
+	if [ -z "${bootstrap_is_good}" ]; then
+		echo "Bootstrap download failed or its checksum is incorrect"
+		rm -f archlinux-bootstrap-x86_64.tar.zst sha256sums.txt
+		exit 1
 	fi
-	echo "Download failed, trying again with different mirror"
-done
-
-if [ -z "${bootstrap_is_good}" ]; then
-	echo "Bootstrap download failed or its checksum is incorrect"
-	exit 1
 fi
 
 # Unmount first just in case
@@ -150,7 +153,6 @@ unmount_chroot
 
 rm -rf "${bootstrap}"
 zstd -dc archlinux-bootstrap-x86_64.tar.zst | tar -xf -
-rm archlinux-bootstrap-x86_64.tar.zst sha256sums.txt
 
 mount_chroot
 
