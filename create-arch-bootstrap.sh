@@ -39,11 +39,9 @@ mount_chroot () {
 
 unmount_chroot () {
 	umount -l "${bootstrap}"
-	umount "${bootstrap}"/proc
-	umount "${bootstrap}"/sys
-	umount "${bootstrap}"/dev/pts
-	umount "${bootstrap}"/dev/shm
-	umount "${bootstrap}"/dev
+	for fs in proc sys dev/pts dev/shm dev; do
+		umount "${bootstrap}"/"${fs}"
+	done
 }
 
 run_in_chroot () {
