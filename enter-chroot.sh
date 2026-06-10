@@ -26,7 +26,6 @@ mount -t sysfs /sys "${bootstrap}"/sys
 mount -o bind /dev "${bootstrap}"/dev
 mount -o bind /dev/pts "${bootstrap}"/dev/pts
 mount -o bind /dev/shm "${bootstrap}"/dev/shm
-mount -o bind "${bootstrap}"/dev
 
 rm -f "${bootstrap}"/etc/resolv.conf
 cp /etc/resolv.conf "${bootstrap}"/etc/resolv.conf
