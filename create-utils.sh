@@ -42,19 +42,19 @@ curl -#Lo busybox.tar.bz2 https://busybox.net/downloads/busybox-${busybox_versio
 curl -#Lo bash.tar.gz https://ftp.gnu.org/gnu/bash/bash-${bash_version}.tar.gz
 cp "${script_dir}"/init.c init.c
 
-tar xf lz4.tar.gz
-tar xf zstd.tar.gz
-tar xf bwrap.tar.gz
-tar xf unionfs-fuse.tar.gz
-tar xf busybox.tar.bz2
-tar xf bash.tar.gz
+gzip -dc lz4.tar.gz | tar -xf -
+gzip -dc zstd.tar.gz | tar -xf -
+gzip -dc bwrap.tar.gz | tar -xf -
+gzip -dc unionfs-fuse.tar.gz | tar -xf -
+bzip2 -dc busybox.tar.bz2 | tar -xf -
+gzip -dc bash.tar.gz | tar -xf -
 
 if [ "${build_dwarfs}" != "true" ]; then
 	curl -#Lo squashfuse.tar.gz https://github.com/vasi/squashfuse/archive/refs/tags/${squashfuse_version}.tar.gz
 	curl -#Lo sqfstools.tar.gz https://github.com/plougher/squashfs-tools/archive/refs/tags/${squashfs_tools_version}.tar.gz
 
-	tar xf squashfuse.tar.gz
-	tar xf sqfstools.tar.gz
+	gzip -dc  squashfuse.tar.gz | tar -xf -
+	gzip -dc  sqfstools.tar.gz | tar -xf -
 fi
 
 cd bubblewrap-"${bwrap_version}" || exit 1
@@ -207,7 +207,7 @@ else
 	utils="utils.tar.gz"
 fi
 
-tar -zcf "${utils}" utils
+tar -cf - utils | gzip > "${utils}"
 mv "${script_dir}"/"${utils}" "${script_dir}"/"${utils}".old
 mv "${utils}" "${script_dir}"
 cd "${script_dir}" || exit 1
