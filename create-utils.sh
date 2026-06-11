@@ -65,24 +65,24 @@ cd ../unionfs-fuse-"${unionfs_fuse_version}" || exit 1
 mkdir build-fuse3
 cd build-fuse3
 cmake ../ -DCMAKE_BUILD_TYPE=Release
-make -j"$(nproc)" DESTDIR="${script_dir}"/build-utils/bin install
+make DESTDIR="${script_dir}"/build-utils/bin install
 mv "${script_dir}"/build-utils/bin/usr/local/bin/unionfs "${script_dir}"/build-utils/bin/usr/local/bin/unionfs3
 mkdir ../build-fuse2
 cd ../build-fuse2
 cmake ../ -DCMAKE_BUILD_TYPE=Release -DWITH_LIBFUSE3=FALSE
-make -j"$(nproc)" DESTDIR="${script_dir}"/build-utils/bin install
+make DESTDIR="${script_dir}"/build-utils/bin install
 
 cd ../../lz4-"${lz4_version}" || exit 1
-make -j"$(nproc)" DESTDIR="${script_dir}"/build-utils/bin install
+make DESTDIR="${script_dir}"/build-utils/bin install
 
 cd ../zstd-"${zstd_version}" || exit 1
-ZSTD_LEGACY_SUPPORT=0 HAVE_ZLIB=0 HAVE_LZMA=0 HAVE_LZ4=0 BACKTRACE=0 make -j"$(nproc)" DESTDIR="${script_dir}"/build-utils/bin install
+ZSTD_LEGACY_SUPPORT=0 HAVE_ZLIB=0 HAVE_LZMA=0 HAVE_LZ4=0 BACKTRACE=0 make DESTDIR="${script_dir}"/build-utils/bin install
 
 cd ../busybox-${busybox_version} || exit 1
 make defconfig
 sed 's/# CONFIG_STATIC is not set/CONFIG_STATIC=y/g' .config > _
 mv -f _ .config
-make CC=musl-gcc -j"$(nproc)"
+make CC=musl-gcc
 
 cd ../bash-${bash_version}
 curl -#Lo bash.patch "https://raw.githubusercontent.com/robxu9/bash-static/master/custom/bash-musl-strtoimax-debian-1023053.patch"
@@ -90,16 +90,16 @@ patch -Np1 < ./bash.patch
 CFLAGS="${CFLAGS} -std=gnu17 -Wno-error=implicit-function-declaration -static" CC=musl-gcc ./configure --without-bash-malloc
 autoconf -f
 CFLAGS="${CFLAGS} -std=gnu17 -Wno-error=implicit-function-declaration -static" CC=musl-gcc ./configure --without-bash-malloc
-CFLAGS="${CFLAGS} -std=gnu17 -Wno-error=implicit-function-declaration -static" CC=musl-gcc make -j"$(nproc)"
+CFLAGS="${CFLAGS} -std=gnu17 -Wno-error=implicit-function-declaration -static" CC=musl-gcc make
 
 if [ "${build_dwarfs}" != "true" ]; then
 	cd ../squashfuse-"${squashfuse_version}" || exit 1
 	./autogen.sh
 	./configure
-	make -j"$(nproc)" DESTDIR="${script_dir}"/build-utils/bin install
+	make DESTDIR="${script_dir}"/build-utils/bin install
 
 	cd ../squashfs-tools-"${squashfs_tools_version}"/squashfs-tools || exit 1
-	CC=gcc CXX=g++ make -j"$(nproc)" GZIP_SUPPORT=1 XZ_SUPPORT=1 LZO_SUPPORT=1 LZMA_XZ_SUPPORT=1 \
+	CC=gcc CXX=g++ make GZIP_SUPPORT=1 XZ_SUPPORT=1 LZO_SUPPORT=1 LZMA_XZ_SUPPORT=1 \
 			LZ4_SUPPORT=1 ZSTD_SUPPORT=1 XATTR_SUPPORT=1
 	CC=gcc CXX=g++ make INSTALL_DIR="${script_dir}"/build-utils/bin/usr/local/bin install
 fi
@@ -136,7 +136,7 @@ if [ "${build_dwarfs}" = "true" ]; then
 			-DPREFER_SYSTEM_ZSTD=ON -DPREFER_SYSTEM_XXHASH=ON \
 			-DPREFER_SYSTEM_GTEST=ON -DPREFER_SYSTEM_LIBFMT=ON
 
-	make -j"$(nproc)"
+	make
 	make DESTDIR="${script_dir}"/build-utils/bin install
 
 	cd "${script_dir}"/build-utils || exit 1
