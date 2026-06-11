@@ -105,21 +105,21 @@ if [ ! -f "${image_path}" ] || [ -z "${USE_EXISTING_IMAGE}" ]; then
 fi
 
 if command -v sed 1>/dev/null; then
-	utils_size="$(stat -c%s "${utils}")"
+	utils_size="$(stat "${utils}" | grep Size | awk -F ' ' '{print $2}')"
 	init_size=0
 	bash_size=0
 	busybox_size=0
 
 	if [ -s utils/init ]; then
-		init_size="$(stat -c%s utils/init)"
+		init_size="$(stat utils/init | grep Size | awk -F ' ' '{print $2}')"
 	fi
 
 	if [ -s utils/bash ]; then
-		bash_size="$(stat -c%s utils/bash)"
+		bash_size="$(stat utils/bash | grep Size | awk -F ' ' '{print $2}')"
 	fi
 
 	if [ -s utils/busybox ]; then
-		busybox_size="$(stat -c%s utils/busybox)"
+		busybox_size="$(stat utils/busybox | grep Size | awk -F ' ' '{print $2}')"
 	fi
 
 	if [ "${init_size}" = 0 ] || [ "${bash_size}" = 0 ]; then
@@ -137,9 +137,9 @@ if command -v sed 1>/dev/null; then
 	sed "s/utils_size=.*/utils_size=${utils_size}/" conty-start.sh > _
 	mv -f _ conty-start.sh
 
-	sed "s/script_size=.*/script_size=$(stat -c%s conty-start.sh)/" conty-start.sh > _
+	sed "s/script_size=.*/script_size=$(stat conty-start.sh | grep Size | awk -F ' ' '{print $2}')/" conty-start.sh > _
 	mv -f _ conty-start.sh
-	sed "s/script_size=.*/script_size=$(stat -c%s conty-start.sh)/" conty-start.sh > _
+	sed "s/script_size=.*/script_size=$(stat conty-start.sh | grep Size | awk -F ' ' '{print $2}')/" conty-start.sh > _
 	mv -f _ conty-start.sh
 	chmod +x conty-start.sh
 fi

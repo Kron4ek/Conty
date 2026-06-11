@@ -165,8 +165,8 @@ fi
 find utils -type f -exec strip --strip-unneeded {} \; 2>/dev/null
 
 init_program_size=50000
-conty_script_size="$(($(stat -c%s "${script_dir}"/conty-start.sh)+5000))"
-bash_size="$(stat -c%s utils/bash)"
+conty_script_size="$(($(stat "${script_dir}"/conty-start.sh | grep Size | awk -F ' ' '{print $2}')+5000))"
+bash_size="$(stat utils/bash | grep Size | awk -F ' ' {print $2}')"
 
 sed "s/#define SCRIPT_SIZE 0/#define SCRIPT_SIZE ${conty_script_size}/g" init.c > _
 mv -f _ init.c
@@ -178,7 +178,7 @@ mv -f _ init.c
 musl-gcc -o init -static init.c
 strip --strip-unneeded init
 
-padding_size="$((init_program_size-$(stat -c%s init)))"
+padding_size="$((init_program_size-$(stat init | grep Size | awk -F ' ' '{print $2}')))"
 
 if [ "${padding_size}" -gt 0 ]; then
 	dd if=/dev/zero of=padding bs=1 count="${padding_size}" &>/dev/null
