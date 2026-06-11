@@ -24,8 +24,10 @@ unionfs_fuse_version="3.3"
 busybox_version="1.36.1"
 bash_version="5.2.37"
 
-export CC=clang
-export CXX=clang++
+if command -v clang; then
+	export CC=clang
+	export CXX=clang++
+fi
 
 export CFLAGS="-O3 -flto"
 export CXXFLAGS="${CFLAGS}"
