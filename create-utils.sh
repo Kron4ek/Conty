@@ -84,6 +84,8 @@ cd ../busybox-${busybox_version} || exit 1
 make defconfig
 sed 's/# CONFIG_STATIC is not set/CONFIG_STATIC=y/g' .config > _
 mv -f _ .config
+sed 's/CONFIG_TC=y/# CONFIG_TC is not set/g' .config > _
+mv -f _ .config
 make CC=musl-gcc
 
 cd ../bash-${bash_version}
@@ -168,7 +170,7 @@ find utils -type f -exec strip --strip-unneeded {} \; 2>/dev/null
 
 init_program_size=50000
 conty_script_size="$(($(stat "${script_dir}"/conty-start.sh | grep Size | awk -F ' ' '{print $2}')+5000))"
-bash_size="$(stat utils/bash | grep Size | awk -F ' ' {print $2}')"
+bash_size="$(stat utils/bash | grep Size | awk -F ' ' '{print $2}')"
 
 sed "s/#define SCRIPT_SIZE 0/#define SCRIPT_SIZE ${conty_script_size}/g" init.c > _
 mv -f _ init.c

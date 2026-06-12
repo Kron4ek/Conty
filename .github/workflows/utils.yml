@@ -20,12 +20,14 @@ jobs:
         run: |
           chmod +x create-utils.sh
           pacman -Syu --noconfirm --needed base-devel gawk grep lz4 zstd \
-                 curl gcc make autoconf libtool pkgconf libcap fuse2 lzo \
+                 curl gcc15 make autoconf libtool pkgconf libcap fuse2 lzo \
                  xz zlib findutils openssl jemalloc xxhash boost boost-libs lz4 xz \
                  zstd libarchive libunwind google-glog gtest fmt gflags \
                  double-conversion cmake ruby-ronn libevent libdwarf git \
                  clang libsodium liburing libaio musl kernel-headers-musl utf8cpp \
                  chrono-date python python-mistletoe range-v3 nlohmann-json meson
+          ln -sf /usr/bin/gcc-15 /usr/bin/gcc
+          ln -sf /usr/bin/g++-15 /usr/bin/g++
           build_dwarfs=false ./create-utils.sh
           tar xf utils.tar.gz
           mv utils utils-bak
