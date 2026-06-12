@@ -29,7 +29,6 @@ mount_chroot () {
 	mount -o bind /dev "${bootstrap}"/dev
 	mount -o bind /dev/pts "${bootstrap}"/dev/pts
 	mount -o bind /dev/shm "${bootstrap}"/dev/shm
-	mount -o bind "${bootstrap}"/dev
 
 	rm -f "${bootstrap}"/etc/resolv.conf
 	cp /etc/resolv.conf "${bootstrap}"/etc/resolv.conf
@@ -40,11 +39,9 @@ mount_chroot () {
 
 unmount_chroot () {
 	umount -l "${bootstrap}"
-	umount "${bootstrap}"/proc
-	umount "${bootstrap}"/sys
-	umount "${bootstrap}"/dev/pts
-	umount "${bootstrap}"/dev/shm
-	umount "${bootstrap}"/dev
+	for fs in proc sys dev/pts dev/shm dev; do
+		umount "${bootstrap}"/"${fs}"
+	done
 }
 
 run_in_chroot () {
@@ -180,7 +177,8 @@ if [ -f mirrorlist ]; then
 fi
 
 #if [ -n "${DOWNLOAD_PROXY}" ]; then
-#	sed -i "s,#XferCommand = /usr/bin/curl -L -C - -f -o %o %u,XferCommand = /usr/bin/curl ${proxy[0]} ${proxy[1]} -L -C - -f -o %o %u," "${bootstrap}"/etc/pacman.conf
+#	sed "s,#XferCommand = /usr/bin/curl -L -C - -f -o %o %u,XferCommand = /usr/bin/curl ${proxy[0]} ${proxy[1]} -L -C - -f -o %o %u," "${bootstrap}"/etc/pacman.conf > _
+#	mv -f _ "${bootstrap}"/etc/pacman.conf
 #fi
 
 sed 's/#DisableSandboxSyscalls/#DisableSandboxSyscalls\nDisableSandbox/' "${bootstrap}"/etc/pacman.conf > _

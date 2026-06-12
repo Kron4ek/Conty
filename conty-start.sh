@@ -820,12 +820,12 @@ exit_function () {
 	if [ ! "$(ls "${working_dir}"/running_* 2>/dev/null)" ]; then
 		if [ -d "${overlayfs_dir}"/merged ]; then
 			fusermount"${fuse_version}" -uz "${overlayfs_dir}"/merged 2>/dev/null || \
-			umount --lazy "${overlayfs_dir}"/merged 2>/dev/null
+			umount -l "${overlayfs_dir}"/merged 2>/dev/null
 		fi
 
 		if [ -z "${CUSTOM_MNT}" ]; then
 			fusermount"${fuse_version}" -uz "${mount_point}" 2>/dev/null || \
-			umount --lazy "${mount_point}" 2>/dev/null
+			umount -l "${mount_point}" 2>/dev/null
 		fi
 
 		if [ ! "$(ls "${mount_point}" 2>/dev/null)" ] || [ -n "${CUSTOM_MNT}" ]; then
@@ -1113,7 +1113,7 @@ if [ "$(ls "${mount_point}" 2>/dev/null)" ] || launch_wrapper "${mount_command[@
 
 				if [ -n "${NVIDIA_SHARED}" ]; then
 					fusermount"${fuse_version}" -uz "${overlayfs_dir}"/merged 2>/dev/null || \
-					umount --lazy "${overlayfs_dir}"/merged 2>/dev/null
+					umount -l "${overlayfs_dir}"/merged 2>/dev/null
 
 					rm -f "${overlayfs_shared_dir}"/up/etc/ld.so.cache
 

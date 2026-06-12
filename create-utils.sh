@@ -24,8 +24,10 @@ unionfs_fuse_version="3.3"
 busybox_version="1.36.1"
 bash_version="5.2.37"
 
-export CC=clang
-export CXX=clang++
+if command -v clang; then
+	export CC=clang
+	export CXX=clang++
+fi
 
 export CFLAGS="-O3 -flto"
 export CXXFLAGS="${CFLAGS}"
@@ -42,19 +44,19 @@ curl -#Lo busybox.tar.bz2 https://busybox.net/downloads/busybox-${busybox_versio
 curl -#Lo bash.tar.gz https://ftp.gnu.org/gnu/bash/bash-${bash_version}.tar.gz
 cp "${script_dir}"/init.c init.c
 
-tar xf lz4.tar.gz
-tar xf zstd.tar.gz
-tar xf bwrap.tar.gz
-tar xf unionfs-fuse.tar.gz
-tar xf busybox.tar.bz2
-tar xf bash.tar.gz
+gzip -dc lz4.tar.gz | tar -xf -
+gzip -dc zstd.tar.gz | tar -xf -
+gzip -dc bwrap.tar.gz | tar -xf -
+gzip -dc unionfs-fuse.tar.gz | tar -xf -
+bzip2 -dc busybox.tar.bz2 | tar -xf -
+gzip -dc bash.tar.gz | tar -xf -
 
 if [ "${build_dwarfs}" != "true" ]; then
 	curl -#Lo squashfuse.tar.gz https://github.com/vasi/squashfuse/archive/refs/tags/${squashfuse_version}.tar.gz
 	curl -#Lo sqfstools.tar.gz https://github.com/plougher/squashfs-tools/archive/refs/tags/${squashfs_tools_version}.tar.gz
 
-	tar xf squashfuse.tar.gz
-	tar xf sqfstools.tar.gz
+	gzip -dc  squashfuse.tar.gz | tar -xf -
+	gzip -dc  sqfstools.tar.gz | tar -xf -
 fi
 
 cd bubblewrap-"${bwrap_version}" || exit 1
@@ -65,23 +67,24 @@ cd ../unionfs-fuse-"${unionfs_fuse_version}" || exit 1
 mkdir build-fuse3
 cd build-fuse3
 cmake ../ -DCMAKE_BUILD_TYPE=Release
-make -j"$(nproc)" DESTDIR="${script_dir}"/build-utils/bin install
+make DESTDIR="${script_dir}"/build-utils/bin install
 mv "${script_dir}"/build-utils/bin/usr/local/bin/unionfs "${script_dir}"/build-utils/bin/usr/local/bin/unionfs3
 mkdir ../build-fuse2
 cd ../build-fuse2
 cmake ../ -DCMAKE_BUILD_TYPE=Release -DWITH_LIBFUSE3=FALSE
-make -j"$(nproc)" DESTDIR="${script_dir}"/build-utils/bin install
+make DESTDIR="${script_dir}"/build-utils/bin install
 
 cd ../../lz4-"${lz4_version}" || exit 1
-make -j"$(nproc)" DESTDIR="${script_dir}"/build-utils/bin install
+make DESTDIR="${script_dir}"/build-utils/bin install
 
 cd ../zstd-"${zstd_version}" || exit 1
-ZSTD_LEGACY_SUPPORT=0 HAVE_ZLIB=0 HAVE_LZMA=0 HAVE_LZ4=0 BACKTRACE=0 make -j"$(nproc)" DESTDIR="${script_dir}"/build-utils/bin install
+ZSTD_LEGACY_SUPPORT=0 HAVE_ZLIB=0 HAVE_LZMA=0 HAVE_LZ4=0 BACKTRACE=0 make DESTDIR="${script_dir}"/build-utils/bin install
 
 cd ../busybox-${busybox_version} || exit 1
 make defconfig
-sed -i 's/# CONFIG_STATIC is not set/CONFIG_STATIC=y/g' .config
-make CC=musl-gcc -j"$(nproc)"
+sed 's/# CONFIG_STATIC is not set/CONFIG_STATIC=y/g' .config > _
+mv -f _ .config
+make CC=musl-gcc
 
 cd ../bash-${bash_version}
 curl -#Lo bash.patch "https://raw.githubusercontent.com/robxu9/bash-static/master/custom/bash-musl-strtoimax-debian-1023053.patch"
@@ -89,16 +92,16 @@ patch -Np1 < ./bash.patch
 CFLAGS="${CFLAGS} -std=gnu17 -Wno-error=implicit-function-declaration -static" CC=musl-gcc ./configure --without-bash-malloc
 autoconf -f
 CFLAGS="${CFLAGS} -std=gnu17 -Wno-error=implicit-function-declaration -static" CC=musl-gcc ./configure --without-bash-malloc
-CFLAGS="${CFLAGS} -std=gnu17 -Wno-error=implicit-function-declaration -static" CC=musl-gcc make -j"$(nproc)"
+CFLAGS="${CFLAGS} -std=gnu17 -Wno-error=implicit-function-declaration -static" CC=musl-gcc make
 
 if [ "${build_dwarfs}" != "true" ]; then
 	cd ../squashfuse-"${squashfuse_version}" || exit 1
 	./autogen.sh
 	./configure
-	make -j"$(nproc)" DESTDIR="${script_dir}"/build-utils/bin install
+	make DESTDIR="${script_dir}"/build-utils/bin install
 
 	cd ../squashfs-tools-"${squashfs_tools_version}"/squashfs-tools || exit 1
-	CC=gcc CXX=g++ make -j"$(nproc)" GZIP_SUPPORT=1 XZ_SUPPORT=1 LZO_SUPPORT=1 LZMA_XZ_SUPPORT=1 \
+	CC=gcc CXX=g++ make GZIP_SUPPORT=1 XZ_SUPPORT=1 LZO_SUPPORT=1 LZMA_XZ_SUPPORT=1 \
 			LZ4_SUPPORT=1 ZSTD_SUPPORT=1 XATTR_SUPPORT=1
 	CC=gcc CXX=g++ make INSTALL_DIR="${script_dir}"/build-utils/bin/usr/local/bin install
 fi
@@ -135,7 +138,7 @@ if [ "${build_dwarfs}" = "true" ]; then
 			-DPREFER_SYSTEM_ZSTD=ON -DPREFER_SYSTEM_XXHASH=ON \
 			-DPREFER_SYSTEM_GTEST=ON -DPREFER_SYSTEM_LIBFMT=ON
 
-	make -j"$(nproc)"
+	make
 	make DESTDIR="${script_dir}"/build-utils/bin install
 
 	cd "${script_dir}"/build-utils || exit 1
@@ -164,17 +167,20 @@ fi
 find utils -type f -exec strip --strip-unneeded {} \; 2>/dev/null
 
 init_program_size=50000
-conty_script_size="$(($(stat -c%s "${script_dir}"/conty-start.sh)+5000))"
-bash_size="$(stat -c%s utils/bash)"
+conty_script_size="$(($(stat "${script_dir}"/conty-start.sh | grep Size | awk -F ' ' '{print $2}')+5000))"
+bash_size="$(stat utils/bash | grep Size | awk -F ' ' {print $2}')"
 
-sed -i "s/#define SCRIPT_SIZE 0/#define SCRIPT_SIZE ${conty_script_size}/g" init.c
-sed -i "s/#define BASH_SIZE 0/#define BASH_SIZE ${bash_size}/g" init.c
-sed -i "s/#define PROGRAM_SIZE 0/#define PROGRAM_SIZE ${init_program_size}/g" init.c
+sed "s/#define SCRIPT_SIZE 0/#define SCRIPT_SIZE ${conty_script_size}/g" init.c > _
+mv -f _ init.c
+sed "s/#define BASH_SIZE 0/#define BASH_SIZE ${bash_size}/g" init.c > _
+mv -f _ init.c
+sed "s/#define PROGRAM_SIZE 0/#define PROGRAM_SIZE ${init_program_size}/g" init.c > _
+mv -f _ init.c
 
 musl-gcc -o init -static init.c
 strip --strip-unneeded init
 
-padding_size="$((init_program_size-$(stat -c%s init)))"
+padding_size="$((init_program_size-$(stat init | grep Size | awk -F ' ' '{print $2}')))"
 
 if [ "${padding_size}" -gt 0 ]; then
 	dd if=/dev/zero of=padding bs=1 count="${padding_size}" &>/dev/null
@@ -203,7 +209,7 @@ else
 	utils="utils.tar.gz"
 fi
 
-tar -zcf "${utils}" utils
+tar -cf - utils | gzip > "${utils}"
 mv "${script_dir}"/"${utils}" "${script_dir}"/"${utils}".old
 mv "${utils}" "${script_dir}"
 cd "${script_dir}" || exit 1
