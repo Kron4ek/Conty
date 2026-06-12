@@ -2,6 +2,8 @@
 
 # Dependencies: sed, squashfs-tools or dwarfs
 
+export LC_ALL=C
+
 script_dir="$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")"
 image_path="${script_dir}"/image
 bootstrap="${script_dir}"/root.x86_64

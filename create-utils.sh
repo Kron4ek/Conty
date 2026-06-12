@@ -10,6 +10,8 @@
 #
 # Dwarfs compilation is optional and disabled by default.
 
+export LC_ALL=C
+
 script_dir="$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")"
 
 # Set to true to compile dwarfs instead of squashfuse
