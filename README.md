@@ -85,13 +85,11 @@ $ chmod +x conty.sh
 
 Chmod only need to be executed once (per file). You can now [start using Conty](#usage).
 
-Or you can install from [gentoo-zh overlay](https://github.com/microcai/gentoo-zh/tree/master/games-emulation/conty).
-
 ###  Requirements
 
 The only requirements are `fuse3` (or `fuse2`) and `coreutils` (or other POSIX compliant basic utilities). And your `/tmp` directory should allow files execution (which it does by default on most distros).
 
-Your Linux kernel must be at least version 4.4 and should support unprivileged user namespaces. On some Linux distros this feature is disabled by default and can be enabled with sysfs:
+Your Linux kernel must be at least version 4.4 (though 6.0 or newer is highly recommended due to the last point of [known issues](https://github.com/Kron4ek/Conty#known-issues)) and should support unprivileged user namespaces. On some Linux distros this feature is disabled by default and can be enabled with sysfs:
 
 ```
 # sysctl kernel.unprivileged_userns_clone=1
