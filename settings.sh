@@ -24,13 +24,13 @@ PACKAGES=(
 	libxrandr lib32-libxrandr xorg-xrandr libldap lib32-libldap
 	mpg123 lib32-mpg123 libxcomposite lib32-libxcomposite
 	libxi lib32-libxi libxinerama lib32-libxinerama libxss lib32-libxss
-	libxslt lib32-libxslt openal lib32-openal
+	libxslt lib32-libxslt openal
 	krb5 lib32-krb5 libpulse lib32-libpulse alsa-plugins
 	lib32-alsa-plugins alsa-lib lib32-alsa-lib gnutls lib32-gnutls
-	giflib lib32-giflib gst-libav gst-plugin-pipewire gst-plugins-ugly
+	giflib gst-libav gst-plugin-pipewire gst-plugins-ugly
 	gst-plugins-bad gst-plugins-bad-libs gst-plugin-va lsp-plugins-gst
 	gst-plugins-base-libs gst-plugins-base gst-plugins-good gstreamer
-	libpng lib32-libpng v4l-utils lib32-v4l-utils
+	libpng lib32-libpng v4l-utils
 	libgpg-error lib32-libgpg-error libjpeg-turbo lib32-libjpeg-turbo
 	libgcrypt lib32-libgcrypt ncurses lib32-ncurses ocl-icd lib32-ocl-icd
 	libxcrypt-compat lib32-libxcrypt-compat libva lib32-libva sqlite lib32-sqlite
